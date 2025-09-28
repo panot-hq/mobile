@@ -7,7 +7,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Alert, Text, TextInput, View } from "react-native";
 
 export default function PasswordScreen() {
-  const { signUp } = useAuth();
+  const { signUpWithOTP } = useAuth();
   const { signupData, setPassword, clearSignupData, isPasswordValid } =
     useSignup();
   const [password, setPasswordState] = useState(signupData.password);
@@ -27,11 +27,15 @@ export default function PasswordScreen() {
 
     setIsLoading(true);
     try {
-      const result = await signUp(signupData.email, password, signupData.name);
+      const result = await signUpWithOTP(
+        signupData.email,
+        password,
+        signupData.name
+      );
 
       if (result.success) {
-        clearSignupData();
-        router.replace("/(tabs)");
+        // Navigate to email verification screen
+        router.push("./email-verify");
       } else {
         Alert.alert(
           "Sign Up Failed",

@@ -43,6 +43,14 @@ export default function AuthLayout() {
             gestureEnabled: false,
           }}
         />
+        <Stack.Screen
+          name="(continue)/email-verify"
+          options={{
+            animation: "slide_from_right",
+            headerShown: false,
+            gestureEnabled: false,
+          }}
+        />
       </Stack>
     </SignupProvider>
   );
