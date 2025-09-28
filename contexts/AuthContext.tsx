@@ -1,0 +1,161 @@
+import LoadingScreen from "@/components/LoadingScreen";
+import { supabase } from "@/lib/supabase";
+import { Session, User } from "@supabase/supabase-js";
+import { router } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+const DEV_MODE = false;
+
+interface AuthContextType {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  signOut: () => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    name: string
+  ) => Promise<{ success: boolean; error?: string }>;
+}
+
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  session: null,
+  loading: true,
+  signOut: async () => {},
+  signUp: async () => ({ success: false }),
+});
+
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [user, setUser] = useState<User | null>(
+    DEV_MODE ? ({ id: "dev-user", email: "dev@example.com" } as User) : null
+  );
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(DEV_MODE ? false : true);
+  const [initialCheckComplete, setInitialCheckComplete] = useState(DEV_MODE);
+  const initializedRef = useRef(false);
+  const authStateListenerRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (DEV_MODE) {
+      return;
+    }
+
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        if (!mounted) return;
+
+        if (error) {
+          console.error("Error getting initial session:", error);
+        }
+
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+        setInitialCheckComplete(true);
+        initializedRef.current = true;
+
+        SplashScreen.hideAsync();
+
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((event, session) => {
+          if (!mounted) return;
+
+          if (event === "INITIAL_SESSION") {
+            return;
+          }
+
+          if (initializedRef.current) {
+            setSession(session);
+            setUser(session?.user ?? null);
+          }
+        });
+
+        authStateListenerRef.current = subscription;
+      } catch (error) {
+        if (!mounted) return;
+        console.error("Error initializing auth:", error);
+        setLoading(false);
+        setInitialCheckComplete(true);
+        initializedRef.current = true;
+
+        SplashScreen.hideAsync();
+      }
+    };
+
+    initializeAuth();
+
+    return () => {
+      mounted = false;
+      if (authStateListenerRef.current) {
+        authStateListenerRef.current.unsubscribe();
+      }
+    };
+  }, []);
+
+  const signOut = async () => {
+    if (DEV_MODE) {
+      setUser(null);
+      return;
+    }
+    router.replace("/(auth)");
+    await supabase.auth.signOut();
+  };
+
+  const signUp = async (email: string, password: string, name: string) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            display_name: name,
+          },
+        },
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      };
+    }
+  };
+
+  if (!initialCheckComplete) {
+    return <LoadingScreen />;
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, session, loading, signOut, signUp }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
