@@ -23,6 +23,16 @@ interface AuthContextType {
     password: string,
     name: string
   ) => Promise<{ success: boolean; error?: string }>;
+  signUpWithOTP: (
+    email: string,
+    password: string,
+    name: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  verifyOTP: (
+    email: string,
+    token: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  resendOTP: (email: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -31,6 +41,9 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   signOut: async () => {},
   signUp: async () => ({ success: false }),
+  signUpWithOTP: async () => ({ success: false }),
+  verifyOTP: async () => ({ success: false }),
+  resendOTP: async () => ({ success: false }),
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -149,12 +162,114 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const signUpWithOTP = async (
+    email: string,
+    password: string,
+    name: string
+  ) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            display_name: name,
+          },
+          emailRedirectTo: undefined, // Prevent auto-confirmation
+        },
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      // Check if user needs email confirmation
+      if (data.user && !data.user.email_confirmed_at) {
+        return { success: true };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      };
+    }
+  };
+
+  const verifyOTP = async (email: string, token: string) => {
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: "signup",
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      if (data.user) {
+        setUser(data.user);
+        setSession(data.session);
+        return { success: true };
+      }
+
+      return { success: false, error: "Verification failed" };
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      };
+    }
+  };
+
+  const resendOTP = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      };
+    }
+  };
+
   if (!initialCheckComplete) {
     return <LoadingScreen />;
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut, signUp }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        loading,
+        signOut,
+        signUp,
+        signUpWithOTP,
+        verifyOTP,
+        resendOTP,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
