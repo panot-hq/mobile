@@ -1,5 +1,5 @@
-import { ArrowButton } from "@/components/auth/Button";
 import KeyboardArrowButton from "@/components/auth/KeyboardArrowButton";
+import { ArrowButton } from "@/components/ui/Button";
 import { useSignup } from "@/contexts/SignupContext";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";

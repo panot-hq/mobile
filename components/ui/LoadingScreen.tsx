@@ -5,7 +5,7 @@ export default function LoadingScreen() {
   return (
     <View style={styles.container}>
       <Image
-        source={require("../assets/images/icon.jpg")}
+        source={require("../../assets/images/icon.jpg")}
         style={styles.icon}
         resizeMode="contain"
       />
@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#ffffff", // Match your app's background
+    backgroundColor: "#ffffff",
   },
   icon: {
     width: 120,

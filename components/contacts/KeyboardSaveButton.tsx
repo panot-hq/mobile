@@ -1,50 +1,46 @@
-import { ArrowButton } from "@/components/ui/Button";
+import BaseButton from "@/components/ui/BaseButton";
 import React, { useEffect } from "react";
-import { ActivityIndicator, Dimensions, Keyboard, View } from "react-native";
+import {
+  ActivityIndicator,
+  Dimensions,
+  Keyboard,
+  Text,
+  View,
+} from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
 
-interface KeyboardArrowButtonProps {
+interface KeyboardSaveButtonProps {
   onPress: () => void;
   isEnabled: boolean;
   isLoading?: boolean;
-  iconDimensions?: number;
   width?: number;
   height?: number;
   borderRadius?: number;
 }
 
-export default function KeyboardArrowButton({
+export default function KeyboardSaveButton({
   onPress,
   isEnabled,
   isLoading = false,
-  iconDimensions = 28,
-  width = 111,
+  width = 160,
   height = 66,
-  borderRadius = 41,
-}: KeyboardArrowButtonProps) {
+  borderRadius = 24,
+}: KeyboardSaveButtonProps) {
   const screenHeight = Dimensions.get("window").height;
   const keyboardViewPosition = useSharedValue(screenHeight - 84);
 
   const willChange = (e: any) => {
     const keyboardY = e.endCoordinates.screenY;
 
-    keyboardViewPosition.value = withSpring(keyboardY - 84, {
-      damping: 15,
-      stiffness: 120,
-      mass: 1,
-    });
+    keyboardViewPosition.value = withSpring(keyboardY - 84);
   };
 
   const hideKeyboardView = () => {
-    keyboardViewPosition.value = withSpring(screenHeight - 100, {
-      damping: 15,
-      stiffness: 120,
-      mass: 1,
-    });
+    keyboardViewPosition.value = withSpring(screenHeight - 100);
   };
 
   useEffect(() => {
@@ -64,10 +60,11 @@ export default function KeyboardArrowButton({
   }, []);
 
   const keyboardAnimatedStyle = useAnimatedStyle(() => ({
-    top: keyboardViewPosition.value,
+    top: keyboardViewPosition.value - 80,
   }));
 
-  const backgroundColor = isEnabled && !isLoading ? "white" : "#666666";
+  const backgroundColor = isEnabled && !isLoading ? "black" : "#f1f1f1";
+  const textColor = isEnabled && !isLoading ? "white" : "#999999";
 
   return (
     <Animated.View
@@ -79,9 +76,8 @@ export default function KeyboardArrowButton({
           height: 60,
           elevation: 5,
           zIndex: 1000,
-          borderTopLeftRadius: 12,
-          borderTopRightRadius: 12,
-          paddingRight: 24,
+          paddingHorizontal: 24,
+          paddingLeft: 25,
           alignItems: "flex-end",
         },
         keyboardAnimatedStyle,
@@ -101,20 +97,21 @@ export default function KeyboardArrowButton({
           <ActivityIndicator color="black" size="small" />
         </View>
       ) : (
-        <ArrowButton
+        <BaseButton
           onPress={() => {
             if (isEnabled && !isLoading) {
               onPress();
             }
           }}
-          iconDimensions={iconDimensions}
           width={width}
           height={height}
-          iconColor="black"
           backgroundColor={backgroundColor}
           borderRadius={borderRadius}
-          orientation="right"
-        />
+        >
+          <Text style={{ fontSize: 16, fontWeight: "600", color: textColor }}>
+            Save
+          </Text>
+        </BaseButton>
       )}
     </Animated.View>
   );

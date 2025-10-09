@@ -50,7 +50,7 @@ export function IOSAuth({
             });
           }
           supabase.auth.setSession(data.session);
-          router.replace("/(tabs)");
+          router.replace("/(tabs)/present");
         } catch (e: any) {
           if (e?.code === "ERR_REQUEST_CANCELED") return;
           console.log("Apple sign-in error:", e);

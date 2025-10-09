@@ -1,6 +1,6 @@
 import PanotBanner from "@/assets/images/panot-banner.svg";
 import { IOSAuth } from "@/components/auth/AuthNativeIOSButton";
-import AuthButton, { EmailButton } from "@/components/auth/Button";
+import AuthButton, { EmailButton } from "@/components/ui/Button";
 import Entypo from "@expo/vector-icons/Entypo";
 import { router } from "expo-router";
 import { useState } from "react";

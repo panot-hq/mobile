@@ -1,5 +1,5 @@
-import { ArrowButton } from "@/components/auth/Button";
 import KeyboardArrowButton from "@/components/auth/KeyboardArrowButton";
+import { ArrowButton } from "@/components/ui/Button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSignup } from "@/contexts/SignupContext";
 import { router } from "expo-router";
@@ -51,7 +51,7 @@ export default function EmailVerifyScreen() {
 
       if (result.success) {
         clearSignupData();
-        router.replace("/(tabs)");
+        router.replace("/(tabs)/present");
       } else {
         Alert.alert(
           "Verification Failed",
