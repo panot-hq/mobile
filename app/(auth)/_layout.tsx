@@ -1,14 +1,6 @@
 import { SignupProvider } from "@/contexts/SignupContext";
 import { Stack } from "expo-router";
 export default function AuthLayout() {
-  /*const { user } = useAuth();
-  const hasUser = user && user.id;
-  useEffect(() => {
-    if (hasUser) {
-      router.replace("/(tabs)");
-    }
-  }, [hasUser]);*/
-
   return (
     <SignupProvider>
       <Stack>
