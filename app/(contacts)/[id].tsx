@@ -2,6 +2,7 @@ import ArrowButton from "@/components/auth/buttons/ArrowButton";
 import ContactCardActionButton from "@/components/contacts/ContactCardActionButton";
 import Badge from "@/components/ui/Badge";
 import { useContacts } from "@/contexts/ContactsContext";
+import { useInteraction } from "@/contexts/InteractionContext";
 import {
   Contact,
   ContactsService,
@@ -110,6 +111,7 @@ function InteractionItem({ interaction }: InteractionItemProps) {
 export default function ContactDetailsScreen() {
   const { id } = useLocalSearchParams();
   const { triggerRefresh } = useContacts();
+  const { refreshTrigger } = useInteraction();
   const [contact, setContact] = useState<Contact | null>(null);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -138,6 +140,13 @@ export default function ContactDetailsScreen() {
     };
     loadData();
   }, [id]);
+
+  // Listen for interaction changes to refresh the interactions list
+  useEffect(() => {
+    if (id) {
+      fetchInteractions();
+    }
+  }, [refreshTrigger, id]);
 
   const handleEditToggle = () => {
     if (isEditing) {
