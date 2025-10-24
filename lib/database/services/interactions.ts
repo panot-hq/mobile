@@ -5,7 +5,7 @@ import type {
   Interaction,
   InteractionInsert,
   InteractionUpdate,
-} from "../types";
+} from "../database.types";
 
 export class InteractionsService {
   private static readonly TABLE_NAME = "interactions";

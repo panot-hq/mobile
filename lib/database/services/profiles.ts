@@ -4,7 +4,7 @@ import type {
   Profile,
   ProfileInsert,
   ProfileUpdate,
-} from "../types";
+} from "../database.types";
 
 export class ProfilesService {
   private static readonly TABLE_NAME = "profiles";

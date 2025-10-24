@@ -106,13 +106,13 @@ export default function NewInteraction({
         <View>
           {isRecording && (
             <View style={{ padding: 24, height: 40 }}>
-              <Badge title="recording" color="#999" textColor="#fff" />
+              <Badge title="recording    ●" color="#999" textColor="#fff" />
             </View>
           )}
           <ScrollView
             ref={scrollViewRef}
             style={{
-              marginTop: 10,
+              marginTop: isRecording ? 10 : 20,
               height: 140,
               paddingHorizontal: 20,
             }}
@@ -143,7 +143,7 @@ export default function NewInteraction({
               buttonsAnimatedStyle,
               {
                 flexDirection: "row",
-                marginTop: 90,
+                marginTop: 80,
                 gap: 12,
                 height: 50,
               },

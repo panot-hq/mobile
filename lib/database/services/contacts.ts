@@ -5,7 +5,7 @@ import type {
   ContactUpdate,
   DatabaseListResponse,
   DatabaseResponse,
-} from "../types";
+} from "../database.types";
 
 export class ContactsService {
   private static readonly TABLE_NAME = "contacts";

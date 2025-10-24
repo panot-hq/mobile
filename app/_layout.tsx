@@ -1,20 +1,23 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ContactsProvider } from "@/contexts/ContactsContext";
 import { InteractionProvider } from "@/contexts/InteractionContext";
+import { InteractionOverlayProvider } from "@/contexts/InteractionOverlayContext";
 import { RecordingProvider } from "@/contexts/RecordingContext";
 export { ErrorBoundary } from "expo-router";
 
 SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
-  initialRouteName: undefined,
+  initialRouteName: "index",
 };
 
 export default function RootLayout() {
@@ -32,15 +35,21 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <ContactsProvider>
-        <InteractionProvider>
-          <RecordingProvider>
-            <RootLayoutNav />
-          </RecordingProvider>
-        </InteractionProvider>
-      </ContactsProvider>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <BottomSheetModalProvider>
+        <AuthProvider>
+          <ContactsProvider>
+            <InteractionProvider>
+              <RecordingProvider>
+                <InteractionOverlayProvider>
+                  <RootLayoutNav />
+                </InteractionOverlayProvider>
+              </RecordingProvider>
+            </InteractionProvider>
+          </ContactsProvider>
+        </AuthProvider>
+      </BottomSheetModalProvider>
+    </GestureHandlerRootView>
   );
 }
 

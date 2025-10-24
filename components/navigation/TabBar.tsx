@@ -1,7 +1,6 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { BlurView } from "expo-blur";
 import React, { useEffect } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable } from "react-native";
 import Animated, {
   interpolateColor,
   useAnimatedStyle,
@@ -83,26 +82,28 @@ export default function TabBar({
   shouldBlur = false,
   isListExpanded = false,
 }: TabBarProps) {
-  const blurOpacity = useSharedValue(0);
   const tabBarOpacity = useSharedValue(1);
-
-  useEffect(() => {
-    blurOpacity.value = withSpring(shouldBlur ? 1 : 0);
-  }, [shouldBlur, blurOpacity]);
 
   useEffect(() => {
     tabBarOpacity.value = withSpring(isListExpanded ? 0 : 1);
   }, [isListExpanded, tabBarOpacity]);
 
-  const animatedBlurStyle = useAnimatedStyle(() => {
-    return {
-      opacity: blurOpacity.value,
-    };
-  });
-
   const animatedTabBarStyle = useAnimatedStyle(() => {
     return {
       opacity: tabBarOpacity.value,
+    };
+  });
+
+  const animatedBackgroundStyle = useAnimatedStyle(() => {
+    return {
+      backgroundColor: shouldBlur ? "transparent" : "#EFEFEF",
+    };
+  });
+
+  const animatedContainerStyle = useAnimatedStyle(() => {
+    return {
+      backgroundColor: shouldBlur ? "transparent" : "#fff",
+      opacity: shouldBlur ? 0 : 1,
     };
   });
 
@@ -118,21 +119,23 @@ export default function TabBar({
           elevation: 8,
           width: 50,
           zIndex: 1000,
-          backgroundColor: "#fff",
         },
         animatedTabBarStyle,
+        animatedContainerStyle,
       ]}
     >
-      <View
-        style={{
-          backgroundColor: "#EFEFEF",
-          height: 25,
-          flexDirection: "row",
-          justifyContent: "space-evenly",
-          alignItems: "center",
-          paddingHorizontal: 8,
-          borderRadius: 30,
-        }}
+      <Animated.View
+        style={[
+          {
+            height: 25,
+            flexDirection: "row",
+            justifyContent: "space-evenly",
+            alignItems: "center",
+            paddingHorizontal: 8,
+            borderRadius: 30,
+          },
+          animatedBackgroundStyle,
+        ]}
       >
         {navigationState.routes.map((route, index) => {
           const isFocused = navigationState.index === index;
@@ -150,28 +153,6 @@ export default function TabBar({
             />
           );
         })}
-      </View>
-      <Animated.View
-        style={[
-          animatedBlurStyle,
-          {
-            position: "absolute",
-            top: -25,
-            left: -50,
-            width: 170,
-            height: 100,
-            borderRadius: 30,
-            zIndex: 10,
-          },
-        ]}
-      >
-        <BlurView
-          intensity={35}
-          style={{
-            flex: 1,
-            borderRadius: 30,
-          }}
-        />
       </Animated.View>
     </Animated.View>
   );

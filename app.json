@@ -1,19 +1,18 @@
 {
   "expo": {
     "name": "panot",
-    "slug": "panot",
+    "slug": "Panot",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.jpg",
     "scheme": "panot",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/images/splash-icon.jpg",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
+      "icon": {
+        "dark": "./assets/icons/ios-dark.png",
+        "light": "./assets/icons/ios-light.png",
+        "tinted": "./assets/icons/ios-tinted.png"
+      },
       "supportsTablet": true,
       "bundleIdentifier": "com.ahrm.panot",
       "infoPlist": {
@@ -40,7 +39,22 @@
       "output": "static",
       "favicon": "./assets/images/favicon.jpg"
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/icons/splash-icon-dark.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#000",
+          "dark": {
+            "image": "./assets/icons/splash-icon-light.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#fff"
+          }
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true
     },

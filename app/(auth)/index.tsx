@@ -19,12 +19,11 @@ export default function SignupScreen() {
   const [isAnimated, setIsAnimated] = useState(false);
   const [showNewContent, setShowNewContent] = useState(false);
 
-  // Reanimated shared values
   const bannerTranslateY = useSharedValue(0);
   const mainButtonsTranslateY = useSharedValue(0);
   const newContentTranslateY = useSharedValue(200);
   const newContentOpacity = useSharedValue(0);
-  const shadowAnimated = useSharedValue(0); // 0 = normal shadow, 1 = elevated shadow
+  const shadowAnimated = useSharedValue(0);
 
   const performAnimation = (toNewContent: boolean, onComplete?: () => void) => {
     const springConfig = {
@@ -39,13 +38,11 @@ export default function SignupScreen() {
     const targetNewContentOpacity = toNewContent ? 1 : 0;
     const targetShadow = toNewContent ? 1 : 0;
 
-    // Update state immediately for better responsiveness
     if (toNewContent) {
       setIsAnimated(true);
       setShowNewContent(true);
     }
 
-    // Animate all values simultaneously
     bannerTranslateY.value = withSpring(targetBannerY, springConfig);
     mainButtonsTranslateY.value = withSpring(targetMainButtonsY, springConfig);
     newContentTranslateY.value = withSpring(targetNewContentY, springConfig);
@@ -75,7 +72,6 @@ export default function SignupScreen() {
     performAnimation(false);
   };
 
-  // Animated styles
   const bannerAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: bannerTranslateY.value }],
   }));
@@ -113,7 +109,7 @@ export default function SignupScreen() {
               height: 570,
               position: "absolute",
               top: 78,
-              left: (width - 334) / 2, // Center horizontally without percentage
+              left: (width - 334) / 2,
             },
             bannerAnimatedStyle,
           ]}

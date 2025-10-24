@@ -5,6 +5,7 @@ import BaseButton, { BaseButtonProps } from "../../ui/BaseButton";
 interface AuthButtonProps extends Omit<BaseButtonProps, "children"> {
   title?: string;
   variant?: "primary" | "secondary";
+  icon?: React.ReactNode;
 }
 
 export default function AuthButton({
@@ -12,6 +13,7 @@ export default function AuthButton({
   variant = "primary",
   width,
   height = 80,
+  icon,
   ...props
 }: AuthButtonProps) {
   const isPrimary = variant === "primary";
@@ -31,7 +33,7 @@ export default function AuthButton({
       width={width}
       height={height}
       borderRadius={42}
-      backgroundColor={isPrimary ? "black" : "#ccc"}
+      backgroundColor={isPrimary ? "black" : "#E9E9E9"}
       style={shadowStyle}
       {...props}
     >
@@ -41,11 +43,12 @@ export default function AuthButton({
         //   size={24}
         //   color={isPrimary ? "white" : "#fff"}
         // />*/}
+        {icon ? icon : null}
         <Text
           style={{
             fontFamily: "System",
             fontWeight: "300",
-            color: isPrimary ? "white" : "#fff",
+            color: isPrimary ? "white" : "#696969",
             fontSize: isPrimary ? 23 : 21,
           }}
         >

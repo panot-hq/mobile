@@ -1,9 +1,7 @@
 import KeyboardSaveButton from "@/components/contacts/KeyboardSaveButton";
 import NewContactCloseButton from "@/components/contacts/NewContactCloseButton";
 import { useAuth } from "@/contexts/AuthContext";
-import { useContacts } from "@/contexts/ContactsContext";
-import { ContactsService } from "@/lib/database/index";
-import { ContactInsert } from "@/lib/database/types";
+import { useContacts } from "@/lib/hooks/useLegendState";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -20,7 +18,7 @@ import {
 
 export default function NewContactScreen() {
   const { user } = useAuth();
-  const { triggerRefresh } = useContacts();
+  const { createContact } = useContacts();
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -30,7 +28,6 @@ export default function NewContactScreen() {
     address: "",
     notes: "",
   });
-  const [loading, setLoading] = useState(false);
   const [contactName, setContactName] = useState("New Contact");
 
   const hasUnsavedChanges = () => {
@@ -97,7 +94,7 @@ export default function NewContactScreen() {
     );
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!user?.id) {
       Alert.alert("Error", "User not authenticated");
       return;
@@ -108,30 +105,19 @@ export default function NewContactScreen() {
       return;
     }
 
-    setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
-      const contactData: ContactInsert = {
-        owner_id: user.id,
+      // Crear contacto con Legend State (instantáneo, funciona offline)
+      createContact({
         ...formData,
-      };
+      });
 
-      const { data, error } = await ContactsService.create(contactData);
-
-      if (error) {
-        console.error("Error creating contact:", error);
-        Alert.alert("Error", "Failed to save contact. Please try again.");
-      } else {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        triggerRefresh();
-        router.back();
-      }
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.back();
     } catch (error) {
       console.error("Error creating contact:", error);
       Alert.alert("Error", "Failed to save contact. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -209,7 +195,7 @@ export default function NewContactScreen() {
       <KeyboardSaveButton
         onPress={handleSave}
         isEnabled={isFormValid()}
-        isLoading={loading}
+        isLoading={false}
       />
     </KeyboardAvoidingView>
   );

@@ -1,6 +1,17 @@
+import { useAuth } from "@/contexts/AuthContext";
 import { SignupProvider } from "@/contexts/SignupContext";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
+import { useEffect } from "react";
 export default function AuthLayout() {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user?.id) {
+      router.replace("/(tabs)/present");
+    }
+  }, [user?.id]);
+
   return (
     <SignupProvider>
       <Stack>

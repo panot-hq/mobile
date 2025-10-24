@@ -32,11 +32,7 @@ export default function KeyboardArrowButton({
   const willChange = (e: any) => {
     const keyboardY = e.endCoordinates.screenY;
 
-    keyboardViewPosition.value = withSpring(keyboardY - 84, {
-      damping: 15,
-      stiffness: 120,
-      mass: 1,
-    });
+    keyboardViewPosition.value = withSpring(keyboardY - 84);
   };
 
   const hideKeyboardView = () => {

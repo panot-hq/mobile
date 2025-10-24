@@ -1,5 +1,7 @@
 import LoadingScreen from "@/components/ui/LoadingScreen";
+import { ProfilesService } from "@/lib/database/index";
 import { supabase } from "@/lib/supabase";
+import { clearSync, initializeSync } from "@/lib/supaLegend";
 import { Session, User } from "@supabase/supabase-js";
 import { router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -80,6 +82,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           console.error("Error getting initial session:", error);
         }
 
+        // Ensure profile exists for authenticated user
+        if (session?.user) {
+          await ProfilesService.getOrCreate(session.user.id);
+          // Initialize local-first sync for the user
+          await initializeSync(session.user.id);
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -90,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         const {
           data: { subscription },
-        } = supabase.auth.onAuthStateChange((event, session) => {
+        } = supabase.auth.onAuthStateChange(async (event, session) => {
           if (!mounted) return;
 
           if (event === "INITIAL_SESSION") {
@@ -98,6 +107,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           }
 
           if (initializedRef.current) {
+            // Ensure profile exists when auth state changes
+            if (session?.user) {
+              await ProfilesService.getOrCreate(session.user.id);
+              // Initialize sync for authenticated user
+              await initializeSync(session.user.id);
+            } else {
+              // Clear sync when user logs out
+              clearSync();
+            }
+
             setSession(session);
             setUser(session?.user ?? null);
           }
@@ -130,8 +149,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(null);
       return;
     }
-    router.replace("/(auth)");
+    // Clear local sync data before signing out
+    clearSync();
     await supabase.auth.signOut();
+    router.replace("/(auth)");
   };
 
   const signUp = async (email: string, password: string, name: string) => {

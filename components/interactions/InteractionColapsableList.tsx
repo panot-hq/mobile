@@ -1,9 +1,7 @@
 import Badge from "@/components/ui/Badge";
-import { useAuth } from "@/contexts/AuthContext";
-import { useInteraction } from "@/contexts/InteractionContext";
-import { Interaction, InteractionsService } from "@/lib/database/index";
+import { useInteractions } from "@/lib/hooks/useLegendState";
 import * as Haptics from "expo-haptics";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Dimensions, FlatList, Pressable, Text, View } from "react-native";
 import Animated, {
   Extrapolate,
@@ -26,36 +24,17 @@ interface InteractionListProps {
 export default function InteractionList({
   onExpandedChange,
 }: InteractionListProps) {
-  const [interactions, setInteractions] = useState<Interaction[]>([]);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const { user } = useAuth();
-  const { refreshTrigger } = useInteraction();
+  const [isExpanded, setIsExpanded] = React.useState(false);
+  const { unassignedInteractions: rawInteractions } = useInteractions();
 
   const expandedValue = useSharedValue(0);
 
-  const fetchInteractions = async () => {
-    if (!user) return;
-
-    const { data, error } = await InteractionsService.getByOwnerId(user.id);
-    if (data) {
-      const unassignedInteractions = data.filter(
-        (interaction) => !interaction.contact_id
-      );
-
-      const sortedData = unassignedInteractions.sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      setInteractions(sortedData);
-    }
-    if (error) {
-      console.error(error);
-    }
-  };
-
-  useEffect(() => {
-    fetchInteractions();
-  }, [user, refreshTrigger]);
+  const interactions = useMemo(() => {
+    return [...rawInteractions].sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [rawInteractions]);
 
   useEffect(() => {
     if (isExpanded && interactions.length === 0) {
@@ -65,7 +44,6 @@ export default function InteractionList({
   }, [interactions.length, isExpanded, onExpandedChange]);
 
   useEffect(() => {
-    // Si no hay interacciones, no aplicar animación
     if (interactions.length === 0) {
       expandedValue.value = 0;
     } else {
@@ -119,6 +97,7 @@ export default function InteractionList({
               entering={FadeIn.delay(index * 80)
                 .duration(500)
                 .springify()}
+              layout={LinearTransition.springify()}
             >
               {index === 0 && (
                 <View
@@ -153,10 +132,14 @@ export default function InteractionList({
                   }}
                 >
                   <Text style={{ fontSize: 13 }}>
-                    {new Date(interaction.created_at).toLocaleDateString()}
+                    {new Date(
+                      interaction.created_at || new Date()
+                    ).toLocaleDateString()}
                   </Text>
                   <Text style={{ fontSize: 13 }}>
-                    {new Date(interaction.created_at).toLocaleTimeString([], {
+                    {new Date(
+                      interaction.created_at || new Date()
+                    ).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
@@ -243,6 +226,7 @@ export default function InteractionList({
                 gap: 10,
                 paddingTop: 10,
                 paddingBottom: 120,
+                paddingHorizontal: 8,
               }}
               style={{ flex: 1 }}
               bounces={true}
