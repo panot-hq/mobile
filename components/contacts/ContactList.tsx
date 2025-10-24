@@ -1,8 +1,6 @@
-import { useAuth } from "@/contexts/AuthContext";
-import { useContacts } from "@/contexts/ContactsContext";
-import { ContactsService } from "@/lib/database/index";
-import { Contact } from "@/lib/database/types";
-import React, { useEffect, useState } from "react";
+import { Contact } from "@/lib/database/database.types";
+import { useContacts as useLegendContacts } from "@/lib/hooks/useLegendState";
+import React, { useMemo } from "react";
 import { FlatList, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import ContactListElement from "./ContactListElement";
@@ -18,167 +16,32 @@ interface ContactListItem {
   contact?: Contact;
 }
 
-export default function ContactList() {
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-  const { refreshTrigger, searchTerm } = useContacts();
+interface ContactListProps {
+  searchTerm?: string;
+}
 
-  useEffect(() => {
-    loadContacts();
-  }, [user, refreshTrigger]);
+export default function ContactList({ searchTerm = "" }: ContactListProps) {
+  // Usar el hook de Legend State (local-first)
+  const { contacts } = useLegendContacts();
 
-  const loadContacts = async () => {
-    if (!user?.id) {
-      console.log("No user ID found");
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      /*    // Mock data for testing
-      const mockContacts: Contact[] = [
-        {
-          id: "1",
-          owner_id: user.id,
-          first_name: "Ana",
-          last_name: "García",
-          company: "Tech Corp",
-          job_title: "Developer",
-        },
-        {
-          id: "2",
-          owner_id: user.id,
-          first_name: "Alicia",
-          last_name: "Gómez",
-          company: "Alpha Solutions",
-          job_title: "Analyst",
-        },
-        {
-          id: "3",
-          owner_id: user.id,
-          first_name: "Andrés",
-          last_name: "Gutiérrez",
-          company: "Apex Media",
-          job_title: "Account Manager",
-        },
-        {
-          id: "4",
-          owner_id: user.id,
-          first_name: "Beatriz",
-          last_name: "Martín",
-          job_title: "Manager",
-        },
-        {
-          id: "5",
-          owner_id: user.id,
-          first_name: "Bruno",
-          last_name: "Mendoza",
-          company: "BetaTech",
-          job_title: "Backend Developer",
-        },
-        {
-          id: "6",
-          owner_id: user.id,
-          first_name: "Bárbara",
-          last_name: "Morales",
-          company: "BlueSky",
-          job_title: "Brand Manager",
-        },
-        {
-          id: "7",
-          owner_id: user.id,
-          first_name: "Carlos",
-          last_name: "López",
-          company: "Design Studio",
-        },
-        {
-          id: "8",
-          owner_id: user.id,
-          first_name: "Cecilia",
-          last_name: "Luna",
-          company: "Creative Minds",
-          job_title: "Consultant",
-        },
-        {
-          id: "9",
-          owner_id: user.id,
-          first_name: "Cristina",
-          last_name: "León",
-          company: "CloudNet",
-          job_title: "Customer Success",
-        },
-        {
-          id: "10",
-          owner_id: user.id,
-          first_name: "David",
-          last_name: "Sánchez",
-          company: "InnovateX",
-          job_title: "Product Owner",
-        },
-        {
-          id: "11",
-          owner_id: user.id,
-          first_name: "Daniela",
-          last_name: "Santos",
-          company: "DataWorks",
-          job_title: "Data Scientist",
-        },
-        {
-          id: "12",
-          owner_id: user.id,
-          first_name: "Diego",
-          last_name: "Suárez",
-          company: "DriveNow",
-          job_title: "Delivery Lead",
-        },
-        {
-          id: "13",
-          owner_id: user.id,
-          first_name: "Elena",
-          last_name: "Ruiz",
-          company: "Health Solutions",
-          job_title: "Nurse",
-        },
-        {
-          id: "14",
-          owner_id: user.id,
-          first_name: "Eduardo",
-          last_name: "Ramos",
-          company: "EcoLife",
-          job_title: "Engineer",
-        },
-        {
-          id: "15",
-          owner_id: user.id,
-          first_name: "Esteban",
-          last_name: "Reyes",
-          company: "Eventia",
-          job_title: "Event Planner",
-        },
-      ];
-
-      setContacts(mockContacts);
-*/
-      // Real API call (commented out for testing)
-
-      const { data, error } = await ContactsService.getByOwnerId(user.id, {
-        orderBy: "first_name",
-        ascending: true,
-      });
-
-      if (error) {
-        console.error("Error loading contacts:", error);
-      } else {
-        setContacts(data || []);
-      }
-    } catch (error) {
-      console.error("Error loading contacts:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Ordenar contactos alfabéticamente por first_name
+  const sortedContacts = useMemo(() => {
+    return [...contacts].sort((a, b) => {
+      const nameA = (
+        a.first_name ||
+        a.last_name ||
+        a.company ||
+        ""
+      ).toLowerCase();
+      const nameB = (
+        b.first_name ||
+        b.last_name ||
+        b.company ||
+        ""
+      ).toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+  }, [contacts]);
 
   const filterContacts = (
     contacts: Contact[],
@@ -243,21 +106,7 @@ export default function ContactList() {
     return <ContactListElement item={item} searchTerm={searchTerm} />;
   };
 
-  if (loading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <Text>Cargando contactos...</Text>
-      </View>
-    );
-  }
-
-  const filteredContacts = filterContacts(contacts, searchTerm);
+  const filteredContacts = filterContacts(sortedContacts, searchTerm);
   const groupedContacts = groupContactsAlphabetically(filteredContacts);
 
   return (

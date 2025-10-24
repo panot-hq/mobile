@@ -1,8 +1,11 @@
 import ContactList from "@/components/contacts/ContactList";
 import ContactsActionBar from "@/components/contacts/ContactsActionBar";
+import { useState } from "react";
 import { View } from "react-native";
 
 export default function TabThreeScreen() {
+  const [searchTerm, setSearchTerm] = useState("");
+
   return (
     <View
       style={{
@@ -12,9 +15,12 @@ export default function TabThreeScreen() {
       }}
     >
       <View style={{ paddingTop: 68 }}>
-        <ContactsActionBar />
+        <ContactsActionBar
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+        />
       </View>
-      <ContactList />
+      <ContactList searchTerm={searchTerm} />
     </View>
   );
 }

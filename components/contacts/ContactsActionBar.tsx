@@ -1,7 +1,8 @@
+import AddContactModal from "@/components/contacts/AddContactModal";
 import ContactsSearchBar from "@/components/contacts/ContactsSearchBar";
 import NewContactButton from "@/components/contacts/NewContactButton";
-import { router } from "expo-router";
-import { useState } from "react";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import { useRef, useState } from "react";
 import { View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -9,11 +10,20 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 
-export default function ContactsActionBar() {
+interface ContactsActionBarProps {
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+}
+
+export default function ContactsActionBar({
+  searchTerm,
+  setSearchTerm,
+}: ContactsActionBarProps) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const buttonOpacity = useSharedValue(1);
   const buttonWidth = useSharedValue(45);
   const gapWidth = useSharedValue(12);
+  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
   const handleSearchFocus = () => {
     setIsSearchFocused(true);
@@ -27,6 +37,10 @@ export default function ContactsActionBar() {
     buttonOpacity.value = withSpring(1);
     buttonWidth.value = withSpring(45);
     gapWidth.value = withSpring(12);
+  };
+
+  const handleAddContact = () => {
+    bottomSheetModalRef.current?.present();
   };
 
   const gapAnimatedStyle = useAnimatedStyle(() => {
@@ -56,13 +70,21 @@ export default function ContactsActionBar() {
       }}
     >
       <ContactsSearchBar
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
         onFocus={handleSearchFocus}
         onBlur={handleSearchBlur}
       />
       <Animated.View style={gapAnimatedStyle} />
       <Animated.View style={[buttonAnimatedStyle]}>
-        <NewContactButton onPress={() => router.push("/(contacts)/new")} />
+        <NewContactButton onPress={handleAddContact} />
       </Animated.View>
+
+      <AddContactModal
+        bottomSheetModalRef={
+          bottomSheetModalRef as React.RefObject<BottomSheetModal>
+        }
+      />
     </View>
   );
 }

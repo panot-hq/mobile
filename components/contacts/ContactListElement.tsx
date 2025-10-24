@@ -1,4 +1,4 @@
-import { Contact } from "@/lib/database/types";
+import { Contact } from "@/lib/database/database.types";
 import { router } from "expo-router";
 import React from "react";
 import { Text, View } from "react-native";

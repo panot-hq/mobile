@@ -1,13 +1,10 @@
-import ContactCardActionButton from "@/components/contacts/ContactCardActionButton";
+import AssignInteractionButton from "@/components/interactions/AssignInteractionButton";
 import Badge from "@/components/ui/Badge";
-import { useInteraction } from "@/contexts/InteractionContext";
+import { useContacts, useInteractions } from "@/lib/hooks/useLegendState";
 import {
-  Contact,
-  ContactsService,
-  Interaction,
-  InteractionsService,
-} from "@/lib/database/index";
-import { formatCreatedAt } from "@/lib/utils/dateFormatter";
+  formatCreatedAtDate,
+  formatCreatedAtTime,
+} from "@/lib/utils/dateFormatter";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
@@ -20,117 +17,62 @@ import {
   TextInput,
   View,
 } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  withTiming,
-} from "react-native-reanimated";
+import Animated, { useAnimatedStyle } from "react-native-reanimated";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function InteractionDetailsScreen() {
   const { id } = useLocalSearchParams();
-  const { triggerRefresh } = useInteraction();
-  const [interaction, setInteraction] = useState<Interaction | null>(null);
-  const [contact, setContact] = useState<Contact | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState<Partial<Interaction>>({});
-  const [hasChanges, setHasChanges] = useState(false);
+  const { getInteraction, updateInteraction, deleteInteraction } =
+    useInteractions();
+  const { getContact } = useContacts();
+  const [isEditingContent, setIsEditingContent] = useState(false);
+  const [isEditingConcepts, setIsEditingConcepts] = useState(false);
+  const [contentValue, setContentValue] = useState("");
+  const [conceptsValue, setConceptsValue] = useState("");
 
-  const fetchContact = async (contactId: string) => {
-    const { data, error } = await ContactsService.getById(contactId);
-    if (data) {
-      setContact(data);
-    }
-    if (error) {
-      console.error(error);
-    }
-  };
+  // Get interaction from Legend State (reactive)
+  const interaction = getInteraction(id as string);
 
+  // Get associated contact if exists
+  const contact = interaction?.contact_id
+    ? getContact(interaction.contact_id)
+    : null;
+
+  // Update local editing values when interaction changes
   useEffect(() => {
-    const loadData = async () => {
-      const { data, error } = await InteractionsService.getById(id as string);
-      if (data) {
-        setInteraction(data);
-        setEditData(data);
-        // Solo buscar el contacto si tenemos un contact_id válido
-        if (data.contact_id) {
-          await fetchContact(data.contact_id);
-        }
-      }
-      if (error) {
-        console.error(error);
-      }
-    };
-
-    loadData();
-  }, [id]);
-
-  const handleEditToggle = () => {
-    if (isEditing) {
-      handleSave();
-    } else {
-      setIsEditing(true);
+    if (interaction) {
+      setContentValue(interaction.raw_content || "");
+      setConceptsValue(interaction.key_concepts || "");
     }
-  };
+  }, [interaction]);
 
-  const handleSave = async () => {
-    if (interaction && hasChanges) {
+  const handleContentSave = async () => {
+    if (interaction && contentValue !== interaction.raw_content) {
       try {
-        const { data, error } = await InteractionsService.update(
-          interaction.id,
-          editData
-        );
-        if (data) {
-          setInteraction(data);
-          setIsEditing(false);
-          setHasChanges(false);
-          triggerRefresh();
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-        if (error) {
-          console.error("Error updating interaction:", error);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        }
+        // Use Legend State to update (works offline)
+        updateInteraction(interaction.id, { raw_content: contentValue });
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (error) {
         console.error("Error updating interaction:", error);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-    } else {
-      setIsEditing(false);
-      setHasChanges(false);
     }
+    setIsEditingContent(false);
   };
 
-  const handleCancel = () => {
-    setEditData(interaction || {});
-    setIsEditing(false);
-  };
-
-  const handleDiscardChanges = () => {
-    if (!hasChanges) {
-      setIsEditing(false);
-      setHasChanges(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } else {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: ["Cancelar", "Descartar Cambios"],
-          destructiveButtonIndex: 1,
-          cancelButtonIndex: 0,
-          title: "Descartar Cambios",
-          message:
-            "¿Estás seguro de que quieres descartar todos los cambios? Esta acción no se puede deshacer.",
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 1) {
-            setEditData(interaction || {});
-            setIsEditing(false);
-            setHasChanges(false);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          }
-        }
-      );
+  const handleConceptsSave = async () => {
+    if (interaction && conceptsValue !== interaction.key_concepts) {
+      try {
+        // Use Legend State to update (works offline)
+        updateInteraction(interaction.id, { key_concepts: conceptsValue });
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch (error) {
+        console.error("Error updating interaction:", error);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
     }
+    setIsEditingConcepts(false);
   };
 
   const handleDeleteInteraction = () => {
@@ -148,18 +90,10 @@ export default function InteractionDetailsScreen() {
       async (buttonIndex) => {
         if (buttonIndex === 1) {
           try {
-            const { error } = await InteractionsService.delete(interaction.id);
-            if (error) {
-              console.error("Error deleting interaction:", error);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-              Alert.alert("Error", "No se pudo eliminar la interacción");
-            } else {
-              Haptics.notificationAsync(
-                Haptics.NotificationFeedbackType.Success
-              );
-              triggerRefresh();
-              router.back();
-            }
+            // Use Legend State to delete (works offline)
+            deleteInteraction(interaction.id);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            router.back();
           } catch (error) {
             console.error("Error deleting interaction:", error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -170,86 +104,74 @@ export default function InteractionDetailsScreen() {
     );
   };
 
-  const updateEditData = (field: keyof Interaction, value: string) => {
-    setEditData((prev) => {
-      const newData = { ...prev, [field]: value };
-      if (interaction) {
-        const hasChanges = Object.keys(newData).some(
-          (key) =>
-            newData[key as keyof Interaction] !==
-            interaction[key as keyof Interaction]
-        );
-        setHasChanges(hasChanges);
-      }
-      return newData;
-    });
-  };
-
   const contentContainerAnimatedStyle = useAnimatedStyle(() => ({
-    backgroundColor: isEditing
-      ? withTiming("white", { duration: 400 })
-      : withTiming("rgba(245, 245, 245, 0.8)", { duration: 400 }),
+    backgroundColor: "white",
     borderRadius: 20,
     padding: 20,
-    borderWidth: isEditing ? 1 : 0,
-    borderColor: "#ddd",
+    borderWidth: isEditingContent ? 0 : 0,
   }));
 
   const conceptsContainerAnimatedStyle = useAnimatedStyle(() => ({
-    backgroundColor: isEditing
-      ? withTiming("white", { duration: 400 })
-      : withTiming("rgba(245, 245, 245, 0.8)", { duration: 400 }),
+    backgroundColor: "white",
     borderRadius: 20,
     padding: 20,
-    borderWidth: isEditing ? 1 : 0,
+    borderWidth: isEditingConcepts ? 0 : 0,
     borderColor: "#E9E9E9",
   }));
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff", marginTop: -30 }}>
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <View
         style={{
-          position: "absolute",
-          top: 68,
+          paddingTop: 30,
           paddingHorizontal: 20,
-          zIndex: 1000,
-          flexDirection: "row",
-          gap: 10,
-          justifyContent: "flex-end",
-          alignItems: "center",
-          width: "100%",
+          paddingBottom: 20,
+          backgroundColor: "#fff",
         }}
       >
-        <View style={{ flexDirection: "row", gap: 10 }}>
-          {isEditing && (
-            <ContactCardActionButton
-              iconDimensions={20}
-              iconColor="#999"
-              backgroundColor="white"
-              borderRadius={13}
-              borderWidth={1}
-              borderColor="#ddd"
-              isDiscard={true}
-              onEditPress={handleDiscardChanges}
-            />
-          )}
-          <ContactCardActionButton
-            iconDimensions={20}
-            iconColor="#999"
-            backgroundColor="white"
-            borderRadius={13}
-            borderWidth={1}
-            borderColor="#ddd"
-            isEditing={isEditing}
-            onEditPress={handleEditToggle}
-          />
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 20,
+            backgroundColor: "#eee",
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: "#ddd",
+            padding: 30,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 24,
+              color: "#000",
+              fontWeight: "400",
+              paddingLeft: 5,
+            }}
+          >
+            {interaction?.created_at
+              ? formatCreatedAtDate(interaction.created_at)
+              : ""}
+          </Text>
+          <Text
+            style={{
+              fontSize: 24,
+              color: "#000",
+              fontWeight: "400",
+              paddingRight: 5,
+            }}
+          >
+            {interaction?.created_at
+              ? formatCreatedAtTime(interaction.created_at)
+              : ""}
+          </Text>
         </View>
       </View>
 
       <ScrollView
-        style={{ flex: 1, marginTop: -30 }}
+        style={{ flex: 1 }}
         contentContainerStyle={{
-          paddingTop: 120,
           paddingHorizontal: 20,
           paddingBottom: 40,
           gap: 10,
@@ -257,14 +179,14 @@ export default function InteractionDetailsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Badge
-          title="contenido"
+          title="content"
           color="#E9E9E9"
           textColor="#000"
           textSize={14}
           marginBottom={5}
         />
 
-        <Animated.View
+        <AnimatedPressable
           style={[
             {
               borderWidth: 1,
@@ -274,21 +196,23 @@ export default function InteractionDetailsScreen() {
             },
             contentContainerAnimatedStyle,
           ]}
+          onPress={() => setIsEditingContent(true)}
         >
-          {isEditing ? (
+          {isEditingContent ? (
             <TextInput
               style={{
                 fontSize: 16,
                 color: "#000",
                 lineHeight: 22,
-                minHeight: 100,
                 textAlignVertical: "top",
                 fontWeight: "400",
               }}
-              value={editData.raw_content || ""}
-              onChangeText={(value) => updateEditData("raw_content", value)}
-              placeholder="Contenido de la interacción"
+              value={contentValue}
+              onChangeText={setContentValue}
+              onBlur={handleContentSave}
+              placeholder="Interaction content"
               multiline
+              autoFocus
             />
           ) : (
             <Text
@@ -298,20 +222,20 @@ export default function InteractionDetailsScreen() {
                 lineHeight: 22,
               }}
             >
-              {interaction?.raw_content || ""}
+              {contentValue || ""}
             </Text>
           )}
-        </Animated.View>
+        </AnimatedPressable>
 
         <Badge
-          title="conceptos clave"
+          title="key concepts"
           color="#E9E9E9"
           textColor="#000"
           textSize={14}
           marginBottom={5}
         />
 
-        <Animated.View
+        <AnimatedPressable
           style={[
             {
               borderWidth: 1,
@@ -320,83 +244,48 @@ export default function InteractionDetailsScreen() {
             },
             conceptsContainerAnimatedStyle,
           ]}
+          onPress={() => setIsEditingConcepts(true)}
         >
-          <View>
-            {isEditing ? (
-              <TextInput
-                style={{
-                  fontSize: 16,
-                  color: "#000",
-                  lineHeight: 22,
-                  minHeight: 60,
-                  textAlignVertical: "top",
-                  fontWeight: "600",
-                }}
-                value={editData.key_concepts || ""}
-                onChangeText={(value) => updateEditData("key_concepts", value)}
-                multiline
-              />
-            ) : (
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: "#000",
-                  lineHeight: 22,
-                }}
-              >
-                {interaction?.key_concepts || "Sin conceptos clave"}
-              </Text>
-            )}
-          </View>
-        </Animated.View>
-
-        <Badge
-          title="información"
-          color="#E9E9E9"
-          textColor="#000"
-          textSize={14}
-          marginBottom={5}
-        />
+          {isEditingConcepts ? (
+            <TextInput
+              style={{
+                fontSize: 16,
+                color: "#000",
+                textAlignVertical: "top",
+              }}
+              value={conceptsValue}
+              onChangeText={setConceptsValue}
+              onBlur={handleConceptsSave}
+              multiline
+              autoFocus
+            />
+          ) : (
+            <Text
+              style={{
+                fontSize: 16,
+                color: "#000",
+                lineHeight: 22,
+              }}
+            >
+              {conceptsValue || "No key concepts"}
+            </Text>
+          )}
+        </AnimatedPressable>
 
         <View
           style={{
             backgroundColor: "rgba(245, 245, 245, 0.8)",
             borderRadius: 20,
             padding: 20,
+            borderWidth: 1,
+            borderColor: "#E9E9E9",
             marginBottom: 20,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
-          <Text
-            style={{
-              fontSize: 14,
-              color: "#666",
-              marginBottom: 5,
-            }}
-          >
-            Fecha de creación
-          </Text>
-          <Text
-            style={{
-              fontSize: 16,
-              color: "#000",
-              fontWeight: "500",
-            }}
-          >
-            {formatCreatedAt(interaction?.created_at as string)}
-          </Text>
-        </View>
-
-        {contact && (
-          <View
-            style={{
-              backgroundColor: "rgba(245, 245, 245, 0.8)",
-              borderRadius: 20,
-              padding: 20,
-              borderWidth: 1,
-              borderColor: "#E9E9E9",
-              marginBottom: 20,
-            }}
-          >
+          <View>
             <Text
               style={{
                 fontSize: 14,
@@ -404,7 +293,7 @@ export default function InteractionDetailsScreen() {
                 marginBottom: 5,
               }}
             >
-              Contacto asociado
+              Associated contact
             </Text>
             <Text
               style={{
@@ -413,45 +302,17 @@ export default function InteractionDetailsScreen() {
                 fontWeight: "500",
               }}
             >
-              {contact.first_name} {contact.last_name}
+              {contact
+                ? `${contact.first_name} ${contact.last_name}`
+                : "Unassigned"}
             </Text>
           </View>
-        )}
-
-        {isEditing && (
-          <View
-            style={{
-              marginTop: 30,
-              marginBottom: 20,
-              alignItems: "center",
-            }}
-          >
-            <Pressable
-              style={{
-                backgroundColor: "#fff",
-                paddingVertical: 12,
-                paddingHorizontal: 20,
-                borderRadius: 20,
-                borderWidth: 1,
-                borderColor: "#ddd",
-                alignItems: "center",
-                elevation: 5,
-                width: "30%",
-              }}
-              onPress={handleDeleteInteraction}
-            >
-              <Text
-                style={{
-                  color: "#111",
-                  fontSize: 14,
-                  fontWeight: "500",
-                }}
-              >
-                delete
-              </Text>
-            </Pressable>
-          </View>
-        )}
+          <AssignInteractionButton
+            onPress={() =>
+              router.push(`/(interactions)/assign?interactionId=${id}`)
+            }
+          />
+        </View>
       </ScrollView>
     </View>
   );

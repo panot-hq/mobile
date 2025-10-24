@@ -15,6 +15,8 @@ interface ButtonPropsRecord {
   isRecording: boolean;
   volume?: number;
   disabled?: boolean;
+  initialSize?: number;
+  recordingSize?: number;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -25,19 +27,26 @@ export default function RecordButton({
   isRecording,
   volume = 0,
   disabled = false,
+  initialSize = 155,
+  recordingSize = 200,
 }: ButtonPropsRecord) {
   const scale = useSharedValue(1);
   const iconSize = useSharedValue(24);
   const colorProgress = useSharedValue(0);
-  const button_scale = useSharedValue(155);
+  const button_scale = useSharedValue(initialSize);
   const volumeScale = useSharedValue(1);
   const opacity = useSharedValue(1);
 
   useEffect(() => {
-    iconSize.value = withSpring(isRecording ? 130 : 80);
-    button_scale.value = withSpring(isRecording ? 200 : 155);
+    const initialIconSize = initialSize * 0.65;
+    const recordingIconSize = recordingSize * 0.8;
+
+    iconSize.value = withSpring(
+      isRecording ? recordingIconSize : initialIconSize
+    );
+    button_scale.value = withSpring(isRecording ? recordingSize : initialSize);
     colorProgress.value = withTiming(isRecording ? 1 : 0);
-  }, [isRecording]);
+  }, [isRecording, recordingSize, initialSize]);
 
   useEffect(() => {
     opacity.value = withTiming(disabled ? 0.5 : 1, { duration: 300 });

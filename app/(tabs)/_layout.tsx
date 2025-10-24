@@ -22,15 +22,21 @@ export default function TabLayout() {
     { key: "third", title: "Third" },
   ]);
 
-  const renderTabBar = (props: any) => (
-    <TabBar
-      navigationState={props.navigationState}
-      jumpTo={props.jumpTo}
-      disabled={isRecording}
-      shouldBlur={shouldBlur}
-      isListExpanded={isListExpanded}
-    />
-  );
+  const renderTabBar = (props: any) => {
+    if (shouldBlur) {
+      return null; // Hide TabBar completely when blur is active
+    }
+
+    return (
+      <TabBar
+        navigationState={props.navigationState}
+        jumpTo={props.jumpTo}
+        disabled={isRecording}
+        shouldBlur={shouldBlur}
+        isListExpanded={isListExpanded}
+      />
+    );
+  };
 
   return (
     <View style={{ flex: 1 }}>

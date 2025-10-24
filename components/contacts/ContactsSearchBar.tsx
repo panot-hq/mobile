@@ -1,18 +1,19 @@
-import { useContacts } from "@/contexts/ContactsContext";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { TextInput, View } from "react-native";
 
 interface ContactsSearchBarProps {
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
   onFocus?: () => void;
   onBlur?: () => void;
 }
 
 export default function ContactsSearchBar({
+  searchTerm,
+  setSearchTerm,
   onFocus,
   onBlur,
 }: ContactsSearchBarProps) {
-  const { searchTerm, setSearchTerm } = useContacts();
-
   return (
     <View
       style={{
