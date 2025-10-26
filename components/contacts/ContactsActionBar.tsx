@@ -21,37 +21,24 @@ export default function ContactsActionBar({
 }: ContactsActionBarProps) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const buttonOpacity = useSharedValue(1);
-  const buttonWidth = useSharedValue(45);
-  const gapWidth = useSharedValue(12);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
   const handleSearchFocus = () => {
     setIsSearchFocused(true);
     buttonOpacity.value = withSpring(0);
-    buttonWidth.value = withSpring(0);
-    gapWidth.value = withSpring(0);
   };
 
   const handleSearchBlur = () => {
     setIsSearchFocused(false);
     buttonOpacity.value = withSpring(1);
-    buttonWidth.value = withSpring(45);
-    gapWidth.value = withSpring(12);
   };
 
   const handleAddContact = () => {
     bottomSheetModalRef.current?.present();
   };
 
-  const gapAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      width: gapWidth.value,
-    };
-  });
-
   const buttonAnimatedStyle = useAnimatedStyle(() => {
     return {
-      width: buttonWidth.value,
       opacity: buttonOpacity.value,
     };
   });
@@ -61,11 +48,11 @@ export default function ContactsActionBar({
       style={{
         position: "absolute",
         top: 68,
-        left: 16,
-        right: 16,
+        width: "100%",
+        gap: 14,
+        paddingHorizontal: 16,
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "transparent",
         zIndex: 1000,
       }}
     >
@@ -75,7 +62,6 @@ export default function ContactsActionBar({
         onFocus={handleSearchFocus}
         onBlur={handleSearchBlur}
       />
-      <Animated.View style={gapAnimatedStyle} />
       <Animated.View style={[buttonAnimatedStyle]}>
         <NewContactButton onPress={handleAddContact} />
       </Animated.View>

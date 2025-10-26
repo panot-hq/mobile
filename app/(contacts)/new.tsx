@@ -108,9 +108,11 @@ export default function NewContactScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
-      // Crear contacto con Legend State (instantáneo, funciona offline)
       createContact({
         ...formData,
+        deleted: false,
+        birthday: null,
+        communication_channels: null,
       });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

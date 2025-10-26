@@ -104,6 +104,14 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="(contacts)/import"
+        options={{
+          presentation: "modal",
+          headerShown: false,
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
         name="(contacts)/[id]"
         options={{
           presentation: "card",
