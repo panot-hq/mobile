@@ -15,6 +15,7 @@ interface ButtonPropsRecord {
   isRecording: boolean;
   volume?: number;
   disabled?: boolean;
+  onDisabledPress?: () => void;
   initialSize?: number;
   recordingSize?: number;
 }
@@ -27,6 +28,7 @@ export default function RecordButton({
   isRecording,
   volume = 0,
   disabled = false,
+  onDisabledPress,
   initialSize = 155,
   recordingSize = 200,
 }: ButtonPropsRecord) {
@@ -112,7 +114,7 @@ export default function RecordButton({
     <AnimatedPressable
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      onPress={disabled ? undefined : onPress}
+      onPress={disabled ? onDisabledPress || undefined : onPress}
       style={[
         {
           backgroundColor: "#E9E9E9",

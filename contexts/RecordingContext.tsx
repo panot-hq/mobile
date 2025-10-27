@@ -7,6 +7,8 @@ interface RecordingContextType {
   setShouldBlur: (blur: boolean) => void;
   isListExpanded: boolean;
   setIsListExpanded: (expanded: boolean) => void;
+  assignedContactId: string | null;
+  setAssignedContactId: (contactId: string | null) => void;
 }
 
 const RecordingContext = createContext<RecordingContextType | undefined>(
@@ -21,6 +23,9 @@ export function RecordingProvider({ children }: RecordingProviderProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [shouldBlur, setShouldBlur] = useState(false);
   const [isListExpanded, setIsListExpanded] = useState(false);
+  const [assignedContactId, setAssignedContactId] = useState<string | null>(
+    null
+  );
 
   return (
     <RecordingContext.Provider
@@ -31,6 +36,8 @@ export function RecordingProvider({ children }: RecordingProviderProps) {
         setShouldBlur,
         isListExpanded,
         setIsListExpanded,
+        assignedContactId,
+        setAssignedContactId,
       }}
     >
       {children}

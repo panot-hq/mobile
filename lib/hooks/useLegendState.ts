@@ -145,7 +145,8 @@ export function useInteractions() {
         ...interaction,
       });
 
-      return interactions$[id].peek() as Interaction;
+      const created = interactions$[id].peek() as Interaction;
+      return created;
     } catch (error) {
       console.error("❌ Error creating interaction:", error);
       throw error;

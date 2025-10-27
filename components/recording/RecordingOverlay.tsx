@@ -1,13 +1,20 @@
-import NewInteraction from "@/components/recording/NewInteractionPreview";
+import AssignInteractionButton from "@/components/interactions/AssignInteractionButton";
+import NewInteraction, {
+  ActionButton,
+} from "@/components/recording/NewInteractionPreview";
 import RecordButton from "@/components/recording/RecordButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRecording } from "@/contexts/RecordingContext";
 import { ProfilesService } from "@/lib/database/index";
-import { useInteractions } from "@/lib/hooks/useLegendState";
+import { useContacts, useInteractions } from "@/lib/hooks/useLegendState";
 import { BlurView } from "expo-blur";
+import { router } from "expo-router";
 import PanotSpeechModule from "panot-speech";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Keyboard, Pressable, Text, View } from "react-native";
 import Animated, {
+  FadeIn,
+  FadeOut,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -35,10 +42,18 @@ export default function RecordingOverlay({
 }: RecordingOverlayProps) {
   const { user } = useAuth();
   const { createInteraction } = useInteractions();
-  const { isRecording, setIsRecording, shouldBlur, setShouldBlur } =
-    useRecording();
+  const { getContact } = useContacts();
+  const {
+    isRecording,
+    setIsRecording,
+    shouldBlur,
+    setShouldBlur,
+    assignedContactId,
+    setAssignedContactId,
+  } = useRecording();
 
   const [transcript, setTranscript] = useState("");
+  const [previousTranscript, setPreviousTranscript] = useState("");
   const [volume, setVolume] = useState(0);
   const [recordingStartTime, setRecordingStartTime] = useState<
     number | undefined
@@ -80,10 +95,6 @@ export default function RecordingOverlay({
   ]);
 
   useEffect(() => {
-    const sub = PanotSpeechModule.addListener("onTranscriptUpdate", (event) => {
-      setTranscript(event.transcript);
-    });
-
     const volumnSub = PanotSpeechModule.addListener(
       "onVolumeChange",
       (event) => {
@@ -92,7 +103,6 @@ export default function RecordingOverlay({
     );
 
     return () => {
-      sub.remove();
       volumnSub.remove();
     };
   }, []);
@@ -112,6 +122,18 @@ export default function RecordingOverlay({
   const stopRecording = () => {
     PanotSpeechModule.stopTranscribing();
     setIsRecording(false);
+    setPreviousTranscript(transcript);
+  };
+
+  const continueRecording = async () => {
+    const result = await PanotSpeechModule.requestPermissions();
+
+    if (result.status === "granted") {
+      setShowButtons(false);
+      setPreviousTranscript(transcript);
+      PanotSpeechModule.startTranscribing(true, "es-ES");
+      setIsRecording(true);
+    }
   };
 
   const toggleRecording = async () => {
@@ -125,57 +147,88 @@ export default function RecordingOverlay({
   const handleCancelRecording = () => {
     stopRecording();
     setTranscript("");
+    setPreviousTranscript("");
     setShowInteraction(false);
     setRecordingStartTime(undefined);
     setShowButtons(false);
     setShouldBlur(false);
+    setAssignedContactId(null);
   };
 
-  const handleAcceptTranscription = async (acceptedTranscript: string) => {
-    console.log(
-      "🎤 handleAcceptTranscription called with:",
-      acceptedTranscript.substring(0, 50)
-    );
+  const handleAcceptTranscription = useCallback(
+    async (acceptedTranscript: string) => {
+      if (user) {
+        await ProfilesService.getOrCreate(user.id);
 
-    if (!user) {
-      console.error("❌ No user found when trying to create interaction");
-      return;
-    }
+        const finalContactId = assignedContactId ?? contactId ?? null;
 
-    console.log("👤 User ID:", user.id);
+        try {
+          createInteraction({
+            raw_content: acceptedTranscript,
+            key_concepts: "",
+            deleted: false,
+            contact_id: finalContactId,
+          });
 
-    // Ensure profile exists before creating interaction
-    await ProfilesService.getOrCreate(user.id);
+          if (onInteractionCreated) {
+            onInteractionCreated();
+          }
+        } catch (error) {
+          console.error("Error creating interaction:", error);
+        }
 
-    try {
-      console.log("🔨 Creating interaction...");
-      const newInteraction = createInteraction({
-        raw_content: acceptedTranscript,
-        key_concepts: "",
-        ...(contactId && { contact_id: contactId }),
-      });
-      console.log("✅ Interaction created successfully:", newInteraction.id);
-
-      if (onInteractionCreated) {
-        onInteractionCreated();
+        setTranscript("");
+        setPreviousTranscript("");
+        setShowInteraction(false);
+        setRecordingStartTime(undefined);
+        setShowButtons(false);
+        setShouldBlur(false);
+        setAssignedContactId(null);
       }
-    } catch (error) {
-      console.error("❌ Error in handleAcceptTranscription:", error);
-    }
+    },
+    [
+      user,
+      assignedContactId,
+      contactId,
+      createInteraction,
+      onInteractionCreated,
+      setAssignedContactId,
+      setShouldBlur,
+    ]
+  );
 
+  const handleRejectTranscription = useCallback(() => {
     setTranscript("");
+    setPreviousTranscript("");
     setShowInteraction(false);
     setRecordingStartTime(undefined);
     setShowButtons(false);
     setShouldBlur(false);
-  };
+    setAssignedContactId(null);
+  }, [setAssignedContactId, setShouldBlur]);
 
-  const handleRejectTranscription = () => {
-    setShowInteraction(false);
-    setRecordingStartTime(undefined);
-    setShowButtons(false);
-    setShouldBlur(false);
-  };
+  const assignedContact = useMemo(() => {
+    if (!assignedContactId) return null;
+    return getContact(assignedContactId);
+  }, [assignedContactId]);
+
+  const actions: ActionButton[] = useMemo(
+    () => [
+      {
+        label: "Rechazar",
+        onPress: () => handleRejectTranscription(),
+        variant: "secondary",
+        icon: "close",
+      },
+      {
+        label: "Aceptar",
+        onPress: (transcript) => handleAcceptTranscription(transcript),
+        variant: "primary",
+        icon: "check",
+      },
+    ],
+    [handleRejectTranscription, handleAcceptTranscription]
+  );
 
   const animatedBlurStyle = useAnimatedStyle(() => {
     return {
@@ -204,22 +257,80 @@ export default function RecordingOverlay({
           },
         ]}
       >
-        <BlurView
-          intensity={40}
-          style={{
-            flex: 1,
-          }}
-        />
+        <Pressable style={{ flex: 1 }} onPress={() => Keyboard.dismiss()}>
+          <BlurView
+            intensity={40}
+            style={{
+              flex: 1,
+            }}
+          />
+        </Pressable>
       </Animated.View>
 
       {showInteraction && (
-        <NewInteraction
-          isRecording={isRecording}
-          onCancel={handleCancelRecording}
-          onAccept={handleAcceptTranscription}
-          onReject={handleRejectTranscription}
-          showButtons={showButtons}
-        />
+        <>
+          <NewInteraction
+            isRecording={isRecording}
+            onCancel={handleCancelRecording}
+            showButtons={showButtons}
+            previousTranscript={previousTranscript}
+            onTranscriptUpdate={setTranscript}
+            actions={actions}
+          />
+          {!contactId && (
+            <Animated.View
+              entering={FadeIn.duration(200)}
+              exiting={FadeOut.duration(150)}
+              style={{
+                position: "absolute",
+                top: 408,
+                alignSelf: "center",
+                width: "87%",
+                zIndex: 2000,
+              }}
+            >
+              <View
+                style={{
+                  backgroundColor: "rgba(245, 245, 245, 0.8)",
+                  borderRadius: 20,
+                  padding: 20,
+
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <View>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      color: "#666",
+                      marginBottom: 5,
+                    }}
+                  >
+                    Associated contact
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      color: "#000",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {assignedContact
+                      ? `${assignedContact.first_name} ${assignedContact.last_name}`
+                      : "Unassigned"}
+                  </Text>
+                </View>
+                <AssignInteractionButton
+                  onPress={() =>
+                    router.push("/(interactions)/assign?mode=recording")
+                  }
+                />
+              </View>
+            </Animated.View>
+          )}
+        </>
       )}
 
       {!hideRecordButton && (
@@ -240,6 +351,7 @@ export default function RecordingOverlay({
             isRecording={isRecording}
             volume={volume}
             disabled={showButtons}
+            onDisabledPress={continueRecording}
             initialSize={recordButtonInitialSize}
             recordingSize={recordButtonRecordingSize}
           />

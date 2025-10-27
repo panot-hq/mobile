@@ -6,15 +6,49 @@ import Animated, { FadeIn } from "react-native-reanimated";
 export default function FadingTranscript({
   isRecording,
   onTranscriptUpdate,
+  previousTranscript = "",
 }: {
   isRecording?: boolean;
   onTranscriptUpdate?: (transcript: string) => void;
+  previousTranscript?: string;
 }) {
-  const [transcript, setTranscript] = useState("");
+  const [transcript, setTranscript] = useState(previousTranscript);
   const [words, setWords] = useState<
     { word: string; key: string; fade: boolean }[]
   >([]);
-  const prevTranscript = useRef("");
+  const prevTranscript = useRef(previousTranscript);
+
+  useEffect(() => {
+    if (previousTranscript) {
+      const segments = previousTranscript.split(/(\n)/);
+      const initialWords: { word: string; key: string; fade: boolean }[] = [];
+      let globalIdx = 0;
+
+      segments.forEach((segment) => {
+        if (segment === "\n") {
+          initialWords.push({
+            word: "\n",
+            key: `newline-${globalIdx}`,
+            fade: false,
+          });
+          globalIdx++;
+        } else if (segment.trim()) {
+          const words = segment.split(" ").filter(Boolean);
+          words.forEach((word) => {
+            initialWords.push({
+              word,
+              key: `${word}-${globalIdx}`,
+              fade: false,
+            });
+            globalIdx++;
+          });
+        }
+      });
+
+      setWords(initialWords);
+      prevTranscript.current = previousTranscript;
+    }
+  }, [previousTranscript]);
 
   useEffect(() => {
     if (!isRecording) return;
@@ -22,9 +56,18 @@ export default function FadingTranscript({
     const transcriptSub = PanotSpeechModule.addListener(
       "onTranscriptUpdate",
       (event) => {
-        setTranscript(event.transcript);
+        let fullTranscript = event.transcript;
+
+        if (previousTranscript) {
+          // Respetar los saltos de línea y espacios existentes
+          const needsSeparator = !previousTranscript.match(/[\s\n]$/);
+          const separator = needsSeparator ? " " : "";
+          fullTranscript = previousTranscript + separator + event.transcript;
+        }
+
+        setTranscript(fullTranscript);
         if (onTranscriptUpdate) {
-          onTranscriptUpdate(event.transcript);
+          onTranscriptUpdate(fullTranscript);
         }
       }
     );
@@ -32,26 +75,46 @@ export default function FadingTranscript({
     return () => {
       transcriptSub.remove();
     };
-  }, [isRecording, onTranscriptUpdate]);
+  }, [isRecording, onTranscriptUpdate, previousTranscript]);
 
   useEffect(() => {
     if (transcript !== prevTranscript.current) {
-      const prevWords = prevTranscript.current.split(" ").filter(Boolean);
-      const newWords = transcript.split(" ").filter(Boolean);
+      // Dividir el texto respetando saltos de línea
+      const segments = transcript.split(/(\n)/);
+      const allWords: { word: string; key: string; fade: boolean }[] = [];
 
-      let firstNewIdx = newWords.length;
-      for (let i = 0; i < newWords.length; i++) {
-        if (prevWords[i] !== newWords[i]) {
-          firstNewIdx = i;
-          break;
+      const prevSegments = prevTranscript.current.split(/(\n)/);
+      let globalIdx = 0;
+      let prevGlobalIdx = 0;
+
+      segments.forEach((segment, segIdx) => {
+        if (segment === "\n") {
+          allWords.push({
+            word: "\n",
+            key: `newline-${globalIdx}`,
+            fade: segIdx >= prevSegments.length,
+          });
+          globalIdx++;
+        } else if (segment.trim()) {
+          const words = segment.split(" ").filter(Boolean);
+          const prevWords =
+            prevSegments[segIdx]?.split(" ").filter(Boolean) || [];
+
+          words.forEach((word, idx) => {
+            allWords.push({
+              word,
+              key: `${word}-${globalIdx}`,
+              fade:
+                segIdx >= prevSegments.length ||
+                idx >= prevWords.length ||
+                prevWords[idx] !== word,
+            });
+            globalIdx++;
+          });
         }
-      }
-      const fadingWords = newWords.map((word, idx) => ({
-        word,
-        key: `${word}-${idx}`,
-        fade: idx >= firstNewIdx,
-      }));
-      setWords(fadingWords);
+      });
+
+      setWords(allWords);
       prevTranscript.current = transcript;
     }
   }, [transcript]);
@@ -66,19 +129,33 @@ export default function FadingTranscript({
         flexDirection: "row",
         flexWrap: "wrap",
         width: "100%",
-        padding: 10,
+        paddingTop: 10,
         minHeight: 30,
-        alignItems: "center",
+        alignItems: "flex-start",
       }}
     >
-      {words.map(({ word, key, fade }, idx) =>
-        fade ? (
+      {words.map(({ word, key, fade }, idx) => {
+        // Renderizar saltos de línea como elementos que fuerzan un break
+        if (word === "\n") {
+          return (
+            <View
+              key={key}
+              style={{
+                width: "100%",
+                height: 0,
+              }}
+            />
+          );
+        }
+
+        return fade ? (
           <Animated.Text
             key={key}
             entering={FadeIn.duration(400)}
             style={{
               fontSize: 15,
               fontWeight: "500",
+              lineHeight: 22,
               marginRight: 4,
             }}
           >
@@ -90,13 +167,14 @@ export default function FadingTranscript({
             style={{
               fontSize: 15,
               fontWeight: "500",
+              lineHeight: 22,
               marginRight: 4,
             }}
           >
             {word}
           </Text>
-        )
-      )}
+        );
+      })}
     </View>
   );
 }
