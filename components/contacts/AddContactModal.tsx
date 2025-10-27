@@ -1,3 +1,4 @@
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Octicons from "@expo/vector-icons/Octicons";
 
@@ -37,6 +38,13 @@ export default function AddContactModal({
     }, 200);
   }, [bottomSheetModalRef]);
 
+  const handleImportFromContacts = useCallback(() => {
+    bottomSheetModalRef.current?.dismiss();
+    setTimeout(() => {
+      router.push("/(contacts)/import");
+    }, 200);
+  }, [bottomSheetModalRef]);
+
   const renderBackdrop = useCallback(
     (props: any) => (
       <BottomSheetBackdrop
@@ -53,7 +61,7 @@ export default function AddContactModal({
     <BottomSheetModal
       ref={bottomSheetModalRef}
       index={1}
-      snapPoints={["50%", "40%"]}
+      snapPoints={["50%", "49%"]}
       backdropComponent={renderBackdrop}
       backgroundStyle={{
         backgroundColor: "#fff",
@@ -93,48 +101,6 @@ export default function AddContactModal({
             borderRadius={25}
             borderColor="#E0E0E0"
             borderWidth={1}
-            onPress={handleTalkCreate}
-            style={{
-              paddingVertical: 16,
-              paddingHorizontal: 20,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 16,
-              }}
-            >
-              <Octicons name="dot-fill" size={24} color="black" />
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: "600",
-                    color: "black",
-                    marginBottom: 4,
-                  }}
-                >
-                  Talk about them
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    color: "#666",
-                  }}
-                >
-                  Record your thoughts about this person
-                </Text>
-              </View>
-            </View>
-          </BaseButton>
-
-          <BaseButton
-            backgroundColor="#fff"
-            borderRadius={25}
-            borderColor="#E0E0E0"
-            borderWidth={1}
             onPress={handleManualCreate}
             style={{
               paddingVertical: 16,
@@ -167,6 +133,89 @@ export default function AddContactModal({
                   }}
                 >
                   Enter contact details manually
+                </Text>
+              </View>
+            </View>
+          </BaseButton>
+
+          <BaseButton
+            backgroundColor="#fff"
+            borderRadius={25}
+            borderColor="#E0E0E0"
+            borderWidth={1}
+            onPress={handleImportFromContacts}
+            style={{
+              paddingVertical: 16,
+              paddingHorizontal: 20,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 16,
+              }}
+            >
+              <MaterialCommunityIcons name="import" size={24} color="black" />
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "600",
+                    color: "black",
+                    marginBottom: 4,
+                  }}
+                >
+                  Import from contacts
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: "#666",
+                  }}
+                >
+                  Import from your local contacts
+                </Text>
+              </View>
+            </View>
+          </BaseButton>
+          <BaseButton
+            backgroundColor="#fff"
+            borderRadius={25}
+            borderColor="#E0E0E0"
+            borderWidth={1}
+            onPress={handleTalkCreate}
+            style={{
+              paddingVertical: 16,
+              paddingHorizontal: 20,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 16,
+              }}
+            >
+              <Octicons name="dot-fill" size={24} color="black" />
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "600",
+                    color: "black",
+                    marginBottom: 4,
+                  }}
+                >
+                  Talk about them
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: "#666",
+                  }}
+                >
+                  Record your thoughts about this person
                 </Text>
               </View>
             </View>

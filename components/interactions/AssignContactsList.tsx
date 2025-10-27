@@ -1,5 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useContacts as useContactsContext } from "@/contexts/ContactsContext";
+import { useRecording } from "@/contexts/RecordingContext";
 import { Contact } from "@/lib/database/database.types";
 import { useContacts, useInteractions } from "@/lib/hooks/useLegendState";
 import { router } from "expo-router";
@@ -20,16 +21,19 @@ interface ContactListItem {
 }
 
 interface AssignContactsListProps {
-  interactionId: string;
+  interactionId?: string;
+  isRecordingMode?: boolean;
 }
 
 export default function AssignContactsList({
   interactionId,
+  isRecordingMode = false,
 }: AssignContactsListProps) {
   const { user } = useAuth();
   const { searchTerm } = useContactsContext();
   const { contacts } = useContacts();
   const { assignContact } = useInteractions();
+  const { setAssignedContactId } = useRecording();
 
   // Sort contacts alphabetically
   const sortedContacts = React.useMemo(() => {
@@ -111,9 +115,13 @@ export default function AssignContactsList({
 
   const handleAssignContact = async (contactId: string) => {
     try {
-      // Use Legend State to assign contact (works offline)
-      assignContact(interactionId, contactId);
-      router.back();
+      if (isRecordingMode) {
+        setAssignedContactId(contactId);
+        router.back();
+      } else if (interactionId) {
+        assignContact(interactionId, contactId);
+        router.back();
+      }
     } catch (error) {
       console.error("Error assigning contact:", error);
     }
