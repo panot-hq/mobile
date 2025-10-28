@@ -1,7 +1,7 @@
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import { ProfilesService } from "@/lib/database/index";
 import { supabase } from "@/lib/supabase";
-import { clearSync, initializeSync } from "@/lib/supaLegend";
+import { clearPersistedData, initializeSync } from "@/lib/supaLegend";
 import { Session, User } from "@supabase/supabase-js";
 import { router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -82,10 +82,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           console.error("Error getting initial session:", error);
         }
 
-        // Ensure profile exists for authenticated user
         if (session?.user) {
           await ProfilesService.getOrCreate(session.user.id);
-          // Initialize local-first sync for the user
           await initializeSync(session.user.id);
         }
 
@@ -107,14 +105,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           }
 
           if (initializedRef.current) {
-            // Ensure profile exists when auth state changes
             if (session?.user) {
-              await ProfilesService.getOrCreate(session.user.id);
-              // Initialize sync for authenticated user
-              await initializeSync(session.user.id);
+              if (event === "SIGNED_IN") {
+                await clearPersistedData();
+
+                await ProfilesService.getOrCreate(session.user.id);
+                await initializeSync(session.user.id);
+
+                router.replace("/(tabs)/present");
+              }
             } else {
-              // Clear sync when user logs out
-              clearSync();
+              await clearPersistedData();
             }
 
             setSession(session);
@@ -149,8 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(null);
       return;
     }
-    // Clear local sync data before signing out
-    clearSync();
+    await clearPersistedData();
     await supabase.auth.signOut();
     router.replace("/(auth)");
   };
@@ -196,7 +196,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           data: {
             display_name: name,
           },
-          emailRedirectTo: undefined, // Prevent auto-confirmation
+          emailRedirectTo: undefined,
         },
       });
 
@@ -204,7 +204,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return { success: false, error: error.message };
       }
 
-      // Check if user needs email confirmation
       if (data.user && !data.user.email_confirmed_at) {
         return { success: true };
       }

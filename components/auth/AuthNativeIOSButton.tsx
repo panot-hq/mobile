@@ -1,4 +1,6 @@
+import { ProfilesService } from "@/lib/database/index";
 import { supabase } from "@/lib/supabase";
+import { clearPersistedData, initializeSync } from "@/lib/supaLegend";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { router } from "expo-router";
 import { Platform } from "react-native";
@@ -49,7 +51,18 @@ export function IOSAuth({
               email: credential.email ?? undefined,
             });
           }
-          supabase.auth.setSession(data.session);
+
+          await supabase.auth.setSession(data.session);
+
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          const userId = data.session.user.id;
+
+          await clearPersistedData();
+
+          await ProfilesService.getOrCreate(userId);
+          await initializeSync(userId);
+
           router.replace("/(tabs)/present");
         } catch (e: any) {
           if (e?.code === "ERR_REQUEST_CANCELED") return;
