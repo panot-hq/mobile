@@ -1,4 +1,4 @@
-import { observable } from "@legendapp/state";
+import { observable, Observable } from "@legendapp/state";
 import { observablePersistAsyncStorage } from "@legendapp/state/persist-plugins/async-storage";
 import { configureSynced } from "@legendapp/state/sync";
 import { syncedSupabase } from "@legendapp/state/sync-plugins/supabase";
@@ -22,7 +22,7 @@ const customSynced = configureSynced(syncedSupabase, {
   fieldDeleted: "deleted",
 });
 
-export const contacts$ = observable(
+export const contacts$: Observable<any> = observable(
   // @ts-ignore
   customSynced({
     supabase,
@@ -56,7 +56,7 @@ export const contacts$ = observable(
   })
 );
 
-export const interactions$ = observable(
+export const interactions$: Observable<any> = observable(
   // @ts-ignore
   customSynced({
     supabase,
@@ -90,7 +90,7 @@ export const interactions$ = observable(
   })
 );
 
-export const profiles$ = observable(
+export const profiles$: Observable<any> = observable(
   // @ts-ignore
   customSynced({
     supabase,
@@ -118,23 +118,29 @@ export async function initializeSync(userId: string) {
     } = await supabase.auth.getSession();
 
     if (!session) {
-      console.error("❌ No Supabase session found");
       return;
     }
 
     if (session.user.id !== userId) {
-      console.error("❌ User ID mismatch");
       return;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const contactsData = contacts$.get();
+    const interactionsData = interactions$.get();
+    const profilesData = profiles$.get();
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   } catch (error) {
-    console.error("❌ Error initializing sync:", error);
+    console.error("Error initializing sync:", error);
   }
 }
 
-export function clearSync() {
-  contacts$.set({});
-  interactions$.set({});
-  profiles$.set({});
+export async function clearPersistedData() {
+  try {
+    await AsyncStorage.removeItem("contacts");
+    await AsyncStorage.removeItem("interactions");
+    await AsyncStorage.removeItem("profiles");
+  } catch (error) {
+    console.error("Error clearing persisted data:", error);
+  }
 }
