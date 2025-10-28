@@ -283,7 +283,7 @@ export default function RecordingOverlay({
               exiting={FadeOut.duration(150)}
               style={{
                 position: "absolute",
-                top: 408,
+                top: 400,
                 alignSelf: "center",
                 width: "87%",
                 zIndex: 2000,
@@ -292,7 +292,7 @@ export default function RecordingOverlay({
               <View
                 style={{
                   backgroundColor: "rgba(245, 245, 245, 0.8)",
-                  borderRadius: 20,
+                  borderRadius: 22,
                   padding: 20,
 
                   flexDirection: "row",

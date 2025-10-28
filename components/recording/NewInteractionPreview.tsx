@@ -167,7 +167,7 @@ export default function NewInteraction({
         style={{
           flexDirection: "row",
           justifyContent: "space-between",
-          marginBottom: 20,
+          marginBottom: 10,
           height: 80,
           gap: 12,
         }}
@@ -267,7 +267,7 @@ export default function NewInteraction({
             <ScrollView
               style={{
                 marginTop: 20,
-                height: 140,
+                height: 180,
                 paddingHorizontal: 20,
               }}
               contentContainerStyle={{
