@@ -3,6 +3,10 @@ import LocalContactListElement from "@/components/contacts/LocalContactListEleme
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import { useAuth } from "@/contexts/AuthContext";
 import { useContacts } from "@/lib/hooks/useLegendState";
+import {
+  CommunicationChannel,
+  stringifyCommunicationChannels,
+} from "@/lib/types/communicationChannel";
 import * as Contacts from "expo-contacts";
 import { ExistingContact } from "expo-contacts";
 import * as Haptics from "expo-haptics";
@@ -148,12 +152,15 @@ export default function ImportContactScreen() {
 
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-        let phoneNote = "";
+        // Crear canales de comunicación desde los números de teléfono
+        const communicationChannels: CommunicationChannel[] = [];
         if (localContact.phoneNumbers && localContact.phoneNumbers.length > 0) {
-          const phones = localContact.phoneNumbers
-            .map((phone) => `${phone.label || "Phone"}: ${phone.number}`)
-            .join("\n");
-          phoneNote = `\n\nPhone numbers:\n${phones}`;
+          localContact.phoneNumbers.forEach((phone) => {
+            communicationChannels.push({
+              type: "tel",
+              value: phone.number || "",
+            });
+          });
         }
 
         createContact({
@@ -163,10 +170,13 @@ export default function ImportContactScreen() {
           job_title: "",
           department: "",
           address: "",
-          notes: `Imported from local contacts${phoneNote}`,
+          notes: "Imported from local contacts",
           deleted: false,
           birthday: null,
-          communication_channels: null,
+          communication_channels:
+            communicationChannels.length > 0
+              ? stringifyCommunicationChannels(communicationChannels)
+              : null,
         });
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

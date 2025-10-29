@@ -1,9 +1,15 @@
 import ArrowButton from "@/components/auth/buttons/ArrowButton";
+import CommunicationChannels from "@/components/contacts/CommunicationChannels";
 import ContactInteractionItem from "@/components/contacts/ContactInteractionItem";
 import RecordingOverlay from "@/components/recording/RecordingOverlay";
 import Badge from "@/components/ui/Badge";
 import BaseButton from "@/components/ui/BaseButton";
 import { useContacts, useInteractions } from "@/lib/hooks/useLegendState";
+import {
+  CommunicationChannel,
+  parseCommunicationChannels,
+  stringifyCommunicationChannels,
+} from "@/lib/types/communicationChannel";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
@@ -52,6 +58,9 @@ export default function ContactDetailsScreen() {
   const [departmentValue, setDepartmentValue] = useState("");
   const [addressValue, setAddressValue] = useState("");
   const [notesValue, setNotesValue] = useState("");
+  const [communicationChannels, setCommunicationChannels] = useState<
+    CommunicationChannel[]
+  >([]);
 
   // Inicializar valores cuando cambie el contacto
   useEffect(() => {
@@ -64,6 +73,9 @@ export default function ContactDetailsScreen() {
       setDepartmentValue(contact.department || "");
       setAddressValue(contact.address || "");
       setNotesValue(contact.notes || "");
+      setCommunicationChannels(
+        parseCommunicationChannels(contact.communication_channels)
+      );
     }
   }, [contact]);
 
@@ -165,6 +177,22 @@ export default function ContactDetailsScreen() {
       }
     }
     setIsEditingNotes(false);
+  };
+
+  const handleCommunicationChannelsChange = (
+    channels: CommunicationChannel[]
+  ) => {
+    if (!contact) return;
+    try {
+      updateContactData(contact.id, {
+        communication_channels:
+          channels.length > 0 ? stringifyCommunicationChannels(channels) : null,
+      });
+      setCommunicationChannels(channels);
+    } catch (error) {
+      console.error("Error updating communication channels:", error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
   };
 
   const handleDeleteContact = () => {
@@ -305,7 +333,7 @@ export default function ContactDetailsScreen() {
             {
               borderWidth: 1,
               borderColor: "#ddd",
-              marginBottom: 20,
+              marginBottom: 15,
               justifyContent: "center",
             },
             nameContainerAnimatedStyle,
@@ -337,6 +365,13 @@ export default function ContactDetailsScreen() {
             </Text>
           )}
         </AnimatedPressable>
+
+        <View style={{ marginBottom: 20 }}>
+          <CommunicationChannels
+            channels={communicationChannels}
+            onChannelsChange={handleCommunicationChannelsChange}
+          />
+        </View>
 
         {companyValue && (
           <>
