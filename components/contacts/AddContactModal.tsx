@@ -2,6 +2,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Octicons from "@expo/vector-icons/Octicons";
 
+import { useTalkAboutThem } from "@/contexts/TalkAboutThemContext";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -19,6 +20,8 @@ interface AddContactModalProps {
 export default function AddContactModal({
   bottomSheetModalRef,
 }: AddContactModalProps) {
+  const { setIsOverlayVisible, isOverlayVisible } = useTalkAboutThem();
+
   const handleBackdropPress = useCallback(() => {
     bottomSheetModalRef.current?.dismiss();
   }, [bottomSheetModalRef]);
@@ -31,12 +34,11 @@ export default function AddContactModal({
   }, [bottomSheetModalRef]);
 
   const handleTalkCreate = useCallback(() => {
-    bottomSheetModalRef.current?.dismiss();
+    bottomSheetModalRef.current?.close();
     setTimeout(() => {
-      // TODO: Implement talking about contact creation
-      console.log("Talk about contact creation - not implemented yet");
-    }, 200);
-  }, [bottomSheetModalRef]);
+      setIsOverlayVisible(true);
+    }, 300);
+  }, [bottomSheetModalRef, setIsOverlayVisible]);
 
   const handleImportFromContacts = useCallback(() => {
     bottomSheetModalRef.current?.dismiss();
@@ -50,19 +52,25 @@ export default function AddContactModal({
       <BottomSheetBackdrop
         {...props}
         disappearsOnIndex={-1}
-        appearsOnIndex={0}
+        appearsOnIndex={1}
         onPress={handleBackdropPress}
       />
     ),
     [handleBackdropPress]
   );
 
+  if (isOverlayVisible) {
+    return null;
+  }
+
   return (
     <BottomSheetModal
       ref={bottomSheetModalRef}
       index={1}
-      snapPoints={["50%", "49%"]}
+      snapPoints={["50%", "48%"]}
       backdropComponent={renderBackdrop}
+      enablePanDownToClose={true}
+      enableDismissOnClose={true}
       backgroundStyle={{
         backgroundColor: "#fff",
         borderTopLeftRadius: 20,

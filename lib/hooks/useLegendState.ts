@@ -135,6 +135,16 @@ export function useInteractions() {
   ) => {
     if (!user) throw new Error("User not authenticated");
 
+    // Validate contact_id if provided
+    if (interaction.contact_id) {
+      // @ts-ignore
+      const contact = contacts$[interaction.contact_id]?.peek();
+      if (!contact || contact.deleted) {
+        console.warn("⚠️ Invalid contact_id provided, setting to null");
+        interaction.contact_id = null;
+      }
+    }
+
     const id = uuidv4();
 
     try {
@@ -158,6 +168,16 @@ export function useInteractions() {
     const interaction = interactions$[id].peek();
     if (!interaction) throw new Error("Interaction not found");
 
+    // Validate contact_id if being updated
+    if (updates.contact_id) {
+      // @ts-ignore
+      const contact = contacts$[updates.contact_id]?.peek();
+      if (!contact || contact.deleted) {
+        console.warn("⚠️ Invalid contact_id provided, setting to null");
+        updates.contact_id = null;
+      }
+    }
+
     // @ts-ignore
     interactions$[id].assign({
       ...updates,
@@ -166,6 +186,12 @@ export function useInteractions() {
   };
 
   const assignContact = (interactionId: string, contactId: string) => {
+    // Validate that the contact exists before assigning
+    // @ts-ignore
+    const contact = contacts$[contactId]?.peek();
+    if (!contact || contact.deleted) {
+      throw new Error("Cannot assign interaction to non-existent or deleted contact");
+    }
     updateInteraction(interactionId, { contact_id: contactId });
   };
 

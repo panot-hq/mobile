@@ -1,0 +1,12 @@
+// Cargar variables de entorno desde .env
+require("dotenv").config();
+
+module.exports = ({ config }) => {
+  return {
+    ...config,
+    extra: {
+      ...config.extra,
+      openaiApiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY,
+    },
+  };
+};

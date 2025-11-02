@@ -12,6 +12,7 @@ import { ContactsProvider } from "@/contexts/ContactsContext";
 import { InteractionProvider } from "@/contexts/InteractionContext";
 import { InteractionOverlayProvider } from "@/contexts/InteractionOverlayContext";
 import { RecordingProvider } from "@/contexts/RecordingContext";
+import { TalkAboutThemProvider } from "@/contexts/TalkAboutThemContext";
 export { ErrorBoundary } from "expo-router";
 
 SplashScreen.preventAutoHideAsync();
@@ -41,9 +42,11 @@ export default function RootLayout() {
           <ContactsProvider>
             <InteractionProvider>
               <RecordingProvider>
-                <InteractionOverlayProvider>
-                  <RootLayoutNav />
-                </InteractionOverlayProvider>
+                <TalkAboutThemProvider>
+                  <InteractionOverlayProvider>
+                    <RootLayoutNav />
+                  </InteractionOverlayProvider>
+                </TalkAboutThemProvider>
               </RecordingProvider>
             </InteractionProvider>
           </ContactsProvider>
@@ -120,6 +123,7 @@ function RootLayoutNav() {
           headerShown: false,
         }}
       />
+
       <Stack.Screen
         name="settings"
         options={{

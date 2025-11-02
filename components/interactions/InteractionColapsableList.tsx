@@ -179,7 +179,7 @@ export default function InteractionList({
     <View
       style={{ flex: 1, padding: 10, marginTop: 100, gap: 25, width: "93%" }}
     >
-      <Badge title="unassigned interactions" color="#eee" textColor="#000" />
+      <Badge title="capture dock" color="#eee" textColor="#000" />
 
       {interactions.length === 0 ? (
         <View

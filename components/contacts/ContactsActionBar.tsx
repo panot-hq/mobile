@@ -1,6 +1,7 @@
 import AddContactModal from "@/components/contacts/AddContactModal";
 import ContactsSearchBar from "@/components/contacts/ContactsSearchBar";
 import NewContactButton from "@/components/contacts/NewContactButton";
+import { useTalkAboutThem } from "@/contexts/TalkAboutThemContext";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRef, useState } from "react";
 import { View } from "react-native";
@@ -22,6 +23,7 @@ export default function ContactsActionBar({
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const buttonOpacity = useSharedValue(1);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const { isOverlayVisible } = useTalkAboutThem();
 
   const handleSearchFocus = () => {
     setIsSearchFocused(true);
@@ -34,7 +36,10 @@ export default function ContactsActionBar({
   };
 
   const handleAddContact = () => {
-    bottomSheetModalRef.current?.present();
+    // Only open modal if overlay is not visible
+    if (!isOverlayVisible) {
+      bottomSheetModalRef.current?.present();
+    }
   };
 
   const buttonAnimatedStyle = useAnimatedStyle(() => {

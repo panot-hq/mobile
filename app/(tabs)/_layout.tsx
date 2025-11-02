@@ -1,5 +1,7 @@
 import TabBar from "@/components/navigation/TabBar";
+import TalkAboutThemOverlay from "@/components/contacts/TalkAboutThemOverlay";
 import { useRecording } from "@/contexts/RecordingContext";
+import { useTalkAboutThem } from "@/contexts/TalkAboutThemContext";
 import React, { useState } from "react";
 import { View, useWindowDimensions } from "react-native";
 import { SceneMap, TabView } from "react-native-tab-view";
@@ -14,6 +16,7 @@ const renderScene = SceneMap({
 
 export default function TabLayout() {
   const { isRecording, shouldBlur, isListExpanded } = useRecording();
+  const { shouldBlur: shouldBlurTalkAboutThem } = useTalkAboutThem();
   const layout = useWindowDimensions();
 
   const [index, setIndex] = useState(0);
@@ -23,7 +26,7 @@ export default function TabLayout() {
   ]);
 
   const renderTabBar = (props: any) => {
-    if (shouldBlur) {
+    if (shouldBlur || shouldBlurTalkAboutThem) {
       return null; // Hide TabBar completely when blur is active
     }
 
@@ -46,10 +49,11 @@ export default function TabLayout() {
         onIndexChange={setIndex}
         initialLayout={{ width: layout.width }}
         renderTabBar={renderTabBar}
-        swipeEnabled={!isRecording && !shouldBlur}
+        swipeEnabled={!isRecording && !shouldBlur && !shouldBlurTalkAboutThem}
         animationEnabled={true}
         style={{ backgroundColor: "#fff" }}
       />
+      <TalkAboutThemOverlay />
     </View>
   );
 }

@@ -1,10 +1,12 @@
 import KeyboardSaveButton from "@/components/contacts/KeyboardSaveButton";
 import NewContactCloseButton from "@/components/contacts/NewContactCloseButton";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 import { useAuth } from "@/contexts/AuthContext";
+import { processContactFromTranscript } from "@/lib/api/process_contact";
 import { useContacts } from "@/lib/hooks/useLegendState";
 import * as Haptics from "expo-haptics";
-import { router } from "expo-router";
-import React, { useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   ActionSheetIOS,
   Alert,
@@ -19,6 +21,11 @@ import {
 export default function NewContactScreen() {
   const { user } = useAuth();
   const { createContact } = useContacts();
+  const params = useLocalSearchParams<{
+    transcript?: string;
+    mode?: string;
+  }>();
+
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -29,6 +36,44 @@ export default function NewContactScreen() {
     notes: "",
   });
   const [contactName, setContactName] = useState("New Contact");
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    if (params.transcript && params.mode === "talkAboutThem") {
+      processTranscript(params.transcript);
+    }
+  }, [params.transcript, params.mode]);
+
+  const processTranscript = async (transcript: string) => {
+    setIsProcessing(true);
+    try {
+      const contactInfo = await processContactFromTranscript(transcript);
+
+      setFormData({
+        first_name: contactInfo.first_name || "",
+        last_name: contactInfo.last_name || "",
+        company: contactInfo.company || "",
+        job_title: contactInfo.job_title || "",
+        department: contactInfo.department || "",
+        address: contactInfo.address || "",
+        notes: contactInfo.notes || "",
+      });
+
+      if (contactInfo.first_name) {
+        setContactName(contactInfo.first_name);
+      }
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      console.error("Error processing transcript:", error);
+      Alert.alert(
+        "Error",
+        "No se pudo procesar la información. Por favor, ingresa los datos manualmente."
+      );
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const hasUnsavedChanges = () => {
     return Object.values(formData).some((value) => value.trim() !== "");
@@ -152,10 +197,14 @@ export default function NewContactScreen() {
         }
         autoCorrect={false}
         spellCheck={false}
-        autoFocus={focus}
+        autoFocus={focus && !isProcessing && params.mode !== "talkAboutThem"}
       />
     </View>
   );
+
+  if (isProcessing) {
+    return <LoadingScreen />;
+  }
 
   return (
     <KeyboardAvoidingView
