@@ -1,5 +1,4 @@
-import FadingTranscript from "@/components/recording/FadingTranscript";
-import Badge from "@/components/ui/Badge";
+import AudioVisualizer from "@/components/recording/AudioVisualizer";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useRef, useState } from "react";
@@ -58,23 +57,16 @@ export default function NewInteraction({
     }
   }, [showButtons]);
 
+  // Actualizar el transcript y editableText cuando previousTranscript cambia
   useEffect(() => {
-    if (showButtons && !isEditing) {
-      setEditableText(transcript);
+    if (previousTranscript) {
+      const textToShow = previousTranscript;
+      setTranscript(textToShow);
+      if (!isEditing) {
+        setEditableText(textToShow);
+      }
     }
-  }, [showButtons, transcript, isEditing]);
-
-  const handleTranscriptUpdate = (newTranscript: string) => {
-    setTranscript(newTranscript);
-
-    if (onExternalTranscriptUpdate) {
-      onExternalTranscriptUpdate(newTranscript);
-    }
-
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-  };
+  }, [previousTranscript, isEditing]);
 
   const handleTextInputBlur = () => {
     setIsEditing(false);
@@ -104,7 +96,8 @@ export default function NewInteraction({
 
   const handleActionPress = (action: ActionButton) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    action.onPress(transcript);
+    // Usar editableText que es el texto actual del TextInput
+    action.onPress(editableText || transcript);
   };
 
   const getButtonStyle = (
@@ -193,7 +186,7 @@ export default function NewInteraction({
           </Text>
         </View>
 
-        {showButtons && actions.length > 0 && (
+        {!isRecording && showButtons && actions.length > 0 && (
           <Animated.View
             style={[
               buttonsAnimatedStyle,
@@ -258,13 +251,17 @@ export default function NewInteraction({
         ]}
       >
         <View>
-          {isRecording && (
-            <View style={{ padding: 24, height: 40 }}>
-              <Badge title="●    recording" color="#999" textColor="#fff" />
-            </View>
-          )}
-          {showButtons ? (
+          {isRecording ? (
+            <Animated.View
+              entering={FadeIn.duration(200)}
+              exiting={FadeOut.duration(150)}
+              style={{ flex: 1, marginTop: 90 }}
+            >
+              <AudioVisualizer color="#000" />
+            </Animated.View>
+          ) : (
             <ScrollView
+              ref={scrollViewRef}
               style={{
                 marginTop: 20,
                 height: 180,
@@ -294,37 +291,7 @@ export default function NewInteraction({
                   paddingTop: 10,
                   color: "#000",
                 }}
-                placeholder="Escribe aquí..."
-                placeholderTextColor="#999"
               />
-            </ScrollView>
-          ) : (
-            <ScrollView
-              ref={scrollViewRef}
-              style={{
-                marginTop: isRecording ? 10 : 20,
-                height: 140,
-                paddingHorizontal: 20,
-              }}
-              contentContainerStyle={{
-                paddingBottom: 15,
-                flexGrow: 1,
-              }}
-              showsVerticalScrollIndicator={false}
-            >
-              <View
-                style={{
-                  minHeight: 60,
-                  flexDirection: "row",
-                  flexWrap: "wrap",
-                }}
-              >
-                <FadingTranscript
-                  isRecording={isRecording}
-                  onTranscriptUpdate={handleTranscriptUpdate}
-                  previousTranscript={previousTranscript}
-                />
-              </View>
             </ScrollView>
           )}
         </View>

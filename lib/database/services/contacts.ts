@@ -98,7 +98,7 @@ export class ContactsService {
   }
 
   /**
-   * Search contacts by name or company
+   * Search contacts by name
    */
   static async search(
     ownerId: string,
@@ -113,9 +113,7 @@ export class ContactsService {
         .from(this.TABLE_NAME)
         .select("*", { count: "exact" })
         .eq("owner_id", ownerId)
-        .or(
-          `first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,company.ilike.%${searchTerm}%`
-        )
+        .or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,`)
         .order("created_at", { ascending: false });
 
       // Apply pagination

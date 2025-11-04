@@ -285,28 +285,58 @@ export default function ContactDetailsScreen() {
           borderWidth={1}
           borderColor="#ddd"
         />
-        <BaseButton
-          backgroundColor="white"
-          borderRadius={13}
-          borderWidth={1}
-          borderColor="#ddd"
-          onPress={() => setShowOptions(!showOptions)}
-          style={{
-            paddingHorizontal: 15,
-            paddingVertical: 10,
-            elevation: 2,
-          }}
-        >
-          <Text
+        <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+          {showOptions && (
+            <Animated.View
+              entering={FadeIn.duration(300)}
+              exiting={FadeOut.duration(100)}
+            >
+              <BaseButton
+                backgroundColor="#111"
+                borderRadius={13}
+                width={120}
+                onPress={handleDeleteContact}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 10,
+                  elevation: 2,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontSize: 14,
+                    fontWeight: "500",
+                  }}
+                >
+                  delete
+                </Text>
+              </BaseButton>
+            </Animated.View>
+          )}
+          <BaseButton
+            backgroundColor="white"
+            borderRadius={13}
+            borderWidth={1}
+            borderColor="#ddd"
+            onPress={() => setShowOptions(!showOptions)}
             style={{
-              color: "#444",
-              fontSize: 14,
-              fontWeight: "500",
+              paddingHorizontal: 15,
+              paddingVertical: 10,
+              elevation: 2,
             }}
           >
-            {showOptions ? "hide" : "options"}
-          </Text>
-        </BaseButton>
+            <Text
+              style={{
+                color: "#444",
+                fontSize: 14,
+                fontWeight: "500",
+              }}
+            >
+              {showOptions ? "hide" : "options"}
+            </Text>
+          </BaseButton>
+        </View>
       </View>
 
       <ScrollView
@@ -568,58 +598,24 @@ export default function ContactDetailsScreen() {
           </>
         )}
 
-        <Badge
-          title="interactions"
-          color="#E9E9E9"
-          textColor="#000"
-          textSize={14}
-          marginBottom={5}
-        />
-
-        <View style={{ gap: 10, marginBottom: 80 }}>
-          {interactions.map((interaction) => (
-            <ContactInteractionItem
-              key={interaction.id}
-              interaction={interaction}
+        {interactions.length > 0 && (
+          <>
+            <Badge
+              title="interactions"
+              color="#E9E9E9"
+              textColor="#000"
+              textSize={14}
+              marginBottom={5}
             />
-          ))}
-        </View>
-        {showOptions && (
-          <Animated.View
-            entering={FadeIn.duration(300)}
-            exiting={FadeOut.duration(200)}
-            style={{
-              position: "absolute",
-              left: 22,
-              bottom: 0,
-              zIndex: 10,
-              width: "100%",
-              height: 80,
-            }}
-          >
-            <BaseButton
-              backgroundColor="#111"
-              borderRadius={20}
-              width={130}
-              onPress={handleDeleteContact}
-              style={{
-                elevation: 5,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text
-                style={{
-                  textAlign: "center",
-                  color: "#fff",
-                  fontSize: 14,
-                  fontWeight: "500",
-                }}
-              >
-                delete
-              </Text>
-            </BaseButton>
-          </Animated.View>
+            <View style={{ gap: 10, marginBottom: 80 }}>
+              {interactions.map((interaction) => (
+                <ContactInteractionItem
+                  key={interaction.id}
+                  interaction={interaction}
+                />
+              ))}
+            </View>
+          </>
         )}
       </ScrollView>
 

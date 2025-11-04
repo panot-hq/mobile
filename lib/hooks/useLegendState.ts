@@ -70,42 +70,40 @@ export function useContacts() {
     if (!allContacts || !user) return [];
 
     const term = searchTerm.toLowerCase();
-    return Object.values(allContacts).filter(
-      (contact: any) => {
-        if (contact.owner_id !== user.id || contact.deleted) {
-          return false;
-        }
-
-        // Search in name fields
-        if (
-          contact.first_name?.toLowerCase().includes(term) ||
-          contact.last_name?.toLowerCase().includes(term)
-        ) {
-          return true;
-        }
-
-        // Search in professional context
-        if (
-          contact.professional_context?.company?.toLowerCase().includes(term) ||
-          contact.professional_context?.job_title?.toLowerCase().includes(term) ||
-          contact.professional_context?.department?.toLowerCase().includes(term)
-        ) {
-          return true;
-        }
-
-        // Search in relationship context
-        if (contact.relationship_context?.toLowerCase().includes(term)) {
-          return true;
-        }
-
-        // Search in details notes
-        if (contact.details?.notes?.toLowerCase().includes(term)) {
-          return true;
-        }
-
+    return Object.values(allContacts).filter((contact: any) => {
+      if (contact.owner_id !== user.id || contact.deleted) {
         return false;
       }
-    ) as Contact[];
+
+      // Search in name fields
+      if (
+        contact.first_name?.toLowerCase().includes(term) ||
+        contact.last_name?.toLowerCase().includes(term)
+      ) {
+        return true;
+      }
+
+      // Search in professional context
+      if (
+        contact.professional_context?.company?.toLowerCase().includes(term) ||
+        contact.professional_context?.job_title?.toLowerCase().includes(term) ||
+        contact.professional_context?.department?.toLowerCase().includes(term)
+      ) {
+        return true;
+      }
+
+      // Search in relationship context
+      if (contact.relationship_context?.toLowerCase().includes(term)) {
+        return true;
+      }
+
+      // Search in details notes
+      if (contact.details?.notes?.toLowerCase().includes(term)) {
+        return true;
+      }
+
+      return false;
+    }) as Contact[];
   };
 
   return {
@@ -218,7 +216,9 @@ export function useInteractions() {
     // @ts-ignore
     const contact = contacts$[contactId]?.peek();
     if (!contact || contact.deleted) {
-      throw new Error("Cannot assign interaction to non-existent or deleted contact");
+      throw new Error(
+        "Cannot assign interaction to non-existent or deleted contact"
+      );
     }
     updateInteraction(interactionId, { contact_id: contactId });
   };

@@ -13,7 +13,7 @@ export default function SettingsScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(false);
-  const [transcriptionLanguage, setTranscriptionLanguage] = useState("English");
+  const [transcriptionLanguage, setTranscriptionLanguage] = useState("Spanish");
 
   const handleSignOut = async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [

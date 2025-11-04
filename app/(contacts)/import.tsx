@@ -166,17 +166,15 @@ export default function ImportContactScreen() {
         createContact({
           first_name: localContact.firstName || "",
           last_name: localContact.lastName || "",
-          company: "",
-          job_title: "",
-          department: "",
-          address: "",
-          notes: "Imported from local contacts",
-          deleted: false,
+          professional_context: "",
+          personal_context: "",
+          relationship_context: "",
+          details: "you imported this contact from your phone contacts",
+          communication_channels: stringifyCommunicationChannels(
+            communicationChannels
+          ),
           birthday: null,
-          communication_channels:
-            communicationChannels.length > 0
-              ? stringifyCommunicationChannels(communicationChannels)
-              : null,
+          deleted: false,
         });
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
