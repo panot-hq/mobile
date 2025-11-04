@@ -1,39 +1,73 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "panot",
+    "slug": "Panot",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "panot",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
-      "supportsTablet": true
+      "icon": {
+        "dark": "./assets/icons/ios-dark.png",
+        "light": "./assets/icons/ios-light.png",
+        "tinted": "./assets/icons/ios-tinted.png"
+      },
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ahrm.panot",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSSpeechRecognitionUsageDescription": "Allow $(PRODUCT_NAME) to use speech recognition.",
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use the microphone.",
+        "NSContactsUsageDescription": "Allow $(PRODUCT_NAME) to access your contacts."
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.ahrm.panot"
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "output": "static"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/icons/splash-icon-dark.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#000",
+          "dark": {
+            "image": "./assets/icons/splash-icon-light.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#fff"
+          }
+        }
+      ],
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Allow $(PRODUCT_NAME) to access your contacts."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "72501028-5edd-466b-b1c0-7708941aaea3"
+      }
     }
   }
 }

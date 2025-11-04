@@ -1,59 +1,140 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { useFonts } from "expo-font";
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import "react-native-reanimated";
 
-import { useColorScheme } from '@/components/useColorScheme';
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ContactsProvider } from "@/contexts/ContactsContext";
+import { InteractionProvider } from "@/contexts/InteractionContext";
+import { InteractionOverlayProvider } from "@/contexts/InteractionOverlayContext";
+import { RecordingProvider } from "@/contexts/RecordingContext";
+import { TalkAboutThemProvider } from "@/contexts/TalkAboutThemContext";
+export { ErrorBoundary } from "expo-router";
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
+SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
+  initialRouteName: "index",
 };
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     ...FontAwesome.font,
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
 
   if (!loaded) {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <BottomSheetModalProvider>
+        <AuthProvider>
+          <ContactsProvider>
+            <InteractionProvider>
+              <RecordingProvider>
+                <TalkAboutThemProvider>
+                  <InteractionOverlayProvider>
+                    <RootLayoutNav />
+                  </InteractionOverlayProvider>
+                </TalkAboutThemProvider>
+              </RecordingProvider>
+            </InteractionProvider>
+          </ContactsProvider>
+        </AuthProvider>
+      </BottomSheetModalProvider>
+    </GestureHandlerRootView>
+  );
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen
+        name="index"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="(tabs)"
+        options={{
+          animation: "fade",
+          headerShown: false,
+          contentStyle: {
+            backgroundColor: "transparent",
+          },
+        }}
+      />
+      <Stack.Screen
+        name="(auth)"
+        options={{
+          animation: "fade",
+        }}
+      />
+      <Stack.Screen
+        name="(interactions)/[id]"
+        options={{
+          presentation: "modal",
+          headerShown: false,
+          contentStyle: {
+            backgroundColor: "transparent",
+          },
+        }}
+      />
+      <Stack.Screen
+        name="(interactions)/assign"
+        options={{
+          presentation: "modal",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="(contacts)/new"
+        options={{
+          presentation: "modal",
+          headerShown: false,
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
+        name="(contacts)/import"
+        options={{
+          presentation: "modal",
+          headerShown: false,
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="(contacts)/[id]"
+        options={{
+          presentation: "card",
+          animation: "slide_from_right",
+          gestureEnabled: false,
+          headerShown: false,
+        }}
+      />
+
+      <Stack.Screen
+        name="settings"
+        options={{
+          animation: "fade",
+          headerShown: false,
+          gestureEnabled: false,
+          contentStyle: {
+            backgroundColor: "black",
+          },
+        }}
+      />
+    </Stack>
   );
 }
