@@ -19,6 +19,12 @@ export default function FadingTranscript({
   const prevTranscript = useRef(previousTranscript);
 
   useEffect(() => {
+    if (previousTranscript && !isRecording) {
+      setTranscript(previousTranscript);
+    }
+  }, [previousTranscript, isRecording]);
+
+  useEffect(() => {
     if (previousTranscript) {
       const segments = previousTranscript.split(/(\n)/);
       const initialWords: { word: string; key: string; fade: boolean }[] = [];
@@ -47,8 +53,13 @@ export default function FadingTranscript({
 
       setWords(initialWords);
       prevTranscript.current = previousTranscript;
+    } else if (!previousTranscript && !isRecording) {
+      // Si no hay previousTranscript y no se está grabando, limpiar
+      setWords([]);
+      setTranscript("");
+      prevTranscript.current = "";
     }
-  }, [previousTranscript]);
+  }, [previousTranscript, isRecording]);
 
   useEffect(() => {
     if (!isRecording) return;
@@ -135,7 +146,6 @@ export default function FadingTranscript({
       }}
     >
       {words.map(({ word, key, fade }, idx) => {
-        // Renderizar saltos de línea como elementos que fuerzan un break
         if (word === "\n") {
           return (
             <View

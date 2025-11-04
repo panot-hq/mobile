@@ -72,16 +72,25 @@ export default function RecordingOverlay({
 
   useEffect(() => {
     if (!isRecording && recordingStartTime && showInteraction) {
-      if (!transcript.trim()) {
-        setShowInteraction(false);
-        setTranscript("");
-        setRecordingStartTime(undefined);
-        setShowButtons(false);
-        setShouldBlur(false);
-      } else {
-        setShowButtons(true);
-        setShouldBlur(true);
-      }
+      const timer = setTimeout(() => {
+        const hasContent = transcript.trim() || previousTranscript.trim();
+        if (!hasContent) {
+          setShowInteraction(false);
+          setTranscript("");
+          setPreviousTranscript("");
+          setRecordingStartTime(undefined);
+          setShowButtons(false);
+          setShouldBlur(false);
+        } else {
+          if (transcript.trim() && transcript !== previousTranscript) {
+            setPreviousTranscript(transcript);
+          }
+          setShowButtons(true);
+          setShouldBlur(true);
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
     } else if (isRecording) {
       setShowButtons(false);
       setShouldBlur(true);
@@ -90,6 +99,7 @@ export default function RecordingOverlay({
     isRecording,
     recordingStartTime,
     transcript,
+    previousTranscript,
     showInteraction,
     setShouldBlur,
   ]);
@@ -107,6 +117,29 @@ export default function RecordingOverlay({
     };
   }, []);
 
+  useEffect(() => {
+    if (!isRecording) return;
+
+    const transcriptSub = PanotSpeechModule.addListener(
+      "onTranscriptUpdate",
+      (event) => {
+        let fullTranscript = event.transcript;
+
+        if (previousTranscript) {
+          const needsSeparator = !previousTranscript.match(/[\s\n]$/);
+          const separator = needsSeparator ? " " : "";
+          fullTranscript = previousTranscript + separator + event.transcript;
+        }
+
+        setTranscript(fullTranscript);
+      }
+    );
+
+    return () => {
+      transcriptSub.remove();
+    };
+  }, [isRecording, previousTranscript]);
+
   const startRecording = async () => {
     const result = await PanotSpeechModule.requestPermissions();
 
@@ -122,7 +155,11 @@ export default function RecordingOverlay({
   const stopRecording = () => {
     PanotSpeechModule.stopTranscribing();
     setIsRecording(false);
-    setPreviousTranscript(transcript);
+    if (transcript.trim()) {
+      setPreviousTranscript(transcript);
+    } else if (previousTranscript.trim()) {
+      setPreviousTranscript(previousTranscript);
+    }
   };
 
   const continueRecording = async () => {
@@ -130,7 +167,10 @@ export default function RecordingOverlay({
 
     if (result.status === "granted") {
       setShowButtons(false);
-      setPreviousTranscript(transcript);
+      const currentTranscript = transcript.trim() || previousTranscript.trim();
+      if (currentTranscript) {
+        setPreviousTranscript(currentTranscript);
+      }
       PanotSpeechModule.startTranscribing(true, "es-ES");
       setIsRecording(true);
     }

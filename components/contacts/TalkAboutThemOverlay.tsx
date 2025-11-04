@@ -72,19 +72,27 @@ export default function TalkAboutThemOverlay({
 
   useEffect(() => {
     if (!isRecording && recordingStartTime && showPreview) {
-      if (!transcript.trim()) {
-        // Si no hay transcripción, cerrar todo el overlay
-        setShowPreview(false);
-        setTranscript("");
-        setRecordingStartTime(undefined);
-        setShowButtons(false);
-        setShouldBlur(false);
-        setIsOverlayVisible(false);
-        setHasAutoStarted(false);
-      } else {
-        setShowButtons(true);
-        setShouldBlur(true);
-      }
+      const timer = setTimeout(() => {
+        const hasContent = transcript.trim() || previousTranscript.trim();
+        if (!hasContent) {
+          setShowPreview(false);
+          setTranscript("");
+          setPreviousTranscript("");
+          setRecordingStartTime(undefined);
+          setShowButtons(false);
+          setShouldBlur(false);
+          setIsOverlayVisible(false);
+          setHasAutoStarted(false);
+        } else {
+          if (transcript.trim() && transcript !== previousTranscript) {
+            setPreviousTranscript(transcript);
+          }
+          setShowButtons(true);
+          setShouldBlur(true);
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
     } else if (isRecording) {
       setShowButtons(false);
       setShouldBlur(true);
@@ -93,6 +101,7 @@ export default function TalkAboutThemOverlay({
     isRecording,
     recordingStartTime,
     transcript,
+    previousTranscript,
     showPreview,
     setShouldBlur,
     setIsOverlayVisible,
@@ -111,6 +120,29 @@ export default function TalkAboutThemOverlay({
     };
   }, []);
 
+  useEffect(() => {
+    if (!isRecording) return;
+
+    const transcriptSub = PanotSpeechModule.addListener(
+      "onTranscriptUpdate",
+      (event) => {
+        let fullTranscript = event.transcript;
+
+        if (previousTranscript) {
+          const needsSeparator = !previousTranscript.match(/[\s\n]$/);
+          const separator = needsSeparator ? " " : "";
+          fullTranscript = previousTranscript + separator + event.transcript;
+        }
+
+        setTranscript(fullTranscript);
+      }
+    );
+
+    return () => {
+      transcriptSub.remove();
+    };
+  }, [isRecording, previousTranscript]);
+
   const startRecording = async () => {
     const result = await PanotSpeechModule.requestPermissions();
 
@@ -126,7 +158,11 @@ export default function TalkAboutThemOverlay({
   const stopRecording = () => {
     PanotSpeechModule.stopTranscribing();
     setIsRecording(false);
-    setPreviousTranscript(transcript);
+    if (transcript.trim()) {
+      setPreviousTranscript(transcript);
+    } else if (previousTranscript.trim()) {
+      setPreviousTranscript(previousTranscript);
+    }
   };
 
   const continueRecording = async () => {
@@ -134,7 +170,10 @@ export default function TalkAboutThemOverlay({
 
     if (result.status === "granted") {
       setShowButtons(false);
-      setPreviousTranscript(transcript);
+      const currentTranscript = transcript.trim() || previousTranscript.trim();
+      if (currentTranscript) {
+        setPreviousTranscript(currentTranscript);
+      }
       PanotSpeechModule.startTranscribing(true, "es-ES");
       setIsRecording(true);
     }
@@ -162,7 +201,6 @@ export default function TalkAboutThemOverlay({
 
   const handleAcceptTranscription = useCallback(
     async (acceptedTranscript: string) => {
-      // Clean up overlay state first
       setTranscript("");
       setPreviousTranscript("");
       setShowPreview(false);
@@ -172,7 +210,6 @@ export default function TalkAboutThemOverlay({
       setIsOverlayVisible(false);
       setHasAutoStarted(false);
 
-      // Small delay to ensure overlay is closed before navigation
       setTimeout(() => {
         router.push({
           pathname: "/(contacts)/new",

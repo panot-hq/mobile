@@ -131,7 +131,6 @@ export async function initializeSync(userId: string) {
 
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    // Clean up any orphaned interactions after data is loaded
     await cleanupOrphanedInteractions();
   } catch (error) {
     console.error("Error initializing sync:", error);
@@ -159,16 +158,10 @@ export async function cleanupOrphanedInteractions() {
 
     Object.entries(allInteractions).forEach(
       ([id, interaction]: [string, any]) => {
-        // Skip if no contact_id (these are valid unassigned interactions)
         if (!interaction.contact_id) return;
 
-        // Check if the contact exists
         const contact = allContacts[interaction.contact_id];
         if (!contact || contact.deleted) {
-          console.warn(
-            `🧹 Cleaning up orphaned interaction ${id} with invalid contact_id: ${interaction.contact_id}`
-          );
-          // Set contact_id to null instead of deleting the interaction
           // @ts-ignore
           interactions$[id].assign({
             contact_id: null,
@@ -178,10 +171,6 @@ export async function cleanupOrphanedInteractions() {
         }
       }
     );
-
-    if (cleanedCount > 0) {
-      console.log(`✅ Cleaned up ${cleanedCount} orphaned interaction(s)`);
-    }
   } catch (error) {
     console.error("Error cleaning up orphaned interactions:", error);
   }
