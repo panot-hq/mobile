@@ -1,5 +1,5 @@
 // Cargar variables de entorno desde .env
-require("dotenv").config();
+require("dotenv").config({ path: ".env" });
 
 module.exports = ({ config }) => {
   return {

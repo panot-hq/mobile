@@ -46,21 +46,35 @@ export default function ContactDetailsScreen() {
   const interactions = getInteractionsByContact(id as string);
 
   const [isEditingName, setIsEditingName] = useState(false);
-  const [isEditingCompany, setIsEditingCompany] = useState(false);
-  const [isEditingJobTitle, setIsEditingJobTitle] = useState(false);
-  const [isEditingDepartment, setIsEditingDepartment] = useState(false);
-  const [isEditingAddress, setIsEditingAddress] = useState(false);
-  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [isEditingProfessionalContext, setIsEditingProfessionalContext] =
+    useState(false);
+  const [isEditingPersonalContext, setIsEditingPersonalContext] =
+    useState(false);
+  const [isEditingRelationshipContext, setIsEditingRelationshipContext] =
+    useState(false);
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [nameValue, setNameValue] = useState("");
-  const [companyValue, setCompanyValue] = useState("");
-  const [jobTitleValue, setJobTitleValue] = useState("");
-  const [departmentValue, setDepartmentValue] = useState("");
-  const [addressValue, setAddressValue] = useState("");
-  const [notesValue, setNotesValue] = useState("");
+  const [professionalContextValue, setProfessionalContextValue] = useState("");
+  const [personalContextValue, setPersonalContextValue] = useState("");
+  const [relationshipContextValue, setRelationshipContextValue] = useState("");
+  const [detailsValue, setDetailsValue] = useState("");
   const [communicationChannels, setCommunicationChannels] = useState<
     CommunicationChannel[]
   >([]);
+
+  // Helper function to safely get string from Json (can be string directly or nested)
+  const getContextString = (value: any): string => {
+    if (typeof value === "string") {
+      return value;
+    }
+    if (typeof value === "object" && value !== null) {
+      // Legacy format: try to extract from nested object
+      // But ideally all contexts should be strings now
+      return "";
+    }
+    return "";
+  };
 
   // Inicializar valores cuando cambie el contacto
   useEffect(() => {
@@ -68,13 +82,18 @@ export default function ContactDetailsScreen() {
       setNameValue(
         `${contact.first_name || ""} ${contact.last_name || ""}`.trim()
       );
-      setCompanyValue(contact.company || "");
-      setJobTitleValue(contact.job_title || "");
-      setDepartmentValue(contact.department || "");
-      setAddressValue(contact.address || "");
-      setNotesValue(contact.notes || "");
+      setProfessionalContextValue(
+        getContextString(contact.professional_context)
+      );
+      setPersonalContextValue(getContextString(contact.personal_context));
+      setRelationshipContextValue(
+        getContextString(contact.relationship_context)
+      );
+      setDetailsValue(getContextString(contact.details));
       setCommunicationChannels(
-        parseCommunicationChannels(contact.communication_channels)
+        parseCommunicationChannels(
+          contact.communication_channels as string | null
+        )
       );
     }
   }, [contact]);
@@ -104,11 +123,15 @@ export default function ContactDetailsScreen() {
     setIsEditingName(false);
   };
 
-  const handleCompanySave = () => {
-    if (contact && companyValue !== contact.company) {
+  const handleProfessionalContextSave = () => {
+    if (!contact) return;
+
+    const currentValue = getContextString(contact.professional_context);
+
+    if (professionalContextValue !== currentValue) {
       try {
         updateContactData(contact.id, {
-          company: companyValue,
+          professional_context: professionalContextValue.trim() || null,
         });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (error) {
@@ -116,14 +139,18 @@ export default function ContactDetailsScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     }
-    setIsEditingCompany(false);
+    setIsEditingProfessionalContext(false);
   };
 
-  const handleJobTitleSave = () => {
-    if (contact && jobTitleValue !== contact.job_title) {
+  const handlePersonalContextSave = () => {
+    if (!contact) return;
+
+    const currentValue = getContextString(contact.personal_context);
+
+    if (personalContextValue !== currentValue) {
       try {
         updateContactData(contact.id, {
-          job_title: jobTitleValue,
+          personal_context: personalContextValue.trim() || null,
         });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (error) {
@@ -131,14 +158,18 @@ export default function ContactDetailsScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     }
-    setIsEditingJobTitle(false);
+    setIsEditingPersonalContext(false);
   };
 
-  const handleDepartmentSave = () => {
-    if (contact && departmentValue !== contact.department) {
+  const handleRelationshipContextSave = () => {
+    const currentValue =
+      typeof contact?.relationship_context === "string"
+        ? contact.relationship_context
+        : "";
+    if (contact && relationshipContextValue !== currentValue) {
       try {
         updateContactData(contact.id, {
-          department: departmentValue,
+          relationship_context: relationshipContextValue.trim() || null,
         });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (error) {
@@ -146,29 +177,17 @@ export default function ContactDetailsScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     }
-    setIsEditingDepartment(false);
+    setIsEditingRelationshipContext(false);
   };
 
-  const handleAddressSave = () => {
-    if (contact && addressValue !== contact.address) {
-      try {
-        updateContactData(contact.id, {
-          address: addressValue,
-        });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (error) {
-        console.error("Error updating contact:", error);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-    }
-    setIsEditingAddress(false);
-  };
+  const handleDetailsSave = () => {
+    if (!contact) return;
 
-  const handleNotesSave = () => {
-    if (contact && notesValue !== contact.notes) {
+    const currentValue = getContextString(contact.details);
+    if (detailsValue !== currentValue) {
       try {
         updateContactData(contact.id, {
-          notes: notesValue,
+          details: detailsValue.trim() || null,
         });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (error) {
@@ -176,7 +195,7 @@ export default function ContactDetailsScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     }
-    setIsEditingNotes(false);
+    setIsEditingDetails(false);
   };
 
   const handleCommunicationChannelsChange = (
@@ -235,35 +254,7 @@ export default function ContactDetailsScreen() {
     borderColor: "#ddd",
   }));
 
-  const companyContainerAnimatedStyle = useAnimatedStyle(() => ({
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 0,
-  }));
-
-  const jobTitleContainerAnimatedStyle = useAnimatedStyle(() => ({
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 0,
-  }));
-
-  const departmentContainerAnimatedStyle = useAnimatedStyle(() => ({
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 0,
-  }));
-
-  const addressContainerAnimatedStyle = useAnimatedStyle(() => ({
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 0,
-  }));
-
-  const notesContainerAnimatedStyle = useAnimatedStyle(() => ({
+  const contextContainerAnimatedStyle = useAnimatedStyle(() => ({
     backgroundColor: "white",
     borderRadius: 20,
     padding: 20,
@@ -373,10 +364,11 @@ export default function ContactDetailsScreen() {
           />
         </View>
 
-        {companyValue && (
+        {/* Professional Context */}
+        {(professionalContextValue || isEditingProfessionalContext) && (
           <>
             <Badge
-              title="company"
+              title="professional context"
               color="#E9E9E9"
               textColor="#000"
               textSize={14}
@@ -388,199 +380,11 @@ export default function ContactDetailsScreen() {
                 {
                   marginBottom: 20,
                 },
-                companyContainerAnimatedStyle,
+                contextContainerAnimatedStyle,
               ]}
-              onPress={() => setIsEditingCompany(true)}
+              onPress={() => setIsEditingProfessionalContext(true)}
             >
-              {isEditingCompany ? (
-                <TextInput
-                  style={{
-                    fontSize: 16,
-                    color: "#000",
-                    lineHeight: 22,
-                  }}
-                  value={companyValue}
-                  onChangeText={setCompanyValue}
-                  onBlur={handleCompanySave}
-                  placeholder="Company"
-                  autoFocus
-                />
-              ) : (
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: "#000",
-                    lineHeight: 22,
-                  }}
-                >
-                  {companyValue}
-                </Text>
-              )}
-            </AnimatedPressable>
-          </>
-        )}
-
-        {jobTitleValue && (
-          <>
-            <Badge
-              title="job title"
-              color="#E9E9E9"
-              textColor="#000"
-              textSize={14}
-              marginBottom={5}
-            />
-
-            <AnimatedPressable
-              style={[
-                {
-                  marginBottom: 20,
-                },
-                jobTitleContainerAnimatedStyle,
-              ]}
-              onPress={() => setIsEditingJobTitle(true)}
-            >
-              {isEditingJobTitle ? (
-                <TextInput
-                  style={{
-                    fontSize: 16,
-                    color: "#000",
-                    lineHeight: 22,
-                  }}
-                  value={jobTitleValue}
-                  onChangeText={setJobTitleValue}
-                  onBlur={handleJobTitleSave}
-                  placeholder="Job title"
-                  autoFocus
-                />
-              ) : (
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: "#000",
-                    lineHeight: 22,
-                  }}
-                >
-                  {jobTitleValue}
-                </Text>
-              )}
-            </AnimatedPressable>
-          </>
-        )}
-
-        {departmentValue && (
-          <>
-            <Badge
-              title="department"
-              color="#E9E9E9"
-              textColor="#000"
-              textSize={14}
-              marginBottom={5}
-            />
-
-            <AnimatedPressable
-              style={[
-                {
-                  marginBottom: 20,
-                },
-                departmentContainerAnimatedStyle,
-              ]}
-              onPress={() => setIsEditingDepartment(true)}
-            >
-              {isEditingDepartment ? (
-                <TextInput
-                  style={{
-                    fontSize: 16,
-                    color: "#000",
-                    lineHeight: 22,
-                  }}
-                  value={departmentValue}
-                  onChangeText={setDepartmentValue}
-                  onBlur={handleDepartmentSave}
-                  placeholder="Department"
-                  autoFocus
-                />
-              ) : (
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: "#000",
-                    lineHeight: 22,
-                  }}
-                >
-                  {departmentValue}
-                </Text>
-              )}
-            </AnimatedPressable>
-          </>
-        )}
-
-        {addressValue && (
-          <>
-            <Badge
-              title="address"
-              color="#E9E9E9"
-              textColor="#000"
-              textSize={14}
-              marginBottom={5}
-            />
-
-            <AnimatedPressable
-              style={[
-                {
-                  marginBottom: 20,
-                },
-                addressContainerAnimatedStyle,
-              ]}
-              onPress={() => setIsEditingAddress(true)}
-            >
-              {isEditingAddress ? (
-                <TextInput
-                  style={{
-                    fontSize: 16,
-                    color: "#000",
-                    lineHeight: 22,
-                  }}
-                  value={addressValue}
-                  onChangeText={setAddressValue}
-                  onBlur={handleAddressSave}
-                  placeholder="Address"
-                  autoFocus
-                />
-              ) : (
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: "#000",
-                    lineHeight: 22,
-                  }}
-                >
-                  {addressValue}
-                </Text>
-              )}
-            </AnimatedPressable>
-          </>
-        )}
-
-        {notesValue && (
-          <>
-            <Badge
-              title="notes"
-              color="#E9E9E9"
-              textColor="#000"
-              textSize={14}
-              marginBottom={5}
-            />
-
-            <AnimatedPressable
-              style={[
-                {
-                  marginBottom: 20,
-                },
-                notesContainerAnimatedStyle,
-              ]}
-              onPress={() => setIsEditingNotes(true)}
-            >
-              {isEditingNotes ? (
+              {isEditingProfessionalContext ? (
                 <TextInput
                   style={{
                     fontSize: 16,
@@ -589,10 +393,10 @@ export default function ContactDetailsScreen() {
                     minHeight: 60,
                     textAlignVertical: "top",
                   }}
-                  value={notesValue}
-                  onChangeText={setNotesValue}
-                  onBlur={handleNotesSave}
-                  placeholder="Notes"
+                  value={professionalContextValue}
+                  onChangeText={setProfessionalContextValue}
+                  onBlur={handleProfessionalContextSave}
+                  placeholder="Describe their professional situation..."
                   multiline
                   autoFocus
                 />
@@ -604,7 +408,160 @@ export default function ContactDetailsScreen() {
                     lineHeight: 22,
                   }}
                 >
-                  {notesValue}
+                  {professionalContextValue || ""}
+                </Text>
+              )}
+            </AnimatedPressable>
+          </>
+        )}
+
+        {/* Personal Context */}
+        {(personalContextValue || isEditingPersonalContext) && (
+          <>
+            <Badge
+              title="personal context"
+              color="#E9E9E9"
+              textColor="#000"
+              textSize={14}
+              marginBottom={5}
+            />
+
+            <AnimatedPressable
+              style={[
+                {
+                  marginBottom: 20,
+                },
+                contextContainerAnimatedStyle,
+              ]}
+              onPress={() => setIsEditingPersonalContext(true)}
+            >
+              {isEditingPersonalContext ? (
+                <TextInput
+                  style={{
+                    fontSize: 16,
+                    color: "#000",
+                    lineHeight: 22,
+                    minHeight: 60,
+                    textAlignVertical: "top",
+                  }}
+                  value={personalContextValue}
+                  onChangeText={setPersonalContextValue}
+                  onBlur={handlePersonalContextSave}
+                  placeholder="Describe their personal information..."
+                  multiline
+                  autoFocus
+                />
+              ) : (
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: "#000",
+                    lineHeight: 22,
+                  }}
+                >
+                  {personalContextValue || ""}
+                </Text>
+              )}
+            </AnimatedPressable>
+          </>
+        )}
+
+        {/* Relationship Context */}
+        {(relationshipContextValue || isEditingRelationshipContext) && (
+          <>
+            <Badge
+              title="relationship context"
+              color="#E9E9E9"
+              textColor="#000"
+              textSize={14}
+              marginBottom={5}
+            />
+
+            <AnimatedPressable
+              style={[
+                {
+                  marginBottom: 20,
+                },
+                contextContainerAnimatedStyle,
+              ]}
+              onPress={() => setIsEditingRelationshipContext(true)}
+            >
+              {isEditingRelationshipContext ? (
+                <TextInput
+                  style={{
+                    fontSize: 16,
+                    color: "#000",
+                    lineHeight: 22,
+                    minHeight: 60,
+                    textAlignVertical: "top",
+                  }}
+                  value={relationshipContextValue}
+                  onChangeText={setRelationshipContextValue}
+                  onBlur={handleRelationshipContextSave}
+                  placeholder="How you met or relationship context..."
+                  multiline
+                  autoFocus
+                />
+              ) : (
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: "#000",
+                    lineHeight: 22,
+                  }}
+                >
+                  {relationshipContextValue || ""}
+                </Text>
+              )}
+            </AnimatedPressable>
+          </>
+        )}
+
+        {/* Details */}
+        {(detailsValue || isEditingDetails) && (
+          <>
+            <Badge
+              title="details"
+              color="#E9E9E9"
+              textColor="#000"
+              textSize={14}
+              marginBottom={5}
+            />
+
+            <AnimatedPressable
+              style={[
+                {
+                  marginBottom: 20,
+                },
+                contextContainerAnimatedStyle,
+              ]}
+              onPress={() => setIsEditingDetails(true)}
+            >
+              {isEditingDetails ? (
+                <TextInput
+                  style={{
+                    fontSize: 16,
+                    color: "#000",
+                    lineHeight: 22,
+                    minHeight: 60,
+                    textAlignVertical: "top",
+                  }}
+                  value={detailsValue}
+                  onChangeText={setDetailsValue}
+                  onBlur={handleDetailsSave}
+                  placeholder="Additional notes or details..."
+                  multiline
+                  autoFocus
+                />
+              ) : (
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: "#000",
+                    lineHeight: 22,
+                  }}
+                >
+                  {detailsValue || ""}
                 </Text>
               )}
             </AnimatedPressable>

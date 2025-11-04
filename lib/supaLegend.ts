@@ -29,7 +29,7 @@ export const contacts$: Observable<any> = observable(
     collection: "contacts",
     select: (from: any) =>
       from.select(
-        "id,owner_id,first_name,last_name,company,job_title,department,address,birthday,notes,created_at,updated_at,deleted,communication_channels"
+        "id,owner_id,first_name,last_name,professional_context,personal_context,relationship_context,details,birthday,created_at,updated_at,deleted,communication_channels"
       ),
     actions: ["read", "create", "update", "delete"],
     realtime: true,
@@ -157,25 +157,27 @@ export async function cleanupOrphanedInteractions() {
 
     let cleanedCount = 0;
 
-    Object.entries(allInteractions).forEach(([id, interaction]: [string, any]) => {
-      // Skip if no contact_id (these are valid unassigned interactions)
-      if (!interaction.contact_id) return;
+    Object.entries(allInteractions).forEach(
+      ([id, interaction]: [string, any]) => {
+        // Skip if no contact_id (these are valid unassigned interactions)
+        if (!interaction.contact_id) return;
 
-      // Check if the contact exists
-      const contact = allContacts[interaction.contact_id];
-      if (!contact || contact.deleted) {
-        console.warn(
-          `🧹 Cleaning up orphaned interaction ${id} with invalid contact_id: ${interaction.contact_id}`
-        );
-        // Set contact_id to null instead of deleting the interaction
-        // @ts-ignore
-        interactions$[id].assign({
-          contact_id: null,
-          updated_at: new Date().toISOString(),
-        });
-        cleanedCount++;
+        // Check if the contact exists
+        const contact = allContacts[interaction.contact_id];
+        if (!contact || contact.deleted) {
+          console.warn(
+            `🧹 Cleaning up orphaned interaction ${id} with invalid contact_id: ${interaction.contact_id}`
+          );
+          // Set contact_id to null instead of deleting the interaction
+          // @ts-ignore
+          interactions$[id].assign({
+            contact_id: null,
+            updated_at: new Date().toISOString(),
+          });
+          cleanedCount++;
+        }
       }
-    });
+    );
 
     if (cleanedCount > 0) {
       console.log(`✅ Cleaned up ${cleanedCount} orphaned interaction(s)`);

@@ -50,11 +50,14 @@ export default function ContactListElement({
     const contact = item.contact;
     const displayName =
       `${contact.first_name || ""} ${contact.last_name || ""}`.trim() ||
-      contact.company ||
+      contact.professional_context?.company ||
       "Sin nombre";
 
     const hasSearchTerm = searchTerm.trim().length > 0;
-    const showDetails = hasSearchTerm && (contact.company || contact.job_title);
+    const showDetails =
+      hasSearchTerm &&
+      (contact.professional_context?.company ||
+        contact.professional_context?.job_title);
 
     return (
       <Animated.View
@@ -88,18 +91,20 @@ export default function ContactListElement({
             </Text>
             {showDetails && (
               <View>
-                {contact.company && (
+                {contact.professional_context?.company && (
                   <Text
                     style={{
                       fontSize: 14,
                       color: "#666",
-                      marginBottom: contact.job_title ? 2 : 0,
+                      marginBottom: contact.professional_context?.job_title
+                        ? 2
+                        : 0,
                     }}
                   >
-                    {contact.company}
+                    {contact.professional_context.company}
                   </Text>
                 )}
-                {contact.job_title && (
+                {contact.professional_context?.job_title && (
                   <Text
                     style={{
                       fontSize: 14,
@@ -107,7 +112,7 @@ export default function ContactListElement({
                       fontStyle: "italic",
                     }}
                   >
-                    {contact.job_title}
+                    {contact.professional_context.job_title}
                   </Text>
                 )}
               </View>

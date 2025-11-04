@@ -275,28 +275,3 @@ export const Constants = {
     Enums: {},
   },
 } as const;
-
-// Type aliases for easier use
-export type Contact = Tables<"contacts">;
-export type ContactInsert = TablesInsert<"contacts">;
-export type ContactUpdate = TablesUpdate<"contacts">;
-
-export type Interaction = Tables<"interactions">;
-export type InteractionInsert = TablesInsert<"interactions">;
-export type InteractionUpdate = TablesUpdate<"interactions">;
-
-export type Profile = Tables<"profiles">;
-export type ProfileInsert = TablesInsert<"profiles">;
-export type ProfileUpdate = TablesUpdate<"profiles">;
-
-// Common response types (for services if still needed)
-export interface DatabaseResponse<T> {
-  data: T | null;
-  error: Error | null;
-}
-
-export interface DatabaseListResponse<T> {
-  data: T[] | null;
-  error: Error | null;
-  count?: number;
-}

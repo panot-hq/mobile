@@ -29,11 +29,10 @@ export default function NewContactScreen() {
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
-    company: "",
-    job_title: "",
-    department: "",
-    address: "",
-    notes: "",
+    professional_context: "",
+    personal_context: "",
+    relationship_context: "",
+    details: "",
   });
   const [contactName, setContactName] = useState("New Contact");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -52,11 +51,10 @@ export default function NewContactScreen() {
       setFormData({
         first_name: contactInfo.first_name || "",
         last_name: contactInfo.last_name || "",
-        company: contactInfo.company || "",
-        job_title: contactInfo.job_title || "",
-        department: contactInfo.department || "",
-        address: contactInfo.address || "",
-        notes: contactInfo.notes || "",
+        professional_context: contactInfo.professional_context || "",
+        personal_context: contactInfo.personal_context || "",
+        relationship_context: contactInfo.relationship_context || "",
+        details: contactInfo.details || "",
       });
 
       if (contactInfo.first_name) {
@@ -76,7 +74,22 @@ export default function NewContactScreen() {
   };
 
   const hasUnsavedChanges = () => {
-    return Object.values(formData).some((value) => value.trim() !== "");
+    if (formData.first_name.trim() !== "" || formData.last_name.trim() !== "") {
+      return true;
+    }
+    if (formData.professional_context.trim() !== "") {
+      return true;
+    }
+    if (formData.personal_context.trim() !== "") {
+      return true;
+    }
+    if (formData.relationship_context.trim() !== "") {
+      return true;
+    }
+    if (formData.details.trim() !== "") {
+      return true;
+    }
+    return false;
   };
 
   const showUnsavedChangesActionSheet = (onDiscard: () => void) => {
@@ -110,12 +123,11 @@ export default function NewContactScreen() {
     }
   };
 
-  const handleInputChange = (field: keyof typeof formData, value: string) => {
+  const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
-
     if (field === "first_name") {
       setContactName(value.trim() || "New Contact");
     }
@@ -133,9 +145,7 @@ export default function NewContactScreen() {
 
   const isFormValid = () => {
     return (
-      formData.first_name.trim() !== "" ||
-      formData.last_name.trim() !== "" ||
-      formData.company.trim() !== ""
+      formData.first_name.trim() !== "" || formData.last_name.trim() !== ""
     );
   };
 
@@ -153,12 +163,20 @@ export default function NewContactScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
-      createContact({
-        ...formData,
+      // Prepare data according to new schema (all contexts are strings)
+      const contactData = {
+        first_name: formData.first_name.trim() || null,
+        last_name: formData.last_name.trim() || null,
+        professional_context: formData.professional_context.trim() || null,
+        personal_context: formData.personal_context.trim() || null,
+        relationship_context: formData.relationship_context.trim() || null,
+        details: formData.details.trim() || null,
         deleted: false,
         birthday: null,
         communication_channels: null,
-      });
+      };
+
+      createContact(contactData as any);
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
@@ -168,8 +186,12 @@ export default function NewContactScreen() {
     }
   };
 
+  const getFieldValue = (field: string): string => {
+    return (formData[field as keyof typeof formData] as string) || "";
+  };
+
   const renderInputField = (
-    field: keyof typeof formData,
+    field: string,
     placeholder: string,
     multiline: boolean = false,
     focus: boolean = false
@@ -185,7 +207,7 @@ export default function NewContactScreen() {
           minHeight: multiline ? 100 : 50,
           textAlignVertical: multiline ? "top" : "center",
         }}
-        value={formData[field]}
+        value={getFieldValue(field)}
         onChangeText={(value) => handleInputChange(field, value)}
         placeholder={placeholder}
         placeholderTextColor="#999"
@@ -235,12 +257,33 @@ export default function NewContactScreen() {
           {renderInputField("first_name", "First name", false, true)}
           {renderInputField("last_name", "Last name")}
         </View>
-        {renderInputField(
-          "notes",
-          "any notes or relevant info about this contact...",
-          true,
-          false
-        )}
+
+        <View style={{ gap: 10, marginBottom: 30 }}>
+          {renderInputField(
+            "professional_context",
+            "Describe their professional situation...",
+            true,
+            false
+          )}
+          {renderInputField(
+            "personal_context",
+            "Describe their personal information...",
+            true,
+            false
+          )}
+          {renderInputField(
+            "relationship_context",
+            "How you met or relationship context...",
+            true,
+            false
+          )}
+          {renderInputField(
+            "details",
+            "Additional notes or details...",
+            true,
+            false
+          )}
+        </View>
       </ScrollView>
 
       <KeyboardSaveButton

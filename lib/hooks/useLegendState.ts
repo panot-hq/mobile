@@ -71,12 +71,40 @@ export function useContacts() {
 
     const term = searchTerm.toLowerCase();
     return Object.values(allContacts).filter(
-      (contact: any) =>
-        contact.owner_id === user.id &&
-        !contact.deleted &&
-        (contact.first_name?.toLowerCase().includes(term) ||
-          contact.last_name?.toLowerCase().includes(term) ||
-          contact.company?.toLowerCase().includes(term))
+      (contact: any) => {
+        if (contact.owner_id !== user.id || contact.deleted) {
+          return false;
+        }
+
+        // Search in name fields
+        if (
+          contact.first_name?.toLowerCase().includes(term) ||
+          contact.last_name?.toLowerCase().includes(term)
+        ) {
+          return true;
+        }
+
+        // Search in professional context
+        if (
+          contact.professional_context?.company?.toLowerCase().includes(term) ||
+          contact.professional_context?.job_title?.toLowerCase().includes(term) ||
+          contact.professional_context?.department?.toLowerCase().includes(term)
+        ) {
+          return true;
+        }
+
+        // Search in relationship context
+        if (contact.relationship_context?.toLowerCase().includes(term)) {
+          return true;
+        }
+
+        // Search in details notes
+        if (contact.details?.notes?.toLowerCase().includes(term)) {
+          return true;
+        }
+
+        return false;
+      }
     ) as Contact[];
   };
 

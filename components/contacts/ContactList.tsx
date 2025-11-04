@@ -30,13 +30,13 @@ export default function ContactList({ searchTerm = "" }: ContactListProps) {
       const nameA = (
         a.first_name ||
         a.last_name ||
-        a.company ||
+        a.professional_context?.company ||
         ""
       ).toLowerCase();
       const nameB = (
         b.first_name ||
         b.last_name ||
-        b.company ||
+        b.professional_context?.company ||
         ""
       ).toLowerCase();
       return nameA.localeCompare(nameB);
@@ -57,9 +57,9 @@ export default function ContactList({ searchTerm = "" }: ContactListProps) {
       const firstName = (contact.first_name || "").toLowerCase();
       const lastName = (contact.last_name || "").toLowerCase();
       const fullName = `${firstName} ${lastName}`.trim();
-      const company = (contact.company || "").toLowerCase();
-      const jobTitle = (contact.job_title || "").toLowerCase();
-      const department = (contact.department || "").toLowerCase();
+      const company = (contact.professional_context?.company || "").toLowerCase();
+      const jobTitle = (contact.professional_context?.job_title || "").toLowerCase();
+      const department = (contact.professional_context?.department || "").toLowerCase();
 
       return (
         firstName.includes(lowercaseSearch) ||
@@ -79,7 +79,10 @@ export default function ContactList({ searchTerm = "" }: ContactListProps) {
 
     contacts.forEach((contact) => {
       const name =
-        contact.first_name || contact.last_name || contact.company || "";
+        contact.first_name ||
+        contact.last_name ||
+        contact.professional_context?.company ||
+        "";
       const firstLetter = name.charAt(0).toLowerCase();
       const letter = firstLetter.match(/[a-z]/) ? firstLetter : "#";
 
