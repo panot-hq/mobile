@@ -247,11 +247,9 @@ export default function ContactDetailsScreen() {
   };
 
   const nameContainerAnimatedStyle = useAnimatedStyle(() => ({
-    backgroundColor: "rgba(245, 245, 245, 0.8)",
+    backgroundColor: "#E9E9E9",
     borderRadius: 20,
     padding: 20,
-    borderWidth: isEditingName ? 0 : 1,
-    borderColor: "#ddd",
   }));
 
   const contextContainerAnimatedStyle = useAnimatedStyle(() => ({
@@ -352,8 +350,6 @@ export default function ContactDetailsScreen() {
         <AnimatedPressable
           style={[
             {
-              borderWidth: 1,
-              borderColor: "#ddd",
               marginBottom: 15,
               justifyContent: "center",
             },
@@ -387,14 +383,13 @@ export default function ContactDetailsScreen() {
           )}
         </AnimatedPressable>
 
-        <View style={{ marginBottom: 20 }}>
+        <View style={{ marginBottom: 20, display: "none" }}>
           <CommunicationChannels
             channels={communicationChannels}
             onChannelsChange={handleCommunicationChannelsChange}
           />
         </View>
 
-        {/* Professional Context */}
         {(professionalContextValue || isEditingProfessionalContext) && (
           <>
             <Badge
@@ -445,7 +440,6 @@ export default function ContactDetailsScreen() {
           </>
         )}
 
-        {/* Personal Context */}
         {(personalContextValue || isEditingPersonalContext) && (
           <>
             <Badge
@@ -496,7 +490,6 @@ export default function ContactDetailsScreen() {
           </>
         )}
 
-        {/* Relationship Context */}
         {(relationshipContextValue || isEditingRelationshipContext) && (
           <>
             <Badge
@@ -547,7 +540,6 @@ export default function ContactDetailsScreen() {
           </>
         )}
 
-        {/* Details */}
         {(detailsValue || isEditingDetails) && (
           <>
             <Badge
@@ -601,11 +593,11 @@ export default function ContactDetailsScreen() {
         {interactions.length > 0 && (
           <>
             <Badge
-              title="interactions"
+              title="list of interactions"
               color="#E9E9E9"
               textColor="#000"
               textSize={14}
-              marginBottom={5}
+              marginBottom={20}
             />
             <View style={{ gap: 10, marginBottom: 80 }}>
               {interactions.map((interaction) => (

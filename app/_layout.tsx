@@ -86,9 +86,7 @@ function RootLayoutNav() {
         options={{
           presentation: "modal",
           headerShown: false,
-          contentStyle: {
-            backgroundColor: "transparent",
-          },
+          gestureEnabled: false,
         }}
       />
       <Stack.Screen

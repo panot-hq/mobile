@@ -1,10 +1,8 @@
 import AssignInteractionButton from "@/components/interactions/AssignInteractionButton";
-import Badge from "@/components/ui/Badge";
+import BaseButton from "@/components/ui/BaseButton";
 import { useContacts, useInteractions } from "@/lib/hooks/useLegendState";
-import {
-  formatCreatedAtDate,
-  formatCreatedAtTime,
-} from "@/lib/utils/dateFormatter";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
@@ -119,101 +117,179 @@ export default function InteractionDetailsScreen() {
     borderColor: "#E9E9E9",
   }));
 
+  const handleMenuPress = () => {
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options: ["Cancelar", "Eliminar Interacción"],
+        destructiveButtonIndex: 1,
+        cancelButtonIndex: 0,
+        title: "Eliminar Interacción",
+        message:
+          "¿Estás seguro de que quieres eliminar esta interacción? Esta acción no se puede deshacer.",
+      },
+      async (buttonIndex) => {
+        if (buttonIndex === 1) {
+          handleDeleteInteraction();
+        }
+      }
+    );
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <View
         style={{
-          paddingTop: 30,
+          position: "absolute",
+          top: 20,
+          left: 0,
+          right: 0,
           paddingHorizontal: 20,
-          paddingBottom: 20,
-          backgroundColor: "#fff",
+          zIndex: 1000,
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
-        <View
+        <BaseButton
+          onPress={handleMenuPress}
           style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 20,
-            backgroundColor: "#eee",
-            borderRadius: 20,
-            borderWidth: 1,
-            borderColor: "#ddd",
-            padding: 30,
+            padding: 8,
           }}
         >
+          <MaterialCommunityIcons
+            name="delete-outline"
+            size={24}
+            color="#444"
+          />
+        </BaseButton>
+        {interaction?.created_at && (
           <Text
             style={{
-              fontSize: 24,
-              color: "#000",
+              fontSize: 12,
+              color: "#444",
               fontWeight: "400",
-              paddingLeft: 5,
             }}
           >
-            {interaction?.created_at
-              ? formatCreatedAtDate(interaction.created_at)
-              : ""}
+            {(() => {
+              const date = new Date(interaction.created_at);
+              const dayOfWeek = date.toLocaleDateString("en-US", {
+                weekday: "long",
+              });
+              const month = date.toLocaleDateString("en-US", {
+                month: "short",
+              });
+              const day = date.getDate();
+              const year = date.getFullYear();
+              const time = date.toLocaleTimeString("en-US", {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              });
+              return `${dayOfWeek}, ${month} ${day}, ${year} at ${time}`;
+            })()}
+          </Text>
+        )}
+        <BaseButton
+          onPress={() => router.back()}
+          style={{
+            padding: 8,
+          }}
+        >
+          <AntDesign name="close" size={20} color="#444" />
+        </BaseButton>
+      </View>
+      <View
+        style={{
+          backgroundColor: "rgba(245, 245, 245, 0.9)",
+          borderRadius: 16,
+          paddingHorizontal: 20,
+          paddingVertical: 16,
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          position: "absolute",
+          top: 90,
+          marginHorizontal: 20,
+          zIndex: 1000,
+        }}
+      >
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{
+              fontSize: 12,
+              color: "#666",
+              marginBottom: 6,
+              fontWeight: "300",
+              textTransform: "uppercase",
+              letterSpacing: 0.5,
+            }}
+          >
+            Associated contact
           </Text>
           <Text
             style={{
-              fontSize: 24,
+              fontSize: 18,
               color: "#000",
-              fontWeight: "400",
-              paddingRight: 5,
+              fontWeight: "500",
             }}
           >
-            {interaction?.created_at
-              ? formatCreatedAtTime(interaction.created_at)
-              : ""}
+            {contact
+              ? `${contact.first_name} ${contact.last_name}`
+              : "Unassigned"}
           </Text>
         </View>
+        <AssignInteractionButton
+          onPress={() =>
+            router.push(`/(interactions)/assign?interactionId=${id}`)
+          }
+        />
       </View>
 
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingHorizontal: 20,
+          paddingTop: 200,
           paddingBottom: 40,
-          gap: 10,
+          gap: 20,
+          height: "100%",
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Badge
-          title="content"
-          color="#E9E9E9"
-          textColor="#000"
-          textSize={14}
-          marginBottom={5}
-        />
-
         <AnimatedPressable
           style={[
             {
+              backgroundColor: "white",
+              borderRadius: 20,
+              padding: 20,
               borderWidth: 1,
-              borderColor: "#ddd",
-              marginBottom: 20,
-              justifyContent: "center",
+              borderColor: "#E9E9E9",
+              minHeight: 200,
+              justifyContent: "flex-start",
             },
             contentContainerAnimatedStyle,
           ]}
           onPress={() => setIsEditingContent(true)}
         >
           {isEditingContent ? (
-            <TextInput
-              style={{
-                fontSize: 16,
-                color: "#000",
-                lineHeight: 22,
-                textAlignVertical: "top",
-                fontWeight: "400",
-              }}
-              value={contentValue}
-              onChangeText={setContentValue}
-              onBlur={handleContentSave}
-              placeholder="Interaction content"
-              multiline
-              autoFocus
-            />
+            <>
+              <TextInput
+                style={{
+                  fontSize: 16,
+                  color: "#000",
+                  lineHeight: 22,
+                  textAlignVertical: "top",
+                  fontWeight: "400",
+                  minHeight: 200,
+                }}
+                value={contentValue}
+                onChangeText={setContentValue}
+                onBlur={handleContentSave}
+                placeholder="Interaction content"
+                multiline
+                autoFocus
+              />
+            </>
           ) : (
             <Text
               style={{
@@ -227,92 +303,47 @@ export default function InteractionDetailsScreen() {
           )}
         </AnimatedPressable>
 
-        <Badge
-          title="key concepts"
-          color="#E9E9E9"
-          textColor="#000"
-          textSize={14}
-          marginBottom={5}
-        />
-
-        <AnimatedPressable
-          style={[
-            {
-              borderWidth: 1,
-              borderColor: "#E9E9E9",
-              marginBottom: 20,
-            },
-            conceptsContainerAnimatedStyle,
-          ]}
-          onPress={() => setIsEditingConcepts(true)}
-        >
-          {isEditingConcepts ? (
-            <TextInput
-              style={{
-                fontSize: 16,
-                color: "#000",
-                textAlignVertical: "top",
-              }}
-              value={conceptsValue}
-              onChangeText={setConceptsValue}
-              onBlur={handleConceptsSave}
-              multiline
-              autoFocus
-            />
-          ) : (
-            <Text
-              style={{
-                fontSize: 16,
-                color: "#000",
-                lineHeight: 22,
-              }}
-            >
-              {conceptsValue || "No key concepts"}
-            </Text>
-          )}
-        </AnimatedPressable>
-
-        <View
-          style={{
-            backgroundColor: "rgba(245, 245, 245, 0.8)",
-            borderRadius: 20,
-            padding: 20,
-            borderWidth: 1,
-            borderColor: "#E9E9E9",
-            marginBottom: 20,
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <View>
-            <Text
-              style={{
-                fontSize: 14,
-                color: "#666",
-                marginBottom: 5,
-              }}
-            >
-              Associated contact
-            </Text>
-            <Text
-              style={{
-                fontSize: 16,
-                color: "#000",
-                fontWeight: "500",
-              }}
-            >
-              {contact
-                ? `${contact.first_name} ${contact.last_name}`
-                : "Unassigned"}
-            </Text>
-          </View>
-          <AssignInteractionButton
-            onPress={() =>
-              router.push(`/(interactions)/assign?interactionId=${id}`)
-            }
-          />
-        </View>
+        {conceptsValue && (
+          <AnimatedPressable
+            style={[
+              {
+                backgroundColor: "white",
+                borderRadius: 20,
+                padding: 20,
+                borderWidth: 1,
+                borderColor: "#E9E9E9",
+              },
+              conceptsContainerAnimatedStyle,
+            ]}
+            onPress={() => setIsEditingConcepts(true)}
+          >
+            {isEditingConcepts ? (
+              <TextInput
+                style={{
+                  fontSize: 16,
+                  color: "#000",
+                  textAlignVertical: "top",
+                  lineHeight: 22,
+                }}
+                value={conceptsValue}
+                onChangeText={setConceptsValue}
+                onBlur={handleConceptsSave}
+                multiline
+                autoFocus
+              />
+            ) : (
+              <Text
+                style={{
+                  fontSize: 16,
+                  color: "#000",
+                  lineHeight: 22,
+                }}
+              >
+                {conceptsValue}
+              </Text>
+            )}
+          </AnimatedPressable>
+        )}
       </ScrollView>
     </View>
   );

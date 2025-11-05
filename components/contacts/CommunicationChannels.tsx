@@ -100,7 +100,6 @@ export default function CommunicationChannels({
     setNewType("");
     setNewValue("");
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // Reset the flag after a short delay
     setTimeout(() => setIsCancelling(false), 100);
   };
 
