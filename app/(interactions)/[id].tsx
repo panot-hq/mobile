@@ -140,7 +140,7 @@ export default function InteractionDetailsScreen() {
       <View
         style={{
           position: "absolute",
-          top: 20,
+          top: 30,
           left: 0,
           right: 0,
           paddingHorizontal: 20,
@@ -155,10 +155,13 @@ export default function InteractionDetailsScreen() {
           style={{
             padding: 8,
           }}
+          borderRadius={13}
+          borderWidth={1}
+          borderColor="#ddd"
         >
           <MaterialCommunityIcons
             name="delete-outline"
-            size={24}
+            size={20}
             color="#444"
           />
         </BaseButton>
@@ -191,11 +194,14 @@ export default function InteractionDetailsScreen() {
         )}
         <BaseButton
           onPress={() => router.back()}
+          borderRadius={13}
+          borderWidth={1}
+          borderColor="#ddd"
           style={{
             padding: 8,
           }}
         >
-          <AntDesign name="close" size={20} color="#444" />
+          <AntDesign name="close" size={17} color="#444" />
         </BaseButton>
       </View>
       <View
@@ -208,7 +214,7 @@ export default function InteractionDetailsScreen() {
           justifyContent: "space-between",
           alignItems: "center",
           position: "absolute",
-          top: 90,
+          top: 100,
           marginHorizontal: 20,
           zIndex: 1000,
         }}

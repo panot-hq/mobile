@@ -250,6 +250,7 @@ export default function ContactDetailsScreen() {
     backgroundColor: "#E9E9E9",
     borderRadius: 20,
     padding: 20,
+    marginBottom: 50,
   }));
 
   const contextContainerAnimatedStyle = useAnimatedStyle(() => ({
