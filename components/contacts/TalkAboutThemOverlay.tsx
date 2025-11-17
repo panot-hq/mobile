@@ -2,6 +2,7 @@ import NewContactPreview, {
   ActionButton,
 } from "@/components/contacts/NewContactPreview";
 import RecordButton from "@/components/recording/RecordButton";
+import { useSettings } from "@/contexts/SettingsContext";
 import { useTalkAboutThem } from "@/contexts/TalkAboutThemContext";
 import { BlurView } from "expo-blur";
 import { router } from "expo-router";
@@ -28,6 +29,7 @@ export default function TalkAboutThemOverlay({
   recordButtonInitialSize = 155,
   recordButtonRecordingSize = 200,
 }: TalkAboutThemOverlayProps) {
+  const { transcriptionLanguage } = useSettings();
   const {
     isRecording,
     setIsRecording,
@@ -150,7 +152,7 @@ export default function TalkAboutThemOverlay({
       const startTime = Date.now();
       setRecordingStartTime(startTime);
       setShowPreview(true);
-      PanotSpeechModule.startTranscribing(true, "es-ES");
+      PanotSpeechModule.startTranscribing(true, transcriptionLanguage);
       setIsRecording(true);
     }
   };
@@ -174,7 +176,7 @@ export default function TalkAboutThemOverlay({
       if (currentTranscript) {
         setPreviousTranscript(currentTranscript);
       }
-      PanotSpeechModule.startTranscribing(true, "es-ES");
+      PanotSpeechModule.startTranscribing(true, transcriptionLanguage);
       setIsRecording(true);
     }
   };

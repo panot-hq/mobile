@@ -5,6 +5,7 @@ import NewInteraction, {
 import RecordButton from "@/components/recording/RecordButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRecording } from "@/contexts/RecordingContext";
+import { useSettings } from "@/contexts/SettingsContext";
 import { ProfilesService } from "@/lib/database/index";
 import { useContacts, useInteractions } from "@/lib/hooks/useLegendState";
 import { BlurView } from "expo-blur";
@@ -43,6 +44,7 @@ export default function RecordingOverlay({
   const { user } = useAuth();
   const { createInteraction } = useInteractions();
   const { getContact } = useContacts();
+  const { transcriptionLanguage } = useSettings();
   const {
     isRecording,
     setIsRecording,
@@ -147,7 +149,7 @@ export default function RecordingOverlay({
       const startTime = Date.now();
       setRecordingStartTime(startTime);
       setShowInteraction(true);
-      PanotSpeechModule.startTranscribing(true, "es-ES");
+      PanotSpeechModule.startTranscribing(true, transcriptionLanguage);
       setIsRecording(true);
     }
   };
@@ -171,7 +173,7 @@ export default function RecordingOverlay({
       if (currentTranscript) {
         setPreviousTranscript(currentTranscript);
       }
-      PanotSpeechModule.startTranscribing(true, "es-ES");
+      PanotSpeechModule.startTranscribing(true, transcriptionLanguage);
       setIsRecording(true);
     }
   };

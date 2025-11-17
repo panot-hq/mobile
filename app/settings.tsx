@@ -1,19 +1,22 @@
 import CloseSettingsButton from "@/components/settings/CloseSettingsButton";
+import LanguageSelector from "@/components/settings/LanguageSelector";
 import SettingItem from "@/components/settings/SettingItem";
 import SettingsSection from "@/components/settings/SettingsSection";
 
-import AuthButton from "@/components/ui/Button";
+import PanotLogo from "@/assets/icons/panot-logo-white.svg";
+
 import { useAuth } from "@/contexts/AuthContext";
+import { useSettings } from "@/contexts/SettingsContext";
 import { useState } from "react";
 import { Alert, ScrollView, Text, View } from "react-native";
 
 export default function SettingsScreen() {
   const { signOut, user } = useAuth();
+  const { transcriptionLanguage, setTranscriptionLanguage } = useSettings();
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(false);
-  const [transcriptionLanguage, setTranscriptionLanguage] = useState("Spanish");
 
   const handleSignOut = async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -36,19 +39,13 @@ export default function SettingsScreen() {
     );
   };
 
-  const handleAbout = () => {
-    // TODO: Navigate to about page
-    Alert.alert("About", "About page functionality coming soon!");
-  };
-
   const handleDataPrivacy = () => {
     // TODO: Navigate to data privacy page
     Alert.alert("Data Privacy", "Data privacy settings coming soon!");
   };
 
-  const handleTranscriptionLanguage = () => {
-    // TODO: Show language selection modal
-    Alert.alert("Transcription Language", "Language selection coming soon!");
+  const handleLanguageChange = (languageCode: string) => {
+    setTranscriptionLanguage(languageCode);
   };
 
   const handleNotificationSettings = () => {
@@ -91,87 +88,36 @@ export default function SettingsScreen() {
           </Text>
         </View>
 
-        <SettingsSection title="account settings">
-          <SettingItem
-            title="Profile Information"
-            subtitle="Update your name, email, and profile picture"
-            icon="person"
-            onPress={handleAccountSettings}
+        <SettingsSection>
+          <LanguageSelector
+            selectedLanguage={transcriptionLanguage}
+            onLanguageChange={handleLanguageChange}
           />
           <SettingItem
-            title="Change Password"
-            subtitle="Update your account password"
-            icon="lock"
-            onPress={handleAccountSettings}
-          />
-        </SettingsSection>
-
-        <SettingsSection title="voice recognition">
-          <SettingItem
-            title="Language"
-            subtitle={`Currently set to ${transcriptionLanguage}`}
-            icon="language"
-            onPress={handleTranscriptionLanguage}
-          />
-        </SettingsSection>
-
-        <SettingsSection title="data privacy">
-          <SettingItem
-            title="Privacy Policy"
-            subtitle="Read our privacy policy"
-            icon="privacy-tip"
-            onPress={handleDataPrivacy}
-          />
-
-          <SettingItem
-            title="Delete Account"
-            subtitle="Permanently delete your account"
-            icon="delete-forever"
-            onPress={handleDataPrivacy}
-          />
-        </SettingsSection>
-
-        <SettingsSection title="about">
-          <SettingItem title="App Version" subtitle="Early MVP" icon="info" />
-          <SettingItem
-            title="Terms of Service"
-            subtitle="Read our terms of service"
-            icon="description"
-            onPress={handleAbout}
-          />
-          <SettingItem
-            title="Support"
-            subtitle="Get help and contact support"
-            icon="help"
-            onPress={handleAbout}
-          />
-          <SettingItem
-            title="Rate App"
-            subtitle="Rate us on the App Store"
-            icon="star"
-            onPress={handleAbout}
-          />
-        </SettingsSection>
-
-        <View
-          style={{
-            marginTop: 20,
-            paddingHorizontal: 40,
-            alignItems: "center",
-          }}
-        >
-          <AuthButton
             title="Sign Out"
+            subtitle="Sign out of your account"
+            icon="sign-out"
             onPress={handleSignOut}
-            variant="secondary"
-            height={50}
-            style={{
-              width: "80%",
-              backgroundColor: "#000",
-            }}
           />
-        </View>
+        </SettingsSection>
       </ScrollView>
+      <View
+        style={{
+          alignItems: "center",
+          position: "absolute",
+          bottom: 100,
+          left: 0,
+          right: 0,
+        }}
+      >
+        <PanotLogo width={200} height={100} color="#fff" />
+        <Text style={{ color: "#fff", fontSize: 12, fontWeight: "200" }}>
+          Curated with care for the people
+        </Text>
+        <Text style={{ color: "#fff", fontSize: 12, fontWeight: "200" }}>
+          version 0.1.0
+        </Text>
+      </View>
     </>
   );
 }
