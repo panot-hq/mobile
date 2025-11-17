@@ -3,7 +3,7 @@ import { View } from "react-native";
 import Badge from "../ui/Badge";
 
 interface SettingsSectionProps {
-  title: string;
+  title?: string;
   children: ReactNode;
 }
 
@@ -14,13 +14,15 @@ export default function SettingsSection({
   return (
     <View style={{ marginBottom: 32 }}>
       <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
-        <Badge
-          title={title}
-          color="#333333"
-          textColor="#FFFFFF"
-          textSize={14}
-          marginBottom={0}
-        />
+        {title && (
+          <Badge
+            title={title}
+            color="#333333"
+            textColor="#FFFFFF"
+            textSize={14}
+            marginBottom={0}
+          />
+        )}
       </View>
       <View
         style={{
