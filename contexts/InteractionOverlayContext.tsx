@@ -282,7 +282,6 @@ export const InteractionOverlayProvider = ({
                 onStartShouldSetResponder={() => true}
               >
                 {actions.map((action, index) => {
-                  // Detect the "View Details" action button
                   const isViewDetails = action.label
                     .toLowerCase()
                     .includes("view details");

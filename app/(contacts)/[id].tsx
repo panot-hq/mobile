@@ -33,7 +33,6 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export default function ContactDetailsScreen() {
   const { id } = useLocalSearchParams();
 
-  // Hooks de Legend State (local-first)
   const {
     getContact,
     updateContact: updateContactData,
@@ -41,7 +40,6 @@ export default function ContactDetailsScreen() {
   } = useContacts();
   const { getInteractionsByContact } = useInteractions();
 
-  // Obtener datos reactivamente
   const contact = getContact(id as string);
   const interactions = getInteractionsByContact(id as string);
 
@@ -63,20 +61,16 @@ export default function ContactDetailsScreen() {
     CommunicationChannel[]
   >([]);
 
-  // Helper function to safely get string from Json (can be string directly or nested)
   const getContextString = (value: any): string => {
     if (typeof value === "string") {
       return value;
     }
     if (typeof value === "object" && value !== null) {
-      // Legacy format: try to extract from nested object
-      // But ideally all contexts should be strings now
       return "";
     }
     return "";
   };
 
-  // Inicializar valores cuando cambie el contacto
   useEffect(() => {
     if (contact) {
       setNameValue(
@@ -108,7 +102,6 @@ export default function ContactDetailsScreen() {
         const [firstName, ...lastNameParts] = nameValue.trim().split(" ");
         const lastName = lastNameParts.join(" ");
 
-        // Actualizar con Legend State (instantáneo, local-first)
         updateContactData(contact.id, {
           first_name: firstName || "",
           last_name: lastName || "",
@@ -228,7 +221,6 @@ export default function ContactDetailsScreen() {
       (buttonIndex) => {
         if (buttonIndex === 1) {
           try {
-            // Eliminar con Legend State (local-first, soft delete)
             deleteContactData(contact.id);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             router.back();
@@ -242,9 +234,7 @@ export default function ContactDetailsScreen() {
     );
   };
 
-  const handleInteractionCreated = () => {
-    // No hacer nada - Legend State actualiza automáticamente
-  };
+  const handleInteractionCreated = () => {};
 
   const nameContainerAnimatedStyle = useAnimatedStyle(() => ({
     backgroundColor: "#E9E9E9",

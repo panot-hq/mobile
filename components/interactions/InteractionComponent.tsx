@@ -96,8 +96,10 @@ export default function Interaction({
           },
           [
             {
-              label: "ASSIGN",
-              onPress: handleAssignInteraction,
+              label: "VIEW",
+              onPress: () => {
+                router.push(`/(interactions)/${interactionId}`);
+              },
             },
             {
               label: "DELETE",

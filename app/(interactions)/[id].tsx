@@ -161,7 +161,7 @@ export default function InteractionDetailsScreen() {
         >
           <MaterialCommunityIcons
             name="delete-outline"
-            size={20}
+            size={23}
             color="#444"
           />
         </BaseButton>
@@ -201,12 +201,12 @@ export default function InteractionDetailsScreen() {
             padding: 8,
           }}
         >
-          <AntDesign name="close" size={17} color="#444" />
+          <AntDesign name="close" size={22} color="#444" />
         </BaseButton>
       </View>
       <View
         style={{
-          backgroundColor: "rgba(245, 245, 245, 0.9)",
+          backgroundColor: "rgba(245, 245, 245, 1)",
           borderRadius: 16,
           paddingHorizontal: 20,
           paddingVertical: 16,
