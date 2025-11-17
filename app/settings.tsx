@@ -110,7 +110,7 @@ export default function SettingsScreen() {
           right: 0,
         }}
       >
-        <PanotLogo width={200} height={100} color="#fff" />
+        <PanotLogo width={100} height={100} color="#fff" />
         <Text style={{ color: "#fff", fontSize: 12, fontWeight: "200" }}>
           Curated with care for the people
         </Text>
