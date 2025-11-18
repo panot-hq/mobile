@@ -16,7 +16,7 @@ const customSynced = configureSynced(syncedSupabase, {
   },
   generateId,
   supabase,
-  changesSince: "last-sync",
+  changesSince: "all",
   fieldCreatedAt: "created_at",
   fieldUpdatedAt: "updated_at",
   fieldDeleted: "deleted",
@@ -121,15 +121,11 @@ export async function initializeSync(userId: string) {
       return;
     }
 
-    if (session.user.id !== userId) {
-      return;
-    }
-
     const contactsData = contacts$.get();
     const interactionsData = interactions$.get();
     const profilesData = profiles$.get();
 
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
     await cleanupOrphanedInteractions();
   } catch (error) {

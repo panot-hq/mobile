@@ -23,7 +23,7 @@ export default function AuthLayout() {
           }}
         />
         <Stack.Screen
-          name="(continue)/email"
+          name="(continue-signup)/email"
           options={{
             animation: "slide_from_bottom",
             headerShown: false,
@@ -31,7 +31,7 @@ export default function AuthLayout() {
           }}
         />
         <Stack.Screen
-          name="(continue)/password"
+          name="(continue-signup)/password"
           options={{
             animation: "slide_from_right",
             headerShown: false,
@@ -39,7 +39,7 @@ export default function AuthLayout() {
           }}
         />
         <Stack.Screen
-          name="(continue)/name"
+          name="(continue-signup)/name"
           options={{
             animation: "slide_from_right",
             headerShown: false,
@@ -47,9 +47,17 @@ export default function AuthLayout() {
           }}
         />
         <Stack.Screen
-          name="(continue)/email-verify"
+          name="(continue-signup)/email-verify"
           options={{
             animation: "slide_from_right",
+            headerShown: false,
+            gestureEnabled: false,
+          }}
+        />
+        <Stack.Screen
+          name="restore"
+          options={{
+            animation: "fade",
             headerShown: false,
             gestureEnabled: false,
           }}
