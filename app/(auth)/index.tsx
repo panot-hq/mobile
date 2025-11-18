@@ -157,7 +157,7 @@ export default function SignupScreen() {
 
         <AuthButton
           title="Restore"
-          onPress={() => console.log("Restore pressed")}
+          onPress={() => router.push("/restore")}
           variant="secondary"
           width={117}
           height={82}
@@ -214,7 +214,7 @@ export default function SignupScreen() {
           <EmailButton
             title="Continue with Email"
             onPress={() => {
-              router.push("./(continue)/email");
+              router.push("./(continue-signup)/email");
             }}
           />
         </View>

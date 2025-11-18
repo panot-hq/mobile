@@ -85,9 +85,7 @@ export default function ContactDetailsScreen() {
       );
       setDetailsValue(getContextString(contact.details));
       setCommunicationChannels(
-        parseCommunicationChannels(
-          contact.communication_channels as string | null
-        )
+        parseCommunicationChannels(contact.communication_channels as string)
       );
     }
   }, [contact]);

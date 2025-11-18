@@ -19,7 +19,12 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isSyncing: boolean;
   signOut: () => Promise<void>;
+  signIn: (
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
   signUp: (
     email: string,
     password: string,
@@ -41,7 +46,9 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
+  isSyncing: false,
   signOut: async () => {},
+  signIn: async () => ({ success: false }),
   signUp: async () => ({ success: false }),
   signUpWithOTP: async () => ({ success: false }),
   verifyOTP: async () => ({ success: false }),
@@ -53,20 +60,15 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<User | null>(
-    DEV_MODE ? ({ id: "dev-user", email: "dev@example.com" } as User) : null
-  );
+  const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(DEV_MODE ? false : true);
-  const [initialCheckComplete, setInitialCheckComplete] = useState(DEV_MODE);
+  const [loading, setLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [initialCheckComplete, setInitialCheckComplete] = useState(false);
   const initializedRef = useRef(false);
   const authStateListenerRef = useRef<any>(null);
 
   useEffect(() => {
-    if (DEV_MODE) {
-      return;
-    }
-
     let mounted = true;
 
     const initializeAuth = async () => {
@@ -83,8 +85,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         if (session?.user) {
+          setIsSyncing(true);
           await ProfilesService.getOrCreate(session.user.id);
           await initializeSync(session.user.id);
+          setIsSyncing(false);
         }
 
         setSession(session);
@@ -107,10 +111,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           if (initializedRef.current) {
             if (session?.user) {
               if (event === "SIGNED_IN") {
+                setIsSyncing(true);
                 await clearPersistedData();
-
                 await ProfilesService.getOrCreate(session.user.id);
                 await initializeSync(session.user.id);
+                setIsSyncing(false);
 
                 router.replace("/(tabs)/present");
               }
@@ -146,13 +151,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const signOut = async () => {
-    if (DEV_MODE) {
-      setUser(null);
-      return;
-    }
     await clearPersistedData();
     await supabase.auth.signOut();
     router.replace("/(auth)");
+  };
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      };
+    }
   };
 
   const signUp = async (email: string, password: string, name: string) => {
@@ -283,7 +307,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         user,
         session,
         loading,
+        isSyncing,
         signOut,
+        signIn,
         signUp,
         signUpWithOTP,
         verifyOTP,
