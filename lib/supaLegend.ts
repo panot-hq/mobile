@@ -1,4 +1,4 @@
-import { observable, Observable } from "@legendapp/state";
+import { observable, Observable, syncState } from "@legendapp/state";
 import { observablePersistAsyncStorage } from "@legendapp/state/persist-plugins/async-storage";
 import { configureSynced } from "@legendapp/state/sync";
 import { syncedSupabase } from "@legendapp/state/sync-plugins/supabase";
@@ -13,6 +13,9 @@ const customSynced = configureSynced(syncedSupabase, {
     plugin: observablePersistAsyncStorage({
       AsyncStorage,
     }),
+  },
+  retry: {
+    infinite: true,
   },
   generateId,
   supabase,
@@ -29,7 +32,7 @@ export const contacts$: Observable<any> = observable(
     collection: "contacts",
     select: (from: any) =>
       from.select(
-        "id,owner_id,first_name,last_name,professional_context,personal_context,relationship_context,details,birthday,created_at,updated_at,deleted,communication_channels"
+        "id,owner_id,first_name,last_name,context,details,created_at,updated_at,deleted,communication_channels"
       ),
     actions: ["read", "create", "update", "delete"],
     realtime: true,
@@ -63,7 +66,7 @@ export const interactions$: Observable<any> = observable(
     collection: "interactions",
     select: (from: any) =>
       from.select(
-        "id,owner_id,raw_content,key_concepts,contact_id,created_at,updated_at,deleted"
+        "id,owner_id,raw_content,contact_id,created_at,updated_at,deleted,processed"
       ),
     actions: ["read", "create", "update", "delete"],
     realtime: true,
@@ -111,8 +114,6 @@ export const profiles$: Observable<any> = observable(
 
 export async function initializeSync(userId: string) {
   try {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -121,11 +122,13 @@ export async function initializeSync(userId: string) {
       return;
     }
 
-    const contactsData = contacts$.get();
-    const interactionsData = interactions$.get();
-    const profilesData = profiles$.get();
+    const contactsSyncState$ = syncState(contacts$);
+    const interactionsSyncState$ = syncState(interactions$);
+    const profilesSyncState$ = syncState(profiles$);
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    contactsSyncState$.sync();
+    interactionsSyncState$.sync();
+    profilesSyncState$.sync();
 
     await cleanupOrphanedInteractions();
   } catch (error) {

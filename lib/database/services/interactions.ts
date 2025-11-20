@@ -192,7 +192,7 @@ export class InteractionsService {
   }
 
   /**
-   * Search interactions by content or key concepts
+   * Search interactions by content
    */
   static async search(
     ownerId: string,
@@ -208,9 +208,7 @@ export class InteractionsService {
         .from(this.TABLE_NAME)
         .select("*", { count: "exact" })
         .eq("owner_id", ownerId)
-        .or(
-          `raw_content.ilike.%${searchTerm}%,key_concepts.ilike.%${searchTerm}%`
-        )
+        .ilike("raw_content", `%${searchTerm}%`)
         .order("created_at", { ascending: false });
 
       // Filter by contact if specified
@@ -382,6 +380,89 @@ export class InteractionsService {
       return { data, error };
     } catch (error) {
       return { data: null, error: error as Error };
+    }
+  }
+
+  /**
+   * Mark an interaction as processed
+   */
+  static async markAsProcessed(
+    interactionId: string
+  ): Promise<DatabaseResponse<Interaction>> {
+    try {
+      const { data, error } = await supabase
+        .from(this.TABLE_NAME)
+        .update({ processed: true, updated_at: new Date().toISOString() })
+        .eq("id", interactionId)
+        .select()
+        .single();
+
+      return { data, error };
+    } catch (error) {
+      return { data: null, error: error as Error };
+    }
+  }
+
+  /**
+   * Get unprocessed interactions for a user
+   */
+  static async getUnprocessedByOwnerId(
+    ownerId: string,
+    options?: {
+      limit?: number;
+      offset?: number;
+      onlyAssigned?: boolean; // Solo interacciones asignadas a un contacto
+    }
+  ): Promise<DatabaseListResponse<Interaction>> {
+    try {
+      let query = supabase
+        .from(this.TABLE_NAME)
+        .select("*", { count: "exact" })
+        .eq("owner_id", ownerId)
+        .eq("processed", false)
+        .order("created_at", { ascending: false });
+
+      // Filter only assigned interactions if specified
+      if (options?.onlyAssigned) {
+        query = query.not("contact_id", "is", null);
+      }
+
+      // Apply pagination
+      if (options?.limit) {
+        query = query.limit(options.limit);
+      }
+      if (options?.offset) {
+        query = query.range(
+          options.offset,
+          options.offset + (options.limit || 10) - 1
+        );
+      }
+
+      const { data, error, count } = await query;
+
+      return { data, error, count: count || 0 };
+    } catch (error) {
+      return { data: null, error: error as Error, count: 0 };
+    }
+  }
+
+  /**
+   * Get unprocessed interactions for a specific contact
+   */
+  static async getUnprocessedByContactId(
+    contactId: string
+  ): Promise<DatabaseListResponse<Interaction>> {
+    try {
+      const { data, error, count } = await supabase
+        .from(this.TABLE_NAME)
+        .select("*", { count: "exact" })
+        .eq("contact_id", contactId)
+        .eq("processed", false)
+        .order("created_at", { ascending: false });
+
+      return { data, error, count: count || 0 };
+    } catch (error) {
+      return { data: null, error: error as Error, count: 0 };
     }
   }
 }

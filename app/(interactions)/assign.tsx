@@ -4,7 +4,7 @@ import { useLocalSearchParams } from "expo-router";
 import { View } from "react-native";
 
 export default function AssignInteractionScreen() {
-  const { interactionId, mode } = useLocalSearchParams();
+  const { interactionId, mode, autoProcess } = useLocalSearchParams();
 
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
@@ -34,6 +34,7 @@ export default function AssignInteractionScreen() {
         <AssignContactsList
           interactionId={interactionId as string | undefined}
           isRecordingMode={mode === "recording"}
+          autoProcess={autoProcess === "true"}
         />
       </View>
     </View>

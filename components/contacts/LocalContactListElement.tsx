@@ -41,7 +41,6 @@ const LocalContactListElement = React.memo(function LocalContactListElement({
   if (item.contact) {
     const contact = item.contact;
 
-    // Get display name
     const firstName = contact.firstName || "";
     const lastName = contact.lastName || "";
     const displayName =
@@ -70,7 +69,7 @@ const LocalContactListElement = React.memo(function LocalContactListElement({
             flex: 1,
             alignItems: "flex-start",
             backgroundColor: "#E9E9E9",
-            marginBottom: 17,
+            marginBottom: 10,
           }}
         >
           <View
@@ -89,14 +88,14 @@ const LocalContactListElement = React.memo(function LocalContactListElement({
             >
               {displayName}
             </Text>
-            <Text
+            {/* <Text
               style={{
                 fontSize: 14,
                 color: "#888",
               }}
             >
               {phoneNumber ? phoneNumber : "No phone number"}
-            </Text>
+            </Text>*/}
           </View>
         </BaseButton>
       </Animated.View>

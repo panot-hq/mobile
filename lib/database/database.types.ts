@@ -16,8 +16,8 @@ export type Database = {
     Tables: {
       contacts: {
         Row: {
-          birthday: string | null;
           communication_channels: Json | null;
+          context: Json | null;
           created_at: string | null;
           deleted: boolean | null;
           details: Json | null;
@@ -25,14 +25,11 @@ export type Database = {
           id: string;
           last_name: string | null;
           owner_id: string;
-          personal_context: Json | null;
-          professional_context: Json | null;
-          relationship_context: Json | null;
           updated_at: string | null;
         };
         Insert: {
-          birthday?: string | null;
           communication_channels?: Json | null;
+          context?: Json | null;
           created_at?: string | null;
           deleted?: boolean | null;
           details?: Json | null;
@@ -40,14 +37,11 @@ export type Database = {
           id?: string;
           last_name?: string | null;
           owner_id: string;
-          personal_context?: Json | null;
-          professional_context?: Json | null;
-          relationship_context?: Json | null;
           updated_at?: string | null;
         };
         Update: {
-          birthday?: string | null;
           communication_channels?: Json | null;
+          context?: Json | null;
           created_at?: string | null;
           deleted?: boolean | null;
           details?: Json | null;
@@ -55,9 +49,6 @@ export type Database = {
           id?: string;
           last_name?: string | null;
           owner_id?: string;
-          personal_context?: Json | null;
-          professional_context?: Json | null;
-          relationship_context?: Json | null;
           updated_at?: string | null;
         };
         Relationships: [];
@@ -68,8 +59,8 @@ export type Database = {
           created_at: string;
           deleted: boolean | null;
           id: string;
-          key_concepts: string;
           owner_id: string;
+          processed: boolean;
           raw_content: string;
           updated_at: string | null;
         };
@@ -78,8 +69,8 @@ export type Database = {
           created_at?: string;
           deleted?: boolean | null;
           id?: string;
-          key_concepts: string;
           owner_id: string;
+          processed?: boolean;
           raw_content: string;
           updated_at?: string | null;
         };
@@ -88,8 +79,8 @@ export type Database = {
           created_at?: string;
           deleted?: boolean | null;
           id?: string;
-          key_concepts?: string;
           owner_id?: string;
+          processed?: boolean;
           raw_content?: string;
           updated_at?: string | null;
         };

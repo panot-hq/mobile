@@ -25,6 +25,7 @@ export interface BaseButtonProps extends Omit<PressableProps, "style"> {
   };
   borderWidth?: number;
   borderColor?: string;
+  stopPropagation?: boolean;
 }
 
 export default function BaseButton({
@@ -40,6 +41,7 @@ export default function BaseButton({
   springConfig = { duration: 150, dampingRatio: 0.8 },
   borderWidth,
   borderColor,
+  stopPropagation = false,
   ...pressableProps
 }: BaseButtonProps) {
   const scale = useSharedValue(1);
@@ -52,7 +54,10 @@ export default function BaseButton({
     scale.value = withSpring(1, springConfig);
   };
 
-  const handlePress = () => {
+  const handlePress = (e: any) => {
+    if (stopPropagation && e?.stopPropagation) {
+      e.stopPropagation();
+    }
     Haptics.impactAsync(hapticFeedback);
     onPress();
   };

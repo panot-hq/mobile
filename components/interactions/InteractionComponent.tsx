@@ -1,10 +1,9 @@
 import { useInteractionOverlay } from "@/contexts/InteractionOverlayContext";
-import { useInteractions } from "@/lib/hooks/useLegendState";
 import { formatCreatedAt } from "@/lib/utils/dateFormatter";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useRef } from "react";
-import { ActionSheetIOS, Alert, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -27,7 +26,6 @@ export default function Interaction({
 }: InteractionProps) {
   const scale = useSharedValue(1);
   const { showOverlay } = useInteractionOverlay();
-  const { deleteInteraction } = useInteractions();
   const componentRef = useRef<View>(null);
   const formatted = formatCreatedAt(createdAt);
 
@@ -46,70 +44,24 @@ export default function Interaction({
     router.push(`/(interactions)/assign?interactionId=${interactionId}`);
   };
 
-  const handleDeleteInteraction = (callback?: () => void) => {
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        options: ["Cancelar", "Eliminar Interacción"],
-        destructiveButtonIndex: 1,
-        cancelButtonIndex: 0,
-        title: "Eliminar Interacción",
-        message:
-          "¿Estás seguro de que quieres eliminar esta interacción? Esta acción no se puede deshacer.",
-      },
-      (buttonIndex) => {
-        if (buttonIndex === 1) {
-          try {
-            deleteInteraction(interactionId);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            if (callback) {
-              setTimeout(() => {
-                callback();
-              }, 400);
-            }
-          } catch (error) {
-            console.error("Error deleting interaction:", error);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert("Error", "No se pudo eliminar la interacción");
-          }
-        } else {
-          if (callback) {
-            callback();
-          }
-        }
-      }
-    );
+  const openOverlay = () => {
+    if (componentRef.current) {
+      componentRef.current.measureInWindow((x, y, width, height) => {
+        showOverlay({
+          id: interactionId,
+          createdAt,
+          rawContent,
+          datePart,
+          hourPart,
+          initialLayout: { x, y, width, height },
+        });
+      });
+    }
   };
 
   const handleLongPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-
-    if (componentRef.current) {
-      componentRef.current.measureInWindow((x, y, width, height) => {
-        showOverlay(
-          {
-            id: interactionId,
-            createdAt,
-            rawContent,
-            datePart,
-            hourPart,
-            initialLayout: { x, y, width, height },
-          },
-          [
-            {
-              label: "VIEW",
-              onPress: () => {
-                router.push(`/(interactions)/${interactionId}`);
-              },
-            },
-            {
-              label: "DELETE",
-              onPress: handleDeleteInteraction,
-              destructive: true,
-            },
-          ]
-        );
-      });
-    }
+    openOverlay();
   };
 
   const handlePressIn = () => {
@@ -122,7 +74,7 @@ export default function Interaction({
 
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push(`/(interactions)/${interactionId}`);
+    openOverlay();
   };
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -175,7 +127,7 @@ export default function Interaction({
           {truncatedContent}
         </Text>
 
-        <AssignInteractionButton onPress={handleAssignInteraction} />
+        <AssignInteractionButton onPress={handleAssignInteraction} stopPropagation />
       </View>
     </AnimatedPressable>
   );

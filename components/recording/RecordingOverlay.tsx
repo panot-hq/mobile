@@ -207,7 +207,6 @@ export default function RecordingOverlay({
         try {
           createInteraction({
             raw_content: acceptedTranscript,
-            key_concepts: "",
             deleted: false,
             contact_id: finalContactId,
           });

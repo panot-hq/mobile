@@ -48,7 +48,6 @@ export default function ImportContactScreen() {
           ],
         });
 
-        // Sort contacts alphabetically
         const sortedContacts = data.sort((a, b) => {
           const nameA = (
             a.firstName ||
@@ -82,6 +81,13 @@ export default function ImportContactScreen() {
     }
   };
 
+  const normalizeString = (str: string): string => {
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+  };
+
   const filterContacts = (
     contacts: ExistingContact[],
     searchTerm: string
@@ -90,25 +96,22 @@ export default function ImportContactScreen() {
       return contacts;
     }
 
-    const lowercaseSearch = searchTerm.toLowerCase().trim();
+    const normalizedSearch = normalizeString(searchTerm.trim());
 
     return contacts.filter((contact) => {
-      const firstName = (contact.firstName || "").toLowerCase();
-      const lastName = (contact.lastName || "").toLowerCase();
+      const firstName = normalizeString(contact.firstName || "");
+      const lastName = normalizeString(contact.lastName || "");
       const fullName = `${firstName} ${lastName}`.trim();
-      const name = (contact.name || "").toLowerCase();
+      const name = normalizeString(contact.name || "");
       const phoneNumbers =
-        contact.phoneNumbers
-          ?.map((p) => p.number || "")
-          .join(" ")
-          .toLowerCase() || "";
+        contact.phoneNumbers?.map((p) => p.number || "").join(" ") || "";
 
       return (
-        firstName.includes(lowercaseSearch) ||
-        lastName.includes(lowercaseSearch) ||
-        fullName.includes(lowercaseSearch) ||
-        name.includes(lowercaseSearch) ||
-        phoneNumbers.includes(lowercaseSearch)
+        firstName.includes(normalizedSearch) ||
+        lastName.includes(normalizedSearch) ||
+        fullName.includes(normalizedSearch) ||
+        name.includes(normalizedSearch) ||
+        phoneNumbers.includes(normalizedSearch)
       );
     });
   };
@@ -120,8 +123,9 @@ export default function ImportContactScreen() {
 
     contacts.forEach((contact) => {
       const name = contact.firstName || contact.lastName || contact.name || "";
-      const firstLetter = name.charAt(0).toLowerCase();
-      const letter = firstLetter.match(/[a-z]/) ? firstLetter : "#";
+      const firstLetter = name.charAt(0);
+      const normalizedLetter = normalizeString(firstLetter);
+      const letter = normalizedLetter.match(/[a-z]/i) ? normalizedLetter : "#";
 
       if (!grouped[letter]) {
         grouped[letter] = [];
@@ -152,7 +156,6 @@ export default function ImportContactScreen() {
 
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-        // Crear canales de comunicación desde los números de teléfono
         const communicationChannels: CommunicationChannel[] = [];
         if (localContact.phoneNumbers && localContact.phoneNumbers.length > 0) {
           localContact.phoneNumbers.forEach((phone) => {
@@ -166,14 +169,11 @@ export default function ImportContactScreen() {
         createContact({
           first_name: localContact.firstName || "",
           last_name: localContact.lastName || "",
-          professional_context: "",
-          personal_context: "",
-          relationship_context: "",
-          details: "you imported this contact from your phone contacts",
+          context: null,
+          details: "",
           communication_channels: stringifyCommunicationChannels(
             communicationChannels
           ),
-          birthday: null,
           deleted: false,
         });
 
@@ -280,7 +280,6 @@ export default function ImportContactScreen() {
               paddingHorizontal: 16,
               paddingBottom: 120,
             }}
-            // Performance optimizations
             removeClippedSubviews={true}
             initialNumToRender={20}
             maxToRenderPerBatch={10}

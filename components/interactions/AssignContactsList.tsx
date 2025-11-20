@@ -1,8 +1,14 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useContacts as useContactsContext } from "@/contexts/ContactsContext";
 import { useRecording } from "@/contexts/RecordingContext";
+import {
+  applyContactUpdates,
+  updateContactFromInteraction,
+} from "@/lib/api/update_contact";
 import { Contact } from "@/lib/database/database.types";
 import { useContacts, useInteractions } from "@/lib/hooks/useLegendState";
+import { startProcessing, stopProcessing } from "@/lib/utils/processingState";
+import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React from "react";
 import { FlatList, Text, View } from "react-native";
@@ -23,33 +29,32 @@ interface ContactListItem {
 interface AssignContactsListProps {
   interactionId?: string;
   isRecordingMode?: boolean;
+  autoProcess?: boolean;
 }
 
 export default function AssignContactsList({
   interactionId,
   isRecordingMode = false,
+  autoProcess = false,
 }: AssignContactsListProps) {
   const { user } = useAuth();
   const { searchTerm } = useContactsContext();
-  const { contacts } = useContacts();
-  const { assignContact } = useInteractions();
+  const { contacts, getContact } = useContacts();
+  const { assignContact, getInteraction, updateInteraction } =
+    useInteractions();
   const { setAssignedContactId } = useRecording();
 
-  // Sort contacts alphabetically
+  const normalizeString = (str: string): string => {
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+  };
+
   const sortedContacts = React.useMemo(() => {
     return [...contacts].sort((a, b) => {
-      const nameA = (
-        a.first_name ||
-        a.last_name ||
-        a.professional_context?.company ||
-        ""
-      ).toLowerCase();
-      const nameB = (
-        b.first_name ||
-        b.last_name ||
-        b.professional_context?.company ||
-        ""
-      ).toLowerCase();
+      const nameA = (a.first_name || a.last_name || "").toLowerCase();
+      const nameB = (b.first_name || b.last_name || "").toLowerCase();
       return nameA.localeCompare(nameB);
     });
   }, [contacts]);
@@ -62,23 +67,17 @@ export default function AssignContactsList({
       return contacts;
     }
 
-    const lowercaseSearch = searchTerm.toLowerCase().trim();
+    const normalizedSearch = normalizeString(searchTerm.trim());
 
     return contacts.filter((contact) => {
-      const firstName = (contact.first_name || "").toLowerCase();
-      const lastName = (contact.last_name || "").toLowerCase();
+      const firstName = normalizeString(contact.first_name || "");
+      const lastName = normalizeString(contact.last_name || "");
       const fullName = `${firstName} ${lastName}`.trim();
-      const company = (contact.professional_context?.company || "").toLowerCase();
-      const jobTitle = (contact.professional_context?.job_title || "").toLowerCase();
-      const department = (contact.professional_context?.department || "").toLowerCase();
 
       return (
-        firstName.includes(lowercaseSearch) ||
-        lastName.includes(lowercaseSearch) ||
-        fullName.includes(lowercaseSearch) ||
-        company.includes(lowercaseSearch) ||
-        jobTitle.includes(lowercaseSearch) ||
-        department.includes(lowercaseSearch)
+        firstName.includes(normalizedSearch) ||
+        lastName.includes(normalizedSearch) ||
+        fullName.includes(normalizedSearch)
       );
     });
   };
@@ -89,13 +88,10 @@ export default function AssignContactsList({
     const grouped: { [key: string]: Contact[] } = {};
 
     contacts.forEach((contact) => {
-      const name =
-        contact.first_name ||
-        contact.last_name ||
-        contact.professional_context?.company ||
-        "";
-      const firstLetter = name.charAt(0).toLowerCase();
-      const letter = firstLetter.match(/[a-z]/) ? firstLetter : "#";
+      const name = contact.first_name || contact.last_name || "";
+      const firstLetter = name.charAt(0);
+      const normalizedLetter = normalizeString(firstLetter);
+      const letter = normalizedLetter.match(/[a-z]/i) ? normalizedLetter : "#";
 
       if (!grouped[letter]) {
         grouped[letter] = [];
@@ -123,7 +119,49 @@ export default function AssignContactsList({
         router.back();
       } else if (interactionId) {
         assignContact(interactionId, contactId);
+
+        if (autoProcess) {
+          startProcessing(interactionId);
+        }
+
         router.back();
+
+        if (autoProcess) {
+          setTimeout(async () => {
+            const interaction = getInteraction(interactionId);
+            const contact = getContact(contactId);
+
+            if (interaction && contact) {
+              try {
+                const displayName = user?.user_metadata?.full_name || "";
+
+                const updateResponse = await updateContactFromInteraction({
+                  transcript: interaction.raw_content,
+                  contact: contact,
+                  displayName,
+                });
+                if (updateResponse.has_updates) {
+                  await applyContactUpdates(contact.id, updateResponse);
+                }
+
+                updateInteraction(interaction.id, {
+                  processed: true,
+                });
+                stopProcessing(interactionId);
+
+                Haptics.notificationAsync(
+                  Haptics.NotificationFeedbackType.Success
+                );
+              } catch (error: any) {
+                console.error("Error auto-processing interaction:", error);
+                stopProcessing(interactionId);
+                Haptics.notificationAsync(
+                  Haptics.NotificationFeedbackType.Error
+                );
+              }
+            }
+          }, 300);
+        }
       }
     } catch (error) {
       console.error("Error assigning contact:", error);

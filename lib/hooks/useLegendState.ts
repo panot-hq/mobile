@@ -83,23 +83,24 @@ export function useContacts() {
         return true;
       }
 
-      // Search in professional context
-      if (
-        contact.professional_context?.company?.toLowerCase().includes(term) ||
-        contact.professional_context?.job_title?.toLowerCase().includes(term) ||
-        contact.professional_context?.department?.toLowerCase().includes(term)
-      ) {
-        return true;
+      // Search in context (JSON field - could be string or object)
+      if (contact.context) {
+        const contextStr = typeof contact.context === 'string' 
+          ? contact.context 
+          : JSON.stringify(contact.context);
+        if (contextStr.toLowerCase().includes(term)) {
+          return true;
+        }
       }
 
-      // Search in relationship context
-      if (contact.relationship_context?.toLowerCase().includes(term)) {
-        return true;
-      }
-
-      // Search in details notes
-      if (contact.details?.notes?.toLowerCase().includes(term)) {
-        return true;
+      // Search in details (JSON field - could be string or object)
+      if (contact.details) {
+        const detailsStr = typeof contact.details === 'string' 
+          ? contact.details 
+          : JSON.stringify(contact.details);
+        if (detailsStr.toLowerCase().includes(term)) {
+          return true;
+        }
       }
 
       return false;
