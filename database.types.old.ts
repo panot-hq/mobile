@@ -60,7 +60,6 @@ export type Database = {
           deleted: boolean | null
           id: string
           owner_id: string
-          processed: boolean
           raw_content: string
           updated_at: string | null
         }
@@ -70,7 +69,6 @@ export type Database = {
           deleted?: boolean | null
           id?: string
           owner_id: string
-          processed?: boolean
           raw_content: string
           updated_at?: string | null
         }
@@ -80,7 +78,6 @@ export type Database = {
           deleted?: boolean | null
           id?: string
           owner_id?: string
-          processed?: boolean
           raw_content?: string
           updated_at?: string | null
         }

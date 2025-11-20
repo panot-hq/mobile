@@ -29,9 +29,7 @@ export default function NewContactScreen() {
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
-    professional_context: "",
-    personal_context: "",
-    relationship_context: "",
+    context: "",
     details: "",
   });
   const [contactName, setContactName] = useState("New Contact");
@@ -45,15 +43,19 @@ export default function NewContactScreen() {
 
   const processTranscript = async (transcript: string) => {
     setIsProcessing(true);
+
     try {
-      const contactInfo = await processContactFromTranscript(transcript);
+      const displayName = user?.user_metadata?.full_name || "";
+
+      const contactInfo = await processContactFromTranscript(
+        transcript,
+        displayName
+      );
 
       setFormData({
         first_name: contactInfo.first_name || "",
-        last_name: contactInfo.last_name || "",
-        professional_context: contactInfo.professional_context || "",
-        personal_context: contactInfo.personal_context || "",
-        relationship_context: contactInfo.relationship_context || "",
+        last_name: contactInfo.last_name?.trim() || "",
+        context: JSON.stringify(contactInfo.context) || "",
         details: contactInfo.details || "",
       });
 
@@ -77,13 +79,7 @@ export default function NewContactScreen() {
     if (formData.first_name.trim() !== "" || formData.last_name.trim() !== "") {
       return true;
     }
-    if (formData.professional_context.trim() !== "") {
-      return true;
-    }
-    if (formData.personal_context.trim() !== "") {
-      return true;
-    }
-    if (formData.relationship_context.trim() !== "") {
+    if (formData.context.trim() !== "") {
       return true;
     }
     if (formData.details.trim() !== "") {
@@ -129,7 +125,7 @@ export default function NewContactScreen() {
       [field]: value,
     }));
     if (field === "first_name") {
-      setContactName(value.trim() || "New Contact");
+      setContactName(value?.trim() || "New Contact");
     }
   };
 
@@ -145,7 +141,7 @@ export default function NewContactScreen() {
 
   const isFormValid = () => {
     return (
-      formData.first_name.trim() !== "" || formData.last_name.trim() !== ""
+      formData.first_name?.trim() !== "" || formData.last_name?.trim() !== ""
     );
   };
 
@@ -163,16 +159,12 @@ export default function NewContactScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
-      // Prepare data according to new schema (all contexts are strings)
       const contactData = {
-        first_name: formData.first_name.trim() || null,
-        last_name: formData.last_name.trim() || null,
-        professional_context: formData.professional_context.trim() || null,
-        personal_context: formData.personal_context.trim() || null,
-        relationship_context: formData.relationship_context.trim() || null,
-        details: formData.details.trim() || null,
+        first_name: formData.first_name.trim() || "",
+        last_name: formData.last_name.trim() || "",
+        context: formData.context || null,
+        details: formData.details.trim() || "",
         deleted: false,
-        birthday: null,
         communication_channels: null,
       };
 
@@ -259,30 +251,7 @@ export default function NewContactScreen() {
         </View>
 
         <View style={{ gap: 10, marginBottom: 30 }}>
-          {renderInputField(
-            "professional_context",
-            "Describe their professional situation...",
-            true,
-            false
-          )}
-          {renderInputField(
-            "personal_context",
-            "Describe their personal information...",
-            true,
-            false
-          )}
-          {renderInputField(
-            "relationship_context",
-            "How you met or relationship context...",
-            true,
-            false
-          )}
-          {renderInputField(
-            "details",
-            "Additional notes or details...",
-            true,
-            false
-          )}
+          {renderInputField("details", "About this contact...", true, false)}
         </View>
       </ScrollView>
 

@@ -85,14 +85,6 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
-        name="(interactions)/[id]"
-        options={{
-          presentation: "modal",
-          headerShown: false,
-          gestureEnabled: false,
-        }}
-      />
-      <Stack.Screen
         name="(interactions)/assign"
         options={{
           presentation: "modal",

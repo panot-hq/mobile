@@ -1,32 +1,110 @@
 import { supabase } from "@/lib/supabase";
 import { z } from "zod";
 
+const ContextSchema = z
+  .object({
+    personal: z
+      .object({
+        situacion_vital: z.string().optional(),
+        preferencias: z.array(z.string()).optional(),
+        necesidades: z.array(z.string()).optional(),
+        intereses: z.array(z.string()).optional(),
+        otros: z.record(z.any()).optional(),
+      })
+      .optional(),
+    profesional: z
+      .object({
+        situacion_laboral: z.string().optional(),
+        empresa: z.string().optional(),
+        puesto: z.string().optional(),
+        preferencias_laborales: z.array(z.string()).optional(),
+        habilidades: z.array(z.string()).optional(),
+        proyectos: z.array(z.string()).optional(),
+      })
+      .optional(),
+    relacion: z
+      .object({
+        como_se_conocieron: z.string().optional(),
+        intereses_comunes: z.array(z.string()).optional(),
+        tipo_relacion: z.string().optional(),
+        ultima_interaccion: z.string().optional(),
+        receptividad_colaboracion: z.string().optional(),
+      })
+      .optional(),
+  })
+  .nullable()
+  .optional();
+
 const ContactInfoSchema = z.object({
   first_name: z.string().min(1),
-  last_name: z.string().nullable().optional(),
-  professional_context: z.string().nullable().optional(),
-  personal_context: z.string().nullable().optional(),
-  relationship_context: z.string().nullable().optional(),
-  details: z.string().nullable().optional(),
+  last_name: z.string().transform((val) => val || ""),
+  context: ContextSchema,
+  details: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => val || ""),
 });
 
 export type ContactInfo = z.infer<typeof ContactInfoSchema>;
 
 export async function processContactFromTranscript(
-  transcript: string
+  transcript: string,
+  displayName?: string
 ): Promise<ContactInfo> {
   try {
-    const { data, error } = await supabase.functions.invoke("talk-about-them", {
-      body: { transcript },
+    const response = await supabase.functions.invoke("talk-about-them", {
+      body: { transcript, displayName },
     });
+
+    const { data, error } = response;
+
     if (error) {
+      console.error("Edge function error object:", {
+        message: error.message,
+        name: error.name,
+        context: error.context,
+        details: error,
+      });
+
+      if (error.context?.status === 404) {
+        throw new Error(
+          "Servicio temporalmente no disponible. Por favor, intenta de nuevo en unos minutos."
+        );
+      }
+
+      if (error.context?.status >= 500) {
+        throw new Error(
+          "Error del servidor. Por favor, intenta de nuevo más tarde."
+        );
+      }
+
       throw new Error(error.message || "Error al procesar el contacto");
     }
 
+    if (!data) {
+      throw new Error("No se recibió respuesta de la edge function");
+    }
+
+    if (data.error) {
+      console.error("Edge function returned error in data:", data.error);
+      throw new Error(data.error);
+    }
+
     const result = ContactInfoSchema.parse(data);
+
     return result;
   } catch (error: any) {
+    console.error("Full error details:", {
+      message: error?.message,
+      name: error?.name,
+      issues: error?.issues,
+      cause: error?.cause,
+      stack: error?.stack,
+    });
+
     if (error?.issues) {
+      console.error("Zod validation errors:", error.issues);
       throw new Error(
         "El formato de la respuesta no es válido. Por favor, intenta describir el contacto de manera más clara o inténtalo de nuevo."
       );

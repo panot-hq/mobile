@@ -27,21 +27,18 @@ export default function ContactList({ searchTerm = "" }: ContactListProps) {
   // Ordenar contactos alfabéticamente por first_name
   const sortedContacts = useMemo(() => {
     return [...contacts].sort((a, b) => {
-      const nameA = (
-        a.first_name ||
-        a.last_name ||
-        a.professional_context?.company ||
-        ""
-      ).toLowerCase();
-      const nameB = (
-        b.first_name ||
-        b.last_name ||
-        b.professional_context?.company ||
-        ""
-      ).toLowerCase();
+      const nameA = (a.first_name || a.last_name || "").toLowerCase();
+      const nameB = (b.first_name || b.last_name || "").toLowerCase();
       return nameA.localeCompare(nameB);
     });
   }, [contacts]);
+
+  const normalizeString = (str: string): string => {
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+  };
 
   const filterContacts = (
     contacts: Contact[],
@@ -51,23 +48,17 @@ export default function ContactList({ searchTerm = "" }: ContactListProps) {
       return contacts;
     }
 
-    const lowercaseSearch = searchTerm.toLowerCase().trim();
+    const normalizedSearch = normalizeString(searchTerm.trim());
 
     return contacts.filter((contact) => {
-      const firstName = (contact.first_name || "").toLowerCase();
-      const lastName = (contact.last_name || "").toLowerCase();
+      const firstName = normalizeString(contact.first_name || "");
+      const lastName = normalizeString(contact.last_name || "");
       const fullName = `${firstName} ${lastName}`.trim();
-      const company = (contact.professional_context?.company || "").toLowerCase();
-      const jobTitle = (contact.professional_context?.job_title || "").toLowerCase();
-      const department = (contact.professional_context?.department || "").toLowerCase();
 
       return (
-        firstName.includes(lowercaseSearch) ||
-        lastName.includes(lowercaseSearch) ||
-        fullName.includes(lowercaseSearch) ||
-        company.includes(lowercaseSearch) ||
-        jobTitle.includes(lowercaseSearch) ||
-        department.includes(lowercaseSearch)
+        firstName.includes(normalizedSearch) ||
+        lastName.includes(normalizedSearch) ||
+        fullName.includes(normalizedSearch)
       );
     });
   };
@@ -78,13 +69,10 @@ export default function ContactList({ searchTerm = "" }: ContactListProps) {
     const grouped: { [key: string]: Contact[] } = {};
 
     contacts.forEach((contact) => {
-      const name =
-        contact.first_name ||
-        contact.last_name ||
-        contact.professional_context?.company ||
-        "";
-      const firstLetter = name.charAt(0).toLowerCase();
-      const letter = firstLetter.match(/[a-z]/) ? firstLetter : "#";
+      const name = contact.first_name || contact.last_name || "";
+      const firstLetter = name.charAt(0);
+      const normalizedLetter = normalizeString(firstLetter);
+      const letter = normalizedLetter.match(/[a-z]/i) ? normalizedLetter : "#";
 
       if (!grouped[letter]) {
         grouped[letter] = [];
