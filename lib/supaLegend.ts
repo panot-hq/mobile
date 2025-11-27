@@ -32,7 +32,7 @@ export const contacts$: Observable<any> = observable(
     collection: "contacts",
     select: (from: any) =>
       from.select(
-        "id,owner_id,first_name,last_name,context,details,created_at,updated_at,deleted,communication_channels"
+        "id,owner_id,first_name,last_name,details,created_at,updated_at,deleted,communication_channels"
       ),
     actions: ["read", "create", "update", "delete"],
     realtime: true,
@@ -99,7 +99,9 @@ export const profiles$: Observable<any> = observable(
     supabase,
     collection: "profiles",
     select: (from: any) =>
-      from.select("user_id,onboarding_done,created_at,updated_at,deleted"),
+      from.select(
+        "user_id,onboarding_done,subscribed,created_at,updated_at,deleted"
+      ),
     actions: ["read", "create", "update"],
     realtime: true,
     persist: {
@@ -108,6 +110,20 @@ export const profiles$: Observable<any> = observable(
     },
     retry: {
       infinite: true,
+    },
+    fieldId: "user_id",
+    onError: (error: any) => {
+      const errorMessage = error?.message || String(error);
+      const isNetworkError =
+        errorMessage.includes("fetch") ||
+        errorMessage.includes("network") ||
+        errorMessage.includes("Failed to fetch") ||
+        errorMessage.includes("NetworkError") ||
+        errorMessage.includes("Unable to resolve host");
+
+      if (!isNetworkError) {
+        console.error("❌ Profiles sync error:", error);
+      }
     },
   })
 );
@@ -130,9 +146,15 @@ export async function initializeSync(userId: string) {
     interactionsSyncState$.sync();
     profilesSyncState$.sync();
 
+    // Log profile data after sync is initiated
+    setTimeout(() => {
+      // @ts-ignore
+      const profile = profiles$[userId]?.get();
+    }, 1000);
+
     await cleanupOrphanedInteractions();
   } catch (error) {
-    console.error("Error initializing sync:", error);
+    console.error("❌ Error initializing sync:", error);
   }
 }
 

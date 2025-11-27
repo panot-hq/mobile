@@ -17,7 +17,6 @@ export type Database = {
       contacts: {
         Row: {
           communication_channels: Json | null
-          context: Json | null
           created_at: string | null
           deleted: boolean | null
           details: Json | null
@@ -29,7 +28,6 @@ export type Database = {
         }
         Insert: {
           communication_channels?: Json | null
-          context?: Json | null
           created_at?: string | null
           deleted?: boolean | null
           details?: Json | null
@@ -41,7 +39,6 @@ export type Database = {
         }
         Update: {
           communication_channels?: Json | null
-          context?: Json | null
           created_at?: string | null
           deleted?: boolean | null
           details?: Json | null
@@ -106,6 +103,7 @@ export type Database = {
           created_at: string | null
           deleted: boolean | null
           onboarding_done: boolean
+          subscribed: boolean
           updated_at: string | null
           user_id: string
         }
@@ -113,6 +111,7 @@ export type Database = {
           created_at?: string | null
           deleted?: boolean | null
           onboarding_done?: boolean
+          subscribed?: boolean
           updated_at?: string | null
           user_id: string
         }
@@ -120,7 +119,70 @@ export type Database = {
           created_at?: string | null
           deleted?: boolean | null
           onboarding_done?: boolean
+          subscribed?: boolean
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      semantic_edges: {
+        Row: {
+          created_at: string | null
+          id: string
+          relation_type: string
+          source_id: string
+          target_id: string
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          relation_type: string
+          source_id: string
+          target_id: string
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          relation_type?: string
+          source_id?: string
+          target_id?: string
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "semantic_edges_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "semantic_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      semantic_nodes: {
+        Row: {
+          created_at: string | null
+          id: string
+          label: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          label: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          label?: string
+          type?: string
           user_id?: string
         }
         Relationships: []

@@ -83,21 +83,12 @@ export function useContacts() {
         return true;
       }
 
-      // Search in context (JSON field - could be string or object)
-      if (contact.context) {
-        const contextStr = typeof contact.context === 'string' 
-          ? contact.context 
-          : JSON.stringify(contact.context);
-        if (contextStr.toLowerCase().includes(term)) {
-          return true;
-        }
-      }
-
       // Search in details (JSON field - could be string or object)
       if (contact.details) {
-        const detailsStr = typeof contact.details === 'string' 
-          ? contact.details 
-          : JSON.stringify(contact.details);
+        const detailsStr =
+          typeof contact.details === "string"
+            ? contact.details
+            : JSON.stringify(contact.details);
         if (detailsStr.toLowerCase().includes(term)) {
           return true;
         }
@@ -261,35 +252,51 @@ export function useProfile() {
   const profile = useSelector(() => {
     if (!user) return null;
     // @ts-ignore
-    const userProfile = profiles$[user.id].peek();
+    const userProfile = profiles$[user.id]?.get();
     if (!userProfile || userProfile.deleted) return null;
     return userProfile as Profile;
+  });
+
+  const isSubscribed = useSelector(() => {
+    if (!user) return false;
+    // @ts-ignore
+    const userProfile = profiles$[user.id]?.get();
+    if (!userProfile || userProfile.deleted) return false;
+    return userProfile.subscribed ?? false;
   });
 
   const updateProfile = (updates: Partial<Profile>) => {
     if (!user) throw new Error("User not authenticated");
 
     // @ts-ignore
-    const currentProfile = profiles$[user.id].peek();
+    const currentProfile = profiles$[user.id]?.peek();
     if (!currentProfile) {
       // @ts-ignore
       profiles$[user.id].set({
         user_id: user.id,
         onboarding_done: false,
+        subscribed: false,
         ...updates,
+        updated_at: new Date().toISOString(),
       });
     } else {
       // @ts-ignore
-      profiles$[user.id].set({
-        ...currentProfile,
+      profiles$[user.id].assign({
         ...updates,
+        updated_at: new Date().toISOString(),
       });
     }
   };
 
+  const updateSubscription = (subscribed: boolean) => {
+    updateProfile({ subscribed });
+  };
+
   return {
     profile,
+    isSubscribed,
     updateProfile,
+    updateSubscription,
   };
 }
 

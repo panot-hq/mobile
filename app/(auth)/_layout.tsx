@@ -1,17 +1,6 @@
-import { useAuth } from "@/contexts/AuthContext";
 import { SignupProvider } from "@/contexts/SignupContext";
-import { Stack, useRouter } from "expo-router";
-import { useEffect } from "react";
+import { Stack } from "expo-router";
 export default function AuthLayout() {
-  const { user } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (user?.id) {
-      router.replace("/(tabs)/present");
-    }
-  }, [user?.id]);
-
   return (
     <SignupProvider>
       <Stack>
@@ -56,6 +45,14 @@ export default function AuthLayout() {
         />
         <Stack.Screen
           name="restore"
+          options={{
+            animation: "fade",
+            headerShown: false,
+            gestureEnabled: false,
+          }}
+        />
+        <Stack.Screen
+          name="(paywall)/paywall"
           options={{
             animation: "fade",
             headerShown: false,

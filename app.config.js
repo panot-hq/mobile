@@ -7,6 +7,7 @@ module.exports = ({ config }) => {
     extra: {
       ...config.extra,
       openaiApiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY,
+      stripePublishableKey: process.env.EXPO_PUBLIC_PUBLISABLE_STRIPE_KEY,
     },
   };
 };

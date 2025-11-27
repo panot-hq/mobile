@@ -17,7 +17,6 @@ export type Database = {
       contacts: {
         Row: {
           communication_channels: Json | null;
-          context: Json | null;
           created_at: string | null;
           deleted: boolean | null;
           details: Json | null;
@@ -29,7 +28,6 @@ export type Database = {
         };
         Insert: {
           communication_channels?: Json | null;
-          context?: Json | null;
           created_at?: string | null;
           deleted?: boolean | null;
           details?: Json | null;
@@ -41,7 +39,6 @@ export type Database = {
         };
         Update: {
           communication_channels?: Json | null;
-          context?: Json | null;
           created_at?: string | null;
           deleted?: boolean | null;
           details?: Json | null;
@@ -106,6 +103,7 @@ export type Database = {
           created_at: string | null;
           deleted: boolean | null;
           onboarding_done: boolean;
+          subscribed: boolean;
           updated_at: string | null;
           user_id: string;
         };
@@ -113,6 +111,7 @@ export type Database = {
           created_at?: string | null;
           deleted?: boolean | null;
           onboarding_done?: boolean;
+          subscribed?: boolean;
           updated_at?: string | null;
           user_id: string;
         };
@@ -120,6 +119,7 @@ export type Database = {
           created_at?: string | null;
           deleted?: boolean | null;
           onboarding_done?: boolean;
+          subscribed?: boolean;
           updated_at?: string | null;
           user_id?: string;
         };
@@ -267,7 +267,7 @@ export const Constants = {
   },
 } as const;
 
-// Type aliases for easier use
+// Convenience type exports
 export type Contact = Tables<"contacts">;
 export type ContactInsert = TablesInsert<"contacts">;
 export type ContactUpdate = TablesUpdate<"contacts">;
@@ -280,7 +280,7 @@ export type Profile = Tables<"profiles">;
 export type ProfileInsert = TablesInsert<"profiles">;
 export type ProfileUpdate = TablesUpdate<"profiles">;
 
-// Common response types (for services if still needed)
+// Database response types
 export interface DatabaseResponse<T> {
   data: T | null;
   error: Error | null;

@@ -13,8 +13,6 @@ import React, {
   useState,
 } from "react";
 
-const DEV_MODE = false;
-
 interface AuthContextType {
   user: User | null;
   session: Session | null;

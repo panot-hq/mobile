@@ -169,7 +169,6 @@ export default function ImportContactScreen() {
         createContact({
           first_name: localContact.firstName || "",
           last_name: localContact.lastName || "",
-          context: null,
           details: "",
           communication_channels: stringifyCommunicationChannels(
             communicationChannels

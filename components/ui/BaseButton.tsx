@@ -26,6 +26,7 @@ export interface BaseButtonProps extends Omit<PressableProps, "style"> {
   borderWidth?: number;
   borderColor?: string;
   stopPropagation?: boolean;
+  marginTop?: number;
 }
 
 export default function BaseButton({
@@ -42,6 +43,7 @@ export default function BaseButton({
   borderWidth,
   borderColor,
   stopPropagation = false,
+  marginTop,
   ...pressableProps
 }: BaseButtonProps) {
   const scale = useSharedValue(1);
@@ -79,6 +81,7 @@ export default function BaseButton({
           height,
           borderWidth,
           borderColor,
+          marginTop,
         },
         animatedStyle,
         style,
