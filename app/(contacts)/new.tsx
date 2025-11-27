@@ -29,7 +29,6 @@ export default function NewContactScreen() {
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
-    context: "",
     details: "",
   });
   const [contactName, setContactName] = useState("New Contact");
@@ -55,7 +54,6 @@ export default function NewContactScreen() {
       setFormData({
         first_name: contactInfo.first_name || "",
         last_name: contactInfo.last_name?.trim() || "",
-        context: JSON.stringify(contactInfo.context) || "",
         details: contactInfo.details || "",
       });
 
@@ -77,9 +75,6 @@ export default function NewContactScreen() {
 
   const hasUnsavedChanges = () => {
     if (formData.first_name.trim() !== "" || formData.last_name.trim() !== "") {
-      return true;
-    }
-    if (formData.context.trim() !== "") {
       return true;
     }
     if (formData.details.trim() !== "") {
@@ -162,7 +157,6 @@ export default function NewContactScreen() {
       const contactData = {
         first_name: formData.first_name.trim() || "",
         last_name: formData.last_name.trim() || "",
-        context: formData.context || null,
         details: formData.details.trim() || "",
         deleted: false,
         communication_channels: null,

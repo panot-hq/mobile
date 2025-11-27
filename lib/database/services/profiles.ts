@@ -21,6 +21,7 @@ export class ProfilesService {
         .insert({
           ...profile,
           onboarding_done: profile.onboarding_done ?? false,
+          subscribed: profile.subscribed ?? false,
           created_at: new Date().toISOString(),
         })
         .select()
@@ -110,6 +111,33 @@ export class ProfilesService {
     } catch (error) {
       return false;
     }
+  }
+
+  /**
+   * Check if user is subscribed
+   */
+  static async isSubscribed(userId: string): Promise<boolean> {
+    try {
+      const { data, error } = await this.getByUserId(userId);
+
+      if (error || !data) {
+        return false;
+      }
+
+      return data.subscribed;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Update subscription status
+   */
+  static async updateSubscription(
+    userId: string,
+    subscribed: boolean
+  ): Promise<DatabaseResponse<Profile>> {
+    return this.update(userId, { subscribed });
   }
 
   /**

@@ -36,10 +36,15 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "static"
+      "output": "server"
     },
     "plugins": [
-      "expo-router",
+      [
+        "expo-router",
+        {
+          "origin": "https://panot.com"
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -57,6 +62,13 @@
         "expo-contacts",
         {
           "contactsPermission": "Allow $(PRODUCT_NAME) to access your contacts."
+        }
+      ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.ahrm.panot",
+          "publishableKey": "pk_test_51SVcCbJXKGjQr9YZXn0gkfU7PXKmZ6MNW7cA5cvgSWGPH18X8W70QbCPC5xzi3neTLQaPckSahP0E4Cv45BDBpYp00TYe4lfqN"
         }
       ]
     ],

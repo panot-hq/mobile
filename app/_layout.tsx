@@ -16,6 +16,8 @@ import { SettingsProvider } from "@/contexts/SettingsContext";
 import { TalkAboutThemProvider } from "@/contexts/TalkAboutThemContext";
 export { ErrorBoundary } from "expo-router";
 
+import StripeProvider from "@/components/stripe/stripe-provider";
+
 SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
@@ -37,25 +39,27 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <AuthProvider>
-          <SettingsProvider>
-            <ContactsProvider>
-              <InteractionProvider>
-                <RecordingProvider>
-                  <TalkAboutThemProvider>
-                    <InteractionOverlayProvider>
-                      <RootLayoutNav />
-                    </InteractionOverlayProvider>
-                  </TalkAboutThemProvider>
-                </RecordingProvider>
-              </InteractionProvider>
-            </ContactsProvider>
-          </SettingsProvider>
-        </AuthProvider>
-      </BottomSheetModalProvider>
-    </GestureHandlerRootView>
+    <StripeProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <BottomSheetModalProvider>
+          <AuthProvider>
+            <SettingsProvider>
+              <ContactsProvider>
+                <InteractionProvider>
+                  <RecordingProvider>
+                    <TalkAboutThemProvider>
+                      <InteractionOverlayProvider>
+                        <RootLayoutNav />
+                      </InteractionOverlayProvider>
+                    </TalkAboutThemProvider>
+                  </RecordingProvider>
+                </InteractionProvider>
+              </ContactsProvider>
+            </SettingsProvider>
+          </AuthProvider>
+        </BottomSheetModalProvider>
+      </GestureHandlerRootView>
+    </StripeProvider>
   );
 }
 

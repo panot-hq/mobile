@@ -1,44 +1,9 @@
 import { supabase } from "@/lib/supabase";
 import { z } from "zod";
 
-const ContextSchema = z
-  .object({
-    personal: z
-      .object({
-        situacion_vital: z.string().optional(),
-        preferencias: z.array(z.string()).optional(),
-        necesidades: z.array(z.string()).optional(),
-        intereses: z.array(z.string()).optional(),
-        otros: z.record(z.any()).optional(),
-      })
-      .optional(),
-    profesional: z
-      .object({
-        situacion_laboral: z.string().optional(),
-        empresa: z.string().optional(),
-        puesto: z.string().optional(),
-        preferencias_laborales: z.array(z.string()).optional(),
-        habilidades: z.array(z.string()).optional(),
-        proyectos: z.array(z.string()).optional(),
-      })
-      .optional(),
-    relacion: z
-      .object({
-        como_se_conocieron: z.string().optional(),
-        intereses_comunes: z.array(z.string()).optional(),
-        tipo_relacion: z.string().optional(),
-        ultima_interaccion: z.string().optional(),
-        receptividad_colaboracion: z.string().optional(),
-      })
-      .optional(),
-  })
-  .nullable()
-  .optional();
-
 const ContactInfoSchema = z.object({
   first_name: z.string().min(1),
   last_name: z.string().transform((val) => val || ""),
-  context: ContextSchema,
   details: z
     .string()
     .nullable()
