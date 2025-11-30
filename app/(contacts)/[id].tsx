@@ -72,7 +72,7 @@ export default function ContactDetailsScreen() {
       setNameValue(
         `${contact.first_name || ""} ${contact.last_name || ""}`.trim()
       );
-      setDetailsValue(getContextString(contact.details));
+      setDetailsValue(getContextString(contact.details.summary));
       setCommunicationChannels(
         parseCommunicationChannels(contact.communication_channels as string)
       );
