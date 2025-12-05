@@ -4,6 +4,8 @@ import ContactInteractionTimeline from "@/components/contacts/ContactInteraction
 import RecordingOverlay from "@/components/recording/RecordingOverlay";
 import Badge from "@/components/ui/Badge";
 import BaseButton from "@/components/ui/BaseButton";
+import { useAuth } from "@/contexts/AuthContext";
+import { callRelationalAgent } from "@/lib/api/relational_agent";
 import { useContacts, useInteractions } from "@/lib/hooks/useLegendState";
 import { contacts$ } from "@/lib/supaLegend";
 import {
@@ -57,6 +59,8 @@ export default function ContactDetailsScreen() {
     CommunicationChannel[]
   >([]);
 
+  const { user } = useAuth();
+
   const getContextString = (value: any): string => {
     if (typeof value === "string") {
       return value;
@@ -109,15 +113,19 @@ export default function ContactDetailsScreen() {
     setIsEditingName(false);
   };
 
-  const handleDetailsSave = () => {
+  const handleDetailsSave = async () => {
     if (!contact) return;
 
-    const currentValue = getContextString(contact.details);
+    const currentValue = getContextString(contact.details.summary);
     if (detailsValue !== currentValue) {
       try {
-        updateContactData(contact.id, {
-          details: detailsValue.trim() || "",
-        });
+        await callRelationalAgent(
+          detailsValue.trim() || "",
+          "CONTACT_DETAILS_UPDATE",
+          contact.id,
+          user!.id
+        );
+
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (error) {
         console.error("Error updating contact:", error);

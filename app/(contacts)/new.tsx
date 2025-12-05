@@ -1,12 +1,10 @@
 import KeyboardSaveButton from "@/components/contacts/KeyboardSaveButton";
 import NewContactCloseButton from "@/components/contacts/NewContactCloseButton";
-import LoadingScreen from "@/components/ui/LoadingScreen";
 import { useAuth } from "@/contexts/AuthContext";
-import { processContactFromTranscript } from "@/lib/api/process_contact";
 import { useContacts } from "@/lib/hooks/useLegendState";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   ActionSheetIOS,
   Alert,
@@ -32,46 +30,6 @@ export default function NewContactScreen() {
     details: "",
   });
   const [contactName, setContactName] = useState("New Contact");
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  useEffect(() => {
-    if (params.transcript && params.mode === "talkAboutThem") {
-      processTranscript(params.transcript);
-    }
-  }, [params.transcript, params.mode]);
-
-  const processTranscript = async (transcript: string) => {
-    setIsProcessing(true);
-
-    try {
-      const displayName = user?.user_metadata?.full_name || "";
-
-      const contactInfo = await processContactFromTranscript(
-        transcript,
-        displayName
-      );
-
-      setFormData({
-        first_name: contactInfo.first_name || "",
-        last_name: contactInfo.last_name?.trim() || "",
-        details: contactInfo.details || "",
-      });
-
-      if (contactInfo.first_name) {
-        setContactName(contactInfo.first_name);
-      }
-
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (error) {
-      console.error("Error processing transcript:", error);
-      Alert.alert(
-        "Error",
-        "No se pudo procesar la información. Por favor, ingresa los datos manualmente."
-      );
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const hasUnsavedChanges = () => {
     if (formData.first_name.trim() !== "" || formData.last_name.trim() !== "") {
@@ -140,7 +98,9 @@ export default function NewContactScreen() {
     );
   };
 
-  const handleSave = () => {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
     if (!user?.id) {
       Alert.alert("Error", "User not authenticated");
       return;
@@ -151,24 +111,34 @@ export default function NewContactScreen() {
       return;
     }
 
+    if (isSaving) return;
+
+    setIsSaving(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
+      const detailsJson = {
+        summary: formData.details.trim() || "",
+        updated_at: new Date().toISOString(),
+      };
+
       const contactData = {
         first_name: formData.first_name.trim() || "",
         last_name: formData.last_name.trim() || "",
-        details: formData.details.trim() || "",
+        details: detailsJson,
         deleted: false,
         communication_channels: null,
       };
 
-      createContact(contactData as any);
+      await createContact(contactData as any);
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (error) {
       console.error("Error creating contact:", error);
       Alert.alert("Error", "Failed to save contact. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -205,14 +175,10 @@ export default function NewContactScreen() {
         }
         autoCorrect={false}
         spellCheck={false}
-        autoFocus={focus && !isProcessing && params.mode !== "talkAboutThem"}
+        autoFocus={focus}
       />
     </View>
   );
-
-  if (isProcessing) {
-    return <LoadingScreen />;
-  }
 
   return (
     <KeyboardAvoidingView
@@ -251,8 +217,8 @@ export default function NewContactScreen() {
 
       <KeyboardSaveButton
         onPress={handleSave}
-        isEnabled={isFormValid()}
-        isLoading={false}
+        isEnabled={isFormValid() && !isSaving}
+        isLoading={isSaving}
       />
     </KeyboardAvoidingView>
   );

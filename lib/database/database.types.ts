@@ -23,6 +23,7 @@ export type Database = {
           first_name: string | null;
           id: string;
           last_name: string | null;
+          node_id: string;
           owner_id: string;
           updated_at: string | null;
         };
@@ -34,6 +35,7 @@ export type Database = {
           first_name?: string | null;
           id?: string;
           last_name?: string | null;
+          node_id: string;
           owner_id: string;
           updated_at?: string | null;
         };
@@ -45,10 +47,19 @@ export type Database = {
           first_name?: string | null;
           id?: string;
           last_name?: string | null;
+          node_id?: string;
           owner_id?: string;
           updated_at?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "contacts_node_id_fkey";
+            columns: ["node_id"];
+            isOneToOne: false;
+            referencedRelation: "semantic_nodes";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       interactions: {
         Row: {
@@ -88,13 +99,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "contacts";
             referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "interactions_owner_id_fkey";
-            columns: ["owner_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["user_id"];
           }
         ];
       };
@@ -125,15 +129,110 @@ export type Database = {
         };
         Relationships: [];
       };
+      semantic_edges: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          relation_type: string;
+          source_id: string;
+          target_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          relation_type: string;
+          source_id: string;
+          target_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          relation_type?: string;
+          source_id?: string;
+          target_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "semantic_edges_source_id_fkey";
+            columns: ["source_id"];
+            isOneToOne: false;
+            referencedRelation: "semantic_nodes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "semantic_edges_target_id_fkey";
+            columns: ["target_id"];
+            isOneToOne: false;
+            referencedRelation: "semantic_nodes";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      semantic_nodes: {
+        Row: {
+          concept_category: string | null;
+          created_at: string;
+          embedding: string | null;
+          id: string;
+          label: string;
+          type: Database["public"]["Enums"]["node_type"];
+          user_id: string;
+          weight: number;
+        };
+        Insert: {
+          concept_category?: string | null;
+          created_at?: string;
+          embedding?: string | null;
+          id?: string;
+          label: string;
+          type: Database["public"]["Enums"]["node_type"];
+          user_id: string;
+          weight?: number;
+        };
+        Update: {
+          concept_category?: string | null;
+          created_at?: string;
+          embedding?: string | null;
+          id?: string;
+          label?: string;
+          type?: Database["public"]["Enums"]["node_type"];
+          user_id?: string;
+          weight?: number;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      find_shared_connections: {
+        Args: { p_contact_id: string; p_user_id: string };
+        Returns: Json;
+      };
       is_my_contact: { Args: { c_id: string }; Returns: boolean };
+      match_semantic_nodes: {
+        Args: {
+          match_count: number;
+          match_threshold: number;
+          p_user_id: string;
+          query_embedding: string;
+        };
+        Returns: {
+          concept_category: string;
+          id: string;
+          label: string;
+          similarity: number;
+          type: string;
+          weight: number;
+        }[];
+      };
     };
     Enums: {
-      [_ in never]: never;
+      node_type: "CONTACT" | "CONCEPT";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -263,24 +362,46 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      node_type: ["CONTACT", "CONCEPT"],
+    },
   },
 } as const;
 
-// Convenience type exports
-export type Contact = Tables<"contacts">;
-export type ContactInsert = TablesInsert<"contacts">;
-export type ContactUpdate = TablesUpdate<"contacts">;
+// Semantic Graph types
+export type SemanticNode =
+  Database["public"]["Tables"]["semantic_nodes"]["Row"];
+export type SemanticNodeInsert =
+  Database["public"]["Tables"]["semantic_nodes"]["Insert"];
+export type SemanticNodeUpdate =
+  Database["public"]["Tables"]["semantic_nodes"]["Update"];
+export type NodeType = Database["public"]["Enums"]["node_type"];
 
-export type Interaction = Tables<"interactions">;
-export type InteractionInsert = TablesInsert<"interactions">;
-export type InteractionUpdate = TablesUpdate<"interactions">;
+export type SemanticEdge =
+  Database["public"]["Tables"]["semantic_edges"]["Row"];
+export type SemanticEdgeInsert =
+  Database["public"]["Tables"]["semantic_edges"]["Insert"];
+export type SemanticEdgeUpdate =
+  Database["public"]["Tables"]["semantic_edges"]["Update"];
 
-export type Profile = Tables<"profiles">;
-export type ProfileInsert = TablesInsert<"profiles">;
-export type ProfileUpdate = TablesUpdate<"profiles">;
+// Contact types
+export type Contact = Database["public"]["Tables"]["contacts"]["Row"];
+export type ContactInsert = Database["public"]["Tables"]["contacts"]["Insert"];
+export type ContactUpdate = Database["public"]["Tables"]["contacts"]["Update"];
 
-// Database response types
+// Interaction types
+export type Interaction = Database["public"]["Tables"]["interactions"]["Row"];
+export type InteractionInsert =
+  Database["public"]["Tables"]["interactions"]["Insert"];
+export type InteractionUpdate =
+  Database["public"]["Tables"]["interactions"]["Update"];
+
+// Profile types
+export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
+export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
+
+// Database response helper types
 export interface DatabaseResponse<T> {
   data: T | null;
   error: Error | null;

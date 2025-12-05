@@ -166,7 +166,7 @@ export default function ImportContactScreen() {
           });
         }
 
-        createContact({
+        await createContact({
           first_name: localContact.firstName || "",
           last_name: localContact.lastName || "",
           details: "",

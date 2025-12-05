@@ -2,7 +2,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSelector } from "@legendapp/state/react";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
-import type { Contact, Interaction, Profile } from "../database/database.types";
+import type {
+  Contact,
+  Interaction,
+  Profile,
+} from "../database/database.types.ts";
+import { SemanticNodesService } from "../database/services/semantic-nodes";
 import { contacts$, interactions$, profiles$ } from "../supaLegend";
 
 export function useContacts() {
@@ -17,10 +22,29 @@ export function useContacts() {
     ) as Contact[];
   });
 
-  const createContact = (
-    contact: Omit<Contact, "id" | "created_at" | "updated_at" | "owner_id">
-  ) => {
+  const createContact = async (
+    contact: Omit<
+      Contact,
+      "id" | "created_at" | "updated_at" | "owner_id" | "node_id"
+    >
+  ): Promise<Contact> => {
     if (!user) throw new Error("User not authenticated");
+
+    // Build the contact label from name
+    const label =
+      [contact.first_name, contact.last_name]
+        .filter(Boolean)
+        .join(" ")
+        .trim() || "Unknown Contact";
+
+    // First, create the semantic node for this contact
+    const { data: node, error: nodeError } =
+      await SemanticNodesService.createContactNode(user.id, label);
+
+    if (nodeError || !node) {
+      console.error("❌ Error creating semantic node for contact:", nodeError);
+      throw new Error("Failed to create contact node");
+    }
 
     const id = uuidv4();
 
@@ -28,6 +52,7 @@ export function useContacts() {
     contacts$[id].assign({
       id,
       owner_id: user.id,
+      node_id: node.id,
       ...contact,
     });
 

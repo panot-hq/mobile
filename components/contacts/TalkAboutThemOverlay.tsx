@@ -2,10 +2,11 @@ import NewContactPreview, {
   ActionButton,
 } from "@/components/contacts/NewContactPreview";
 import RecordButton from "@/components/recording/RecordButton";
+import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useTalkAboutThem } from "@/contexts/TalkAboutThemContext";
+import { callRelationalAgent } from "@/lib/api/relational_agent";
 import { BlurView } from "expo-blur";
-import { router } from "expo-router";
 import PanotSpeechModule from "panot-speech";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Keyboard, Pressable } from "react-native";
@@ -30,6 +31,7 @@ export default function TalkAboutThemOverlay({
   recordButtonRecordingSize = 200,
 }: TalkAboutThemOverlayProps) {
   const { transcriptionLanguage } = useSettings();
+  const { user } = useAuth();
   const {
     isRecording,
     setIsRecording,
@@ -52,10 +54,8 @@ export default function TalkAboutThemOverlay({
   const blurOpacity = useSharedValue(0);
   const recordButtonOpacity = useSharedValue(1);
 
-  // Auto-start recording when overlay becomes visible
   useEffect(() => {
     if (isOverlayVisible && !hasAutoStarted && !isRecording) {
-      // Add a small delay to ensure modal is fully closed
       const timer = setTimeout(() => {
         setHasAutoStarted(true);
         startRecording();
@@ -212,15 +212,16 @@ export default function TalkAboutThemOverlay({
       setIsOverlayVisible(false);
       setHasAutoStarted(false);
 
-      setTimeout(() => {
-        router.push({
-          pathname: "/(contacts)/new",
-          params: {
-            transcript: acceptedTranscript,
-            mode: "talkAboutThem",
-          },
-        });
-      }, 100);
+      try {
+        await callRelationalAgent(
+          acceptedTranscript,
+          "ACTIONABLE",
+          undefined,
+          user!.id
+        );
+      } catch (error) {
+        console.error("Error calling relational agent:", error);
+      }
     },
     [setIsOverlayVisible, setShouldBlur]
   );

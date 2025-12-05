@@ -209,6 +209,7 @@ export default function RecordingOverlay({
             raw_content: acceptedTranscript,
             deleted: false,
             contact_id: finalContactId,
+            processed: false,
           });
 
           if (onInteractionCreated) {

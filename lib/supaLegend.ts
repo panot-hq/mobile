@@ -32,7 +32,7 @@ export const contacts$: Observable<any> = observable(
     collection: "contacts",
     select: (from: any) =>
       from.select(
-        "id,owner_id,first_name,last_name,details,created_at,updated_at,deleted,communication_channels"
+        "id,owner_id,first_name,last_name,details,created_at,updated_at,deleted,communication_channels,node_id"
       ),
     actions: ["read", "create", "update", "delete"],
     realtime: true,
