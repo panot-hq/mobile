@@ -7,6 +7,7 @@ import type {
   Interaction,
   Profile,
 } from "../database/database.types.ts";
+import { ProcessQueueService } from "../database/services/process-queue";
 import { SemanticNodesService } from "../database/services/semantic-nodes";
 import { contacts$, interactions$, profiles$ } from "../supaLegend";
 
@@ -30,14 +31,12 @@ export function useContacts() {
   ): Promise<Contact> => {
     if (!user) throw new Error("User not authenticated");
 
-    // Build the contact label from name
     const label =
       [contact.first_name, contact.last_name]
         .filter(Boolean)
         .join(" ")
         .trim() || "Unknown Contact";
 
-    // First, create the semantic node for this contact
     const { data: node, error: nodeError } =
       await SemanticNodesService.createContactNode(user.id, label);
 
@@ -48,7 +47,6 @@ export function useContacts() {
 
     const id = uuidv4();
 
-    // @ts-ignore
     contacts$[id].assign({
       id,
       owner_id: user.id,
@@ -56,7 +54,33 @@ export function useContacts() {
       ...contact,
     });
 
-    return contacts$[id].peek() as Contact;
+    const createdContact = contacts$[id].peek() as Contact;
+
+    const detailsSummary =
+      typeof contact.details === "object" &&
+      contact.details !== null &&
+      "summary" in contact.details
+        ? (contact.details as { summary?: string }).summary
+        : typeof contact.details === "string"
+        ? contact.details
+        : null;
+
+    if (detailsSummary && detailsSummary.trim().length > 0) {
+      try {
+        await ProcessQueueService.enqueue({
+          userId: user.id,
+          contactId: id,
+          jobType: "NEW_CONTACT",
+          payload: {
+            details: detailsSummary.trim(),
+          },
+        });
+      } catch (enqueueError) {
+        console.error("Error enqueuing NEW_CONTACT job:", enqueueError);
+      }
+    }
+
+    return createdContact;
   };
 
   const updateContact = (id: string, updates: Partial<Contact>) => {
@@ -100,7 +124,6 @@ export function useContacts() {
         return false;
       }
 
-      // Search in name fields
       if (
         contact.first_name?.toLowerCase().includes(term) ||
         contact.last_name?.toLowerCase().includes(term)
@@ -108,7 +131,6 @@ export function useContacts() {
         return true;
       }
 
-      // Search in details (JSON field - could be string or object)
       if (contact.details) {
         const detailsStr =
           typeof contact.details === "string"
@@ -183,7 +205,7 @@ export function useInteractions() {
       // @ts-ignore
       const contact = contacts$[interaction.contact_id]?.peek();
       if (!contact || contact.deleted) {
-        console.warn("⚠️ Invalid contact_id provided, setting to null");
+        console.warn("Invalid contact_id provided, setting to null");
         interaction.contact_id = null;
       }
     }
@@ -211,12 +233,11 @@ export function useInteractions() {
     const interaction = interactions$[id].peek();
     if (!interaction) throw new Error("Interaction not found");
 
-    // Validate contact_id if being updated
     if (updates.contact_id) {
       // @ts-ignore
       const contact = contacts$[updates.contact_id]?.peek();
       if (!contact || contact.deleted) {
-        console.warn("⚠️ Invalid contact_id provided, setting to null");
+        console.warn("Invalid contact_id provided, setting to null");
         updates.contact_id = null;
       }
     }

@@ -14,6 +14,7 @@ interface ContactListItem {
   type: "header" | "contact";
   letter?: string;
   contact?: Contact;
+  hasDetailsSummary?: boolean;
 }
 
 interface ContactListProps {
@@ -21,10 +22,8 @@ interface ContactListProps {
 }
 
 export default function ContactList({ searchTerm = "" }: ContactListProps) {
-  // Usar el hook de Legend State (local-first)
   const { contacts } = useLegendContacts();
 
-  // Ordenar contactos alfabéticamente por first_name
   const sortedContacts = useMemo(() => {
     return [...contacts].sort((a, b) => {
       const nameA = (a.first_name || a.last_name || "").toLowerCase();
@@ -86,7 +85,9 @@ export default function ContactList({ searchTerm = "" }: ContactListProps) {
     sortedLetters.forEach((letter) => {
       flatList.push({ type: "header", letter });
       grouped[letter].forEach((contact) => {
-        flatList.push({ type: "contact", contact });
+        const hasDetailsSummary =
+          (contact.details as any)?.summary !== null ? true : false;
+        flatList.push({ type: "contact", contact, hasDetailsSummary });
       });
     });
 

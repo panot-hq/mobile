@@ -1,16 +1,15 @@
+import { Shimmer } from "@/components/ui/Shimmer";
 import { useInteractionOverlay } from "@/contexts/InteractionOverlayContext";
 import { Interaction } from "@/lib/database/database.types";
 import { formatCreatedAt } from "@/lib/utils/dateFormatter";
-import { isProcessing } from "@/lib/utils/processingState";
 import * as Haptics from "expo-haptics";
-import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { useRef } from "react";
+import { Pressable, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import Badge from "../ui/Badge";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -29,7 +28,8 @@ export default function ContactInteractionItem({
   const { showOverlay } = useInteractionOverlay();
   const componentRef = useRef<View>(null);
   const formatted = formatCreatedAt(interaction.created_at);
-  const [isInteractionProcessing, setIsInteractionProcessing] = useState(false);
+  const isInteractionProcessing = interaction.status === "processing";
+  const isInteractionProcessed = interaction.status === "processed";
 
   let datePart = formatted;
   let hourPart = "";
@@ -38,18 +38,6 @@ export default function ContactInteractionItem({
     datePart = date.trim();
     hourPart = hour.trim();
   }
-  const isInteractionProcessed = interaction.processed;
-
-  useEffect(() => {
-    const checkProcessing = () => {
-      setIsInteractionProcessing(isProcessing(interaction.id));
-    };
-
-    checkProcessing();
-    const interval = setInterval(checkProcessing, 500);
-
-    return () => clearInterval(interval);
-  }, [interaction.id]);
 
   const truncatedContent =
     interaction.raw_content.length > 10
@@ -66,6 +54,7 @@ export default function ContactInteractionItem({
           datePart,
           hourPart,
           initialLayout: { x, y, width, height },
+          status: interaction.status || "unprocessed",
         });
       });
     }
@@ -105,9 +94,10 @@ export default function ContactInteractionItem({
         <View
           style={{
             position: "absolute",
-            width: 1.5,
-            height: "100%",
-            backgroundColor: "#ddd",
+            width: 3,
+            borderRadius: 10,
+            height: "110%",
+            backgroundColor: "#E9E9E9",
           }}
         />
       </View>
@@ -118,15 +108,23 @@ export default function ContactInteractionItem({
           {
             flex: 1,
             padding: 16,
-            borderRadius: 15,
+            borderRadius: 20,
             borderWidth: 1,
-            borderColor: "#e5e5e5",
-            backgroundColor: "white",
+            borderColor:
+              isInteractionProcessing || isInteractionProcessed
+                ? "#e9e9e9b1"
+                : "white",
+            backgroundColor:
+              isInteractionProcessing || isInteractionProcessed
+                ? "#e9e9e9b1"
+                : "white",
             gap: 8,
+            marginTop: isFirst ? 6 : 0,
             marginBottom: isLast ? 0 : 10,
             flexDirection: "row",
-            justifyContent: "space-between",
+            justifyContent: "justify-left",
             alignItems: "center",
+            overflow: "hidden",
           },
           animatedStyle,
         ]}
@@ -135,6 +133,27 @@ export default function ContactInteractionItem({
         onPress={handlePress}
         onLongPress={handleLongPress}
       >
+        {isInteractionProcessing && <Shimmer />}
+        <Text
+          style={{
+            color: "#666",
+            fontSize: 14,
+            lineHeight: 20,
+          }}
+          numberOfLines={1}
+        >
+          {hourPart}
+        </Text>
+        <Text
+          style={{
+            color: "#666",
+            fontSize: 14,
+            lineHeight: 20,
+          }}
+          numberOfLines={1}
+        >
+          {"-"}
+        </Text>
         <Text
           style={{
             color: "#666",
@@ -145,33 +164,6 @@ export default function ContactInteractionItem({
         >
           {truncatedContent}
         </Text>
-        {isInteractionProcessing ? (
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 6,
-              paddingHorizontal: 10,
-              paddingVertical: 4,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: "#FF5117",
-              backgroundColor: "#fff",
-            }}
-          >
-            <ActivityIndicator size="small" color="#FF5117" />
-            <Text style={{ fontSize: 12, color: "#FF5117" }}>processing</Text>
-          </View>
-        ) : (
-          <Badge
-            title={isInteractionProcessed ? "processed" : "unprocessed"}
-            color="#fff"
-            textColor={isInteractionProcessed ? "#bbb" : "#FF5117"}
-            borderColor={isInteractionProcessed ? "#ddd" : "#FF5117"}
-            borderWidth={1}
-            textSize={12}
-          />
-        )}
       </AnimatedPressable>
     </View>
   );

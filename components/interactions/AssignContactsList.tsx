@@ -1,13 +1,9 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useContacts as useContactsContext } from "@/contexts/ContactsContext";
 import { useRecording } from "@/contexts/RecordingContext";
-import {
-  applyContactUpdates,
-  updateContactFromInteraction,
-} from "@/lib/api/update_contact";
 import { Contact } from "@/lib/database/database.types";
+import { ProcessQueueService } from "@/lib/database/services/process-queue";
 import { useContacts, useInteractions } from "@/lib/hooks/useLegendState";
-import { startProcessing, stopProcessing } from "@/lib/utils/processingState";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React from "react";
@@ -24,6 +20,7 @@ interface ContactListItem {
   type: "header" | "contact";
   letter?: string;
   contact?: Contact;
+  hasDetailsSummary?: boolean;
 }
 
 interface AssignContactsListProps {
@@ -105,7 +102,9 @@ export default function AssignContactsList({
     sortedLetters.forEach((letter) => {
       flatList.push({ type: "header", letter });
       grouped[letter].forEach((contact) => {
-        flatList.push({ type: "contact", contact });
+        const hasDetailsSummary =
+          (contact.details as any)?.summary !== null ? true : false;
+        flatList.push({ type: "contact", contact, hasDetailsSummary });
       });
     });
 
@@ -120,10 +119,6 @@ export default function AssignContactsList({
       } else if (interactionId) {
         assignContact(interactionId, contactId);
 
-        if (autoProcess) {
-          startProcessing(interactionId);
-        }
-
         router.back();
 
         if (autoProcess) {
@@ -133,28 +128,24 @@ export default function AssignContactsList({
 
             if (interaction && contact) {
               try {
-                const displayName = user?.user_metadata?.full_name || "";
-
-                const updateResponse = await updateContactFromInteraction({
-                  transcript: interaction.raw_content,
-                  contact: contact,
-                  displayName,
+                await ProcessQueueService.enqueue({
+                  userId: user!.id,
+                  contactId: contact.id,
+                  jobType: "INTERACTION_TRANSCRIPT",
+                  payload: {
+                    transcript: interaction.raw_content,
+                    interaction_id: interaction.id,
+                  },
                 });
-                if (updateResponse.has_updates) {
-                  await applyContactUpdates(contact.id, updateResponse);
-                }
-
                 updateInteraction(interaction.id, {
-                  processed: true,
+                  status: "processing",
                 });
-                stopProcessing(interactionId);
 
                 Haptics.notificationAsync(
                   Haptics.NotificationFeedbackType.Success
                 );
               } catch (error: any) {
-                console.error("Error auto-processing interaction:", error);
-                stopProcessing(interactionId);
+                console.error("Error enqueuing auto-process:", error);
                 Haptics.notificationAsync(
                   Haptics.NotificationFeedbackType.Error
                 );

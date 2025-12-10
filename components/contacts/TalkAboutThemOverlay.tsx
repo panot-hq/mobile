@@ -5,7 +5,7 @@ import RecordButton from "@/components/recording/RecordButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useTalkAboutThem } from "@/contexts/TalkAboutThemContext";
-import { callRelationalAgent } from "@/lib/api/relational_agent";
+import { ProcessQueueService } from "@/lib/database/services/process-queue";
 import { BlurView } from "expo-blur";
 import PanotSpeechModule from "panot-speech";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -213,14 +213,16 @@ export default function TalkAboutThemOverlay({
       setHasAutoStarted(false);
 
       try {
-        await callRelationalAgent(
-          acceptedTranscript,
-          "ACTIONABLE",
-          undefined,
-          user!.id
-        );
+        await ProcessQueueService.enqueue({
+          userId: user?.id || "",
+          contactId: null,
+          jobType: "NEW_CONTACT",
+          payload: {
+            details: acceptedTranscript,
+          },
+        });
       } catch (error) {
-        console.error("Error calling relational agent:", error);
+        console.error("Error enqueuing process:", error);
       }
     },
     [setIsOverlayVisible, setShouldBlur]

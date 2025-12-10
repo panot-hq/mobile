@@ -70,6 +70,7 @@ export type Database = {
           owner_id: string;
           processed: boolean;
           raw_content: string;
+          status: Database["public"]["Enums"]["interaction_status"] | null;
           updated_at: string | null;
         };
         Insert: {
@@ -80,6 +81,7 @@ export type Database = {
           owner_id: string;
           processed?: boolean;
           raw_content: string;
+          status?: Database["public"]["Enums"]["interaction_status"] | null;
           updated_at?: string | null;
         };
         Update: {
@@ -90,6 +92,7 @@ export type Database = {
           owner_id?: string;
           processed?: boolean;
           raw_content?: string;
+          status?: Database["public"]["Enums"]["interaction_status"] | null;
           updated_at?: string | null;
         };
         Relationships: [
@@ -101,6 +104,45 @@ export type Database = {
             referencedColumns: ["id"];
           }
         ];
+      };
+      process_queue: {
+        Row: {
+          contact_id: string | null;
+          created_at: string;
+          error_message: string | null;
+          id: string;
+          job_type: Database["public"]["Enums"]["job_type"];
+          payload: Json;
+          processed_at: string | null;
+          status: Database["public"]["Enums"]["job_status"];
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          contact_id?: string | null;
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          job_type: Database["public"]["Enums"]["job_type"];
+          payload?: Json;
+          processed_at?: string | null;
+          status?: Database["public"]["Enums"]["job_status"];
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          contact_id?: string | null;
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          job_type?: Database["public"]["Enums"]["job_type"];
+          payload?: Json;
+          processed_at?: string | null;
+          status?: Database["public"]["Enums"]["job_status"];
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
       };
       profiles: {
         Row: {
@@ -232,6 +274,14 @@ export type Database = {
       };
     };
     Enums: {
+      interaction_status: "unprocessed" | "processing" | "processed";
+      job_status:
+        | "pending"
+        | "processing"
+        | "completed"
+        | "failed"
+        | "cancelled";
+      job_type: "NEW_CONTACT" | "INTERACTION_TRANSCRIPT" | "DETAILS_UPDATE";
       node_type: "CONTACT" | "CONCEPT";
     };
     CompositeTypes: {
@@ -363,6 +413,9 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      interaction_status: ["unprocessed", "processing", "processed"],
+      job_status: ["pending", "processing", "completed", "failed", "cancelled"],
+      job_type: ["NEW_CONTACT", "INTERACTION_TRANSCRIPT", "DETAILS_UPDATE"],
       node_type: ["CONTACT", "CONCEPT"],
     },
   },
@@ -400,6 +453,15 @@ export type InteractionUpdate =
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
 export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
+
+// Process Queue types
+export type ProcessJob = Database["public"]["Tables"]["process_queue"]["Row"];
+export type ProcessJobInsert =
+  Database["public"]["Tables"]["process_queue"]["Insert"];
+export type ProcessJobUpdate =
+  Database["public"]["Tables"]["process_queue"]["Update"];
+export type JobType = Database["public"]["Enums"]["job_type"];
+export type JobStatus = Database["public"]["Enums"]["job_status"];
 
 // Database response helper types
 export interface DatabaseResponse<T> {
