@@ -1,15 +1,7 @@
 import BaseButton from "@/components/ui/BaseButton";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  applyContactUpdates,
-  updateContactFromInteraction,
-} from "@/lib/api/update_contact";
+import { ProcessQueueService } from "@/lib/database/services/process-queue";
 import { useContacts, useInteractions } from "@/lib/hooks/useLegendState";
-import {
-  isProcessing as checkIsProcessing,
-  startProcessing,
-  stopProcessing,
-} from "@/lib/utils/processingState";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
@@ -29,7 +21,6 @@ import {
   Modal,
   Pressable,
   ScrollView,
-  Switch,
   Text,
   TextInput,
   View,
@@ -59,6 +50,7 @@ interface InteractionData {
     width: number;
     height: number;
   };
+  status: string;
 }
 
 interface InteractionOverlayContextType {
@@ -109,31 +101,16 @@ export const InteractionOverlayProvider = ({
   const isInteractionAssigned =
     interaction !== null && interaction?.contact_id !== null;
   const isInteractionProcessed = interaction !== null && interaction?.processed;
-  const isInteractionProcessing =
-    interaction !== null &&
-    !interaction?.processed &&
-    checkIsProcessing(interaction?.id || "");
 
   useEffect(() => {
     if (interaction) {
       setContentValue(interaction.raw_content || "");
-      if (checkIsProcessing(interaction.id)) {
+      if (interaction.status == "processing") {
         setIsProcessing(true);
       } else {
         setIsProcessing(false);
       }
     }
-  }, [interaction]);
-
-  useEffect(() => {
-    if (!interaction) return;
-
-    const interval = setInterval(() => {
-      const processing = checkIsProcessing(interaction.id);
-      setIsProcessing(processing);
-    }, 500);
-
-    return () => clearInterval(interval);
   }, [interaction]);
 
   const showOverlay = (data: InteractionData) => {
@@ -259,7 +236,7 @@ export const InteractionOverlayProvider = ({
   };
 
   const handleContentPress = () => {
-    if (!isEditingContent) {
+    if (!isEditingContent && !isInteractionProcessed) {
       setIsEditingContent(true);
     } else {
       Keyboard.dismiss();
@@ -278,33 +255,29 @@ export const InteractionOverlayProvider = ({
     if (!interaction || !contact || isProcessing) return;
 
     setIsProcessing(true);
-    startProcessing(interaction.id);
 
     try {
-      const displayName = user?.user_metadata?.full_name || "";
-
-      const updateResponse = await updateContactFromInteraction({
-        transcript: interaction.raw_content,
-        contact: contact,
-        displayName,
+      await ProcessQueueService.enqueue({
+        userId: user!.id,
+        contactId: contact.id,
+        jobType: "INTERACTION_TRANSCRIPT",
+        payload: {
+          transcript: interaction.raw_content,
+          interaction_id: interaction.id,
+          contact_name: `${contact.first_name || ""} ${
+            contact.last_name || ""
+          }`.trim(),
+        },
       });
-
-      if (updateResponse.has_updates) {
-        console.log("Apply contact updates:", updateResponse);
-        await applyContactUpdates(contact.id, updateResponse);
-      }
-
       updateInteraction(interaction.id, {
-        processed: true,
+        status: "processing",
       });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error: any) {
-      console.error("Error processing interaction:", error);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } finally {
       setIsProcessing(false);
-      stopProcessing(interaction.id);
+      console.error("Error enqueuing interaction processing:", error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   };
 
@@ -437,7 +410,7 @@ export const InteractionOverlayProvider = ({
                         : "Unassigned"}
                     </Text>
                   </View>
-                  {!isInteractionProcessed && !isInteractionProcessing && (
+                  {!isInteractionProcessed && !isProcessing && (
                     <BaseButton
                       onPress={handleAssignPress}
                       backgroundColor="#fff"
@@ -462,50 +435,6 @@ export const InteractionOverlayProvider = ({
                     </BaseButton>
                   )}
                 </View>
-                {isInteractionProcessing && (
-                  <View
-                    style={{
-                      marginTop: 10,
-                      paddingTop: 10,
-                      borderTopWidth: 1,
-                      borderTopColor: "#e5e5e5",
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <ActivityIndicator size="small" color="#FF5117" />
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        color: "#FF5117",
-                        fontWeight: "500",
-                      }}
-                    >
-                      Processing...
-                    </Text>
-                  </View>
-                )}
-                {isInteractionProcessed && (
-                  <View
-                    style={{
-                      marginTop: 10,
-                      paddingTop: 10,
-                      borderTopWidth: 1,
-                      borderTopColor: "#e5e5e5",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        color: "#FF5117",
-                        fontWeight: "500",
-                      }}
-                    >
-                      Processed
-                    </Text>
-                  </View>
-                )}
               </Pressable>
             )}
 
@@ -563,48 +492,6 @@ export const InteractionOverlayProvider = ({
                 </ScrollView>
               </Pressable>
             </Animated.View>
-            {!isInteractionAssigned && (
-              <Pressable
-                onPress={() => Keyboard.dismiss()}
-                style={{
-                  backgroundColor: "rgba(245, 245, 245, 0.8)",
-                  borderRadius: 16,
-                  paddingHorizontal: 16,
-                  paddingVertical: 12,
-                  marginHorizontal: 20,
-                  marginBottom: 15,
-                  marginTop: 20,
-                }}
-              >
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <View style={{ flex: 1, paddingRight: 10 }}>
-                    <Text
-                      style={{
-                        fontSize: 13,
-                        color: "#000",
-                        fontWeight: "400",
-                        lineHeight: 18,
-                      }}
-                    >
-                      Process interaction automatically once assigned
-                    </Text>
-                  </View>
-                  <Switch
-                    value={autoProcessOnAssign}
-                    onValueChange={setAutoProcessOnAssign}
-                    trackColor={{ false: "#d1d5db", true: "#ffc7b3" }}
-                    thumbColor={autoProcessOnAssign ? "#FF5117" : "#f9fafb"}
-                    ios_backgroundColor="#d1d5db"
-                  />
-                </View>
-              </Pressable>
-            )}
 
             {!(isInteractionAssigned && isInteractionProcessed) && (
               <Animated.View
@@ -644,36 +531,7 @@ export const InteractionOverlayProvider = ({
                     </Text>
                   </BaseButton>
                 )}
-                {isInteractionAssigned && !isInteractionProcessed && (
-                  <BaseButton
-                    onPress={handleProcessInteraction}
-                    backgroundColor="#FF5117"
-                    borderRadius={20}
-                    scaleValue={0.97}
-                    disabled={isProcessing}
-                    style={{
-                      paddingVertical: 14,
-                      paddingHorizontal: 20,
-                      width: isInteractionAssigned ? "48.5%" : "100%",
-                      height: 55,
-                      opacity: isProcessing ? 0.7 : 1,
-                    }}
-                  >
-                    {isProcessing ? (
-                      <ActivityIndicator size="small" color="#FFF" />
-                    ) : (
-                      <Text
-                        style={{
-                          fontSize: 16,
-                          fontWeight: "400",
-                          color: "#FFF",
-                        }}
-                      >
-                        PROCESS
-                      </Text>
-                    )}
-                  </BaseButton>
-                )}
+
                 <BaseButton
                   onPress={handleDeleteInteraction}
                   backgroundColor="#000"
@@ -696,6 +554,39 @@ export const InteractionOverlayProvider = ({
                     DELETE
                   </Text>
                 </BaseButton>
+                {isInteractionAssigned && !isInteractionProcessed && (
+                  <BaseButton
+                    onPress={handleProcessInteraction}
+                    backgroundColor="#ffffffff"
+                    borderColor={"#000000ff"}
+                    borderWidth={1}
+                    borderRadius={20}
+                    scaleValue={0.97}
+                    disabled={isProcessing}
+                    style={{
+                      paddingVertical: 14,
+                      paddingHorizontal: 20,
+                      width: isInteractionAssigned ? "48.5%" : "100%",
+
+                      height: 55,
+                      opacity: isProcessing ? 0.7 : 1,
+                    }}
+                  >
+                    {isProcessing ? (
+                      <ActivityIndicator size="small" color="#000000ff" />
+                    ) : (
+                      <Text
+                        style={{
+                          fontSize: 16,
+                          fontWeight: "400",
+                          color: "#000000ff",
+                        }}
+                      >
+                        PROCESS
+                      </Text>
+                    )}
+                  </BaseButton>
+                )}
               </Animated.View>
             )}
           </AnimatedPressable>

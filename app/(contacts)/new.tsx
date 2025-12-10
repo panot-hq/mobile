@@ -106,11 +106,6 @@ export default function NewContactScreen() {
       return;
     }
 
-    if (!isFormValid()) {
-      Alert.alert("Error", "Please fill in at least a name or company");
-      return;
-    }
-
     if (isSaving) return;
 
     setIsSaving(true);
@@ -206,8 +201,7 @@ export default function NewContactScreen() {
           {contactName}
         </Text>
         <View style={{ gap: 10, marginBottom: 30 }}>
-          {renderInputField("first_name", "First name", false, true)}
-          {renderInputField("last_name", "Last name")}
+          {renderInputField("first_name", "Contact's name", false, true)}
         </View>
 
         <View style={{ gap: 10, marginBottom: 30 }}>

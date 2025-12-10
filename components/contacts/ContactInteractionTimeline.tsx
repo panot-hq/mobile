@@ -1,7 +1,6 @@
 import ContactInteractionItem from "@/components/contacts/ContactInteractionItem";
 import Badge from "@/components/ui/Badge";
 import { Interaction } from "@/lib/database/database.types";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Text, View } from "react-native";
 
 interface ContactInteractionTimelineProps {
@@ -90,22 +89,16 @@ export default function ContactInteractionTimeline({
           const displayDate = isToday ? "Today" : dateKey;
 
           return (
-            <View key={dateKey}>
+            <View key={dateKey} style={{ marginBottom: 12 }}>
               <View
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
                   marginTop: isFirstGroup ? 0 : 20,
-                  marginBottom: 12,
-                  paddingLeft: 17,
+                  marginBottom: 15,
+                  paddingLeft: 15,
                 }}
               >
-                <FontAwesome
-                  name="circle"
-                  size={8}
-                  color="#ddd"
-                  style={{ marginRight: 18 }}
-                />
                 <Text
                   style={{
                     fontSize: 13,
@@ -121,8 +114,8 @@ export default function ContactInteractionTimeline({
                 <ContactInteractionItem
                   key={interaction.id}
                   interaction={interaction}
-                  isFirst={false}
-                  isLast={isLastGroup && index === dayInteractions.length - 1}
+                  isFirst={index === 0}
+                  isLast={index === dayInteractions.length - 1}
                 />
               ))}
             </View>

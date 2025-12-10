@@ -1,3 +1,4 @@
+import { Shimmer } from "@/components/ui/Shimmer";
 import { Contact } from "@/lib/database/database.types";
 import { router } from "expo-router";
 import React from "react";
@@ -9,6 +10,7 @@ interface ContactListItem {
   type: "header" | "contact";
   letter?: string;
   contact?: Contact;
+  hasDetailsSummary?: boolean;
 }
 
 interface ContactListElementProps
@@ -24,7 +26,7 @@ export default function ContactListElement({
   ...baseButtonProps
 }: ContactListElementProps) {
   const handlePress = () => {
-    if (item.type === "contact" && item.contact) {
+    if (item.type === "contact" && item.contact && item.hasDetailsSummary) {
       router.push(`/(contacts)/${item.contact.id}`);
     }
   };
@@ -65,8 +67,10 @@ export default function ContactListElement({
             alignItems: "flex-start",
             backgroundColor: "#E9E9E9",
             marginBottom: 8,
+            overflow: "hidden",
           }}
         >
+          {!item.hasDetailsSummary && <Shimmer />}
           <View
             style={{
               flex: 1,

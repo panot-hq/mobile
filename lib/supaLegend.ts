@@ -66,7 +66,7 @@ export const interactions$: Observable<any> = observable(
     collection: "interactions",
     select: (from: any) =>
       from.select(
-        "id,owner_id,raw_content,contact_id,created_at,updated_at,deleted,processed"
+        "id,owner_id,raw_content,contact_id,created_at,updated_at,deleted,processed,status"
       ),
     actions: ["read", "create", "update", "delete"],
     realtime: true,
