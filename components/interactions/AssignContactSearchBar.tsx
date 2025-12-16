@@ -1,5 +1,6 @@
 import { useContacts } from "@/contexts/ContactsContext";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useTranslation } from "react-i18next";
 import { TextInput, View } from "react-native";
 
 interface AssignContactSearchBarProps {
@@ -12,6 +13,7 @@ export default function AssignContactSearchBar({
   onBlur,
 }: AssignContactSearchBarProps) {
   const { searchTerm, setSearchTerm } = useContacts();
+  const { t } = useTranslation();
 
   return (
     <View
@@ -31,7 +33,7 @@ export default function AssignContactSearchBar({
       >
         <Ionicons name="search" size={18} color="#666" />
         <TextInput
-          placeholder="Search "
+          placeholder={t("assign.search_placeholder")}
           placeholderTextColor="#666"
           value={searchTerm}
           onChangeText={setSearchTerm}

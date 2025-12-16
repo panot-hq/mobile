@@ -15,6 +15,7 @@ import { useSelector } from "@legendapp/state/react";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActionSheetIOS,
   Alert,
@@ -36,6 +37,7 @@ import Animated, {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function ContactDetailsScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams();
 
   const { updateContact: updateContactData, deleteContact: deleteContactData } =
@@ -102,10 +104,13 @@ export default function ContactDetailsScreen() {
 
     ActionSheetIOS.showActionSheetWithOptions(
       {
-        options: ["Cancelar", "Guardar Cambios"],
+        options: [
+          t("contacts.details.cancel_edit"),
+          t("contacts.details.save_changes"),
+        ],
         cancelButtonIndex: 0,
-        title: "Confirmar Cambios",
-        message: "¿Estás seguro de que quieres guardar los cambios realizados?",
+        title: t("contacts.details.confirm_changes_title"),
+        message: t("contacts.details.confirm_changes_message"),
       },
       async (buttonIndex) => {
         if (buttonIndex === 1) {
@@ -166,7 +171,7 @@ export default function ContactDetailsScreen() {
     } catch (error) {
       console.error("Error saving changes:", error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert("Error", "No se pudieron guardar los cambios");
+      Alert.alert(t("common.error"), t("contacts.details.save_error"));
     }
   };
 
@@ -197,11 +202,13 @@ export default function ContactDetailsScreen() {
 
     ActionSheetIOS.showActionSheetWithOptions(
       {
-        options: ["Cancelar", "Eliminar Contacto"],
+        options: [t("common.cancel"), t("contacts.details.delete_button")],
         destructiveButtonIndex: 1,
         cancelButtonIndex: 0,
-        title: "Eliminar Contacto",
-        message: `¿Estás seguro de que quieres eliminar a ${contact.first_name} ${contact.last_name}? Esta acción no se puede deshacer.`,
+        title: t("contacts.details.delete_title"),
+        message: t("contacts.details.delete_message", {
+          name: `${contact.first_name} ${contact.last_name}`,
+        }),
       },
       (buttonIndex) => {
         if (buttonIndex === 1) {
@@ -212,7 +219,7 @@ export default function ContactDetailsScreen() {
           } catch (error) {
             console.error("Error deleting contact:", error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert("Error", "No se pudo eliminar el contacto");
+            Alert.alert(t("common.error"), t("contacts.details.delete_error"));
           }
         }
       }
@@ -317,7 +324,9 @@ export default function ContactDetailsScreen() {
                     fontWeight: "500",
                   }}
                 >
-                  {isEditMode ? "cancel" : "edit"}
+                  {isEditMode
+                    ? t("contacts.details.cancel_button")
+                    : t("contacts.details.edit_button")}
                 </Text>
               </BaseButton>
             </Animated.View>
@@ -347,7 +356,7 @@ export default function ContactDetailsScreen() {
                     fontWeight: "500",
                   }}
                 >
-                  cancel
+                  {t("contacts.details.cancel_button")}
                 </Text>
               </BaseButton>
               <BaseButton
@@ -367,7 +376,7 @@ export default function ContactDetailsScreen() {
                     fontWeight: "500",
                   }}
                 >
-                  save
+                  {t("contacts.details.save_button")}
                 </Text>
               </BaseButton>
             </Animated.View>
@@ -407,7 +416,7 @@ export default function ContactDetailsScreen() {
                 }}
                 value={nameValue}
                 onChangeText={setNameValue}
-                placeholder="Full name"
+                placeholder={t("contacts.details.full_name_placeholder")}
               />
             </Animated.View>
           ) : (
@@ -436,7 +445,7 @@ export default function ContactDetailsScreen() {
               style={{ position: "relative" }}
             >
               <Badge
-                title="about"
+                title={t("contacts.details.about_badge")}
                 color="#E9E9E9"
                 textColor="#000"
                 textSize={14}
@@ -489,8 +498,7 @@ export default function ContactDetailsScreen() {
                     marginTop: 30,
                   }}
                 >
-                  *Here you can edit your contact's name and details, once
-                  saved, the information of your contact will be changed
+                  {t("contacts.details.edit_warning")}
                 </Text>
               </Animated.View>
             ) : (
@@ -507,7 +515,7 @@ export default function ContactDetailsScreen() {
                     lineHeight: 22,
                   }}
                 >
-                  {detailsValue || "Tap to add details"}
+                  {detailsValue || t("contacts.details.tap_to_add_details")}
                 </Text>
               </Animated.View>
             )}
@@ -561,7 +569,7 @@ export default function ContactDetailsScreen() {
                 fontWeight: "500",
               }}
             >
-              delete
+              {t("contacts.details.delete_button_small")}
             </Text>
           </BaseButton>
         </Animated.View>

@@ -2,15 +2,18 @@ import CloseSettingsButton from "@/components/settings/CloseSettingsButton";
 import LanguageSelector from "@/components/settings/LanguageSelector";
 import SettingItem from "@/components/settings/SettingItem";
 import SettingsSection from "@/components/settings/SettingsSection";
+import { changeLanguage } from "@/lib/i18n";
 
 import PanotLogo from "@/assets/icons/panot-logo-white.svg";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Alert, ScrollView, Text, View } from "react-native";
 
 export default function SettingsScreen() {
+  const { t, i18n } = useTranslation();
   const { signOut, user } = useAuth();
   const { transcriptionLanguage, setTranscriptionLanguage } = useSettings();
 
@@ -19,24 +22,28 @@ export default function SettingsScreen() {
   const [emailNotifications, setEmailNotifications] = useState(false);
 
   const handleSignOut = async () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await signOut();
-          } catch (error) {
-            console.error("Error signing out:", error);
-            Alert.alert(
-              "Sign Out Failed",
-              "An error occurred while signing out. Please try again."
-            );
-          }
+    Alert.alert(
+      t("settings.sign_out_confirm_title"),
+      t("settings.sign_out_confirm_message"),
+      [
+        { text: t("settings.sign_out_cancel"), style: "cancel" },
+        {
+          text: t("settings.sign_out"),
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await signOut();
+            } catch (error) {
+              console.error("Error signing out:", error);
+              Alert.alert(
+                t("settings.sign_out_failed_title"),
+                t("settings.sign_out_failed_message")
+              );
+            }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   const handleAccountSettings = () => {
@@ -92,18 +99,24 @@ export default function SettingsScreen() {
               marginBottom: 8,
             }}
           >
-            Settings
+            {t("settings.title")}
           </Text>
         </View>
 
         <SettingsSection>
           <LanguageSelector
+            label={t("settings.app_language")}
+            selectedLanguage={i18n.language}
+            onLanguageChange={changeLanguage}
+          />
+          <LanguageSelector
+            label={t("settings.transcription_language")}
             selectedLanguage={transcriptionLanguage}
             onLanguageChange={handleLanguageChange}
           />
           <SettingItem
-            title="Sign Out"
-            subtitle="Sign out of your account"
+            title={t("settings.sign_out")}
+            subtitle={t("settings.sign_out_subtitle")}
             icon="sign-out"
             onPress={handleSignOut}
           />
@@ -120,10 +133,10 @@ export default function SettingsScreen() {
       >
         <PanotLogo width={100} height={100} color="#fff" />
         <Text style={{ color: "#fff", fontSize: 12, fontWeight: "200" }}>
-          Curated with care for the people
+          {t("settings.footer_curated")}
         </Text>
         <Text style={{ color: "#fff", fontSize: 12, fontWeight: "200" }}>
-          version 0.1.0
+          {t("settings.footer_version")}
         </Text>
       </View>
     </>

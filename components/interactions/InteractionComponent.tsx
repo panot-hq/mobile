@@ -38,6 +38,11 @@ export default function Interaction({
     datePart = date.trim();
     hourPart = hour.trim();
   }
+  if (formatted.includes("a las")) {
+    const [date, hour] = formatted.split("a las");
+    datePart = date.trim();
+    hourPart = hour.trim();
+  }
 
   const truncatedContent =
     rawContent.length > 20 ? rawContent.substring(0, 30) + "..." : rawContent;

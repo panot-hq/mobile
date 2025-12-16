@@ -2,6 +2,7 @@ import AudioVisualizer from "@/components/recording/AudioVisualizer";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Keyboard, ScrollView, Text, TextInput, View } from "react-native";
 import Animated, {
   FadeIn,
@@ -36,6 +37,7 @@ export default function NewInteraction({
   onTranscriptUpdate: onExternalTranscriptUpdate,
   actions = [],
 }: NewInteractionProps) {
+  const { t, i18n } = useTranslation();
   const [transcript, setTranscript] = useState("");
   const [editableText, setEditableText] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -178,8 +180,9 @@ export default function NewInteraction({
           }}
         >
           <Text style={{ fontSize: 22, color: "#000", fontWeight: "400" }}>
-            Today{", "}
-            {new Date().toLocaleTimeString([], {
+            {t("timeline.today")}
+            {", "}
+            {new Date().toLocaleTimeString(i18n.language, {
               hour: "2-digit",
               minute: "2-digit",
             })}

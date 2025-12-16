@@ -1,6 +1,8 @@
 import ContactInteractionItem from "@/components/contacts/ContactInteractionItem";
 import Badge from "@/components/ui/Badge";
 import { Interaction } from "@/lib/database/database.types";
+import React from "react";
+import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
 interface ContactInteractionTimelineProps {
@@ -10,9 +12,11 @@ interface ContactInteractionTimelineProps {
 export default function ContactInteractionTimeline({
   interactions,
 }: ContactInteractionTimelineProps) {
+  const { t, i18n } = useTranslation();
+
   const groupedInteractions = interactions.reduce((groups, interaction) => {
     const date = new Date(interaction.created_at);
-    const dateKey = date.toLocaleDateString("en-US", {
+    const dateKey = date.toLocaleDateString(i18n.language, {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -43,7 +47,7 @@ export default function ContactInteractionTimeline({
     return (
       <>
         <Badge
-          title="timeline"
+          title={t("timeline.badge")}
           color="#E9E9E9"
           textColor="#000"
           textSize={14}
@@ -58,7 +62,7 @@ export default function ContactInteractionTimeline({
             marginTop: 30,
           }}
         >
-          No interactions yet, go on and start connecting!
+          {t("timeline.empty")}
         </Text>
       </>
     );
@@ -67,7 +71,7 @@ export default function ContactInteractionTimeline({
   return (
     <View>
       <Badge
-        title="timeline"
+        title={t("timeline.badge")}
         color="#E9E9E9"
         textColor="#000"
         textSize={14}
@@ -80,13 +84,13 @@ export default function ContactInteractionTimeline({
           const isLastGroup = groupIndex === sortedDateKeys.length - 1;
 
           const today = new Date();
-          const todayKey = today.toLocaleDateString("en-US", {
+          const todayKey = today.toLocaleDateString(i18n.language, {
             month: "short",
             day: "numeric",
             year: "numeric",
           });
           const isToday = dateKey === todayKey;
-          const displayDate = isToday ? "Today" : dateKey;
+          const displayDate = isToday ? t("timeline.today") : dateKey;
 
           return (
             <View key={dateKey} style={{ marginBottom: 12 }}>

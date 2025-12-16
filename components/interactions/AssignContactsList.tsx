@@ -7,6 +7,7 @@ import { useContacts, useInteractions } from "@/lib/hooks/useLegendState";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { FlatList, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import ContactListElement from "../contacts/ContactListElement";
@@ -34,6 +35,7 @@ export default function AssignContactsList({
   isRecordingMode = false,
   autoProcess = false,
 }: AssignContactsListProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { searchTerm } = useContactsContext();
   const { contacts, getContact } = useContacts();
@@ -208,8 +210,8 @@ export default function AssignContactsList({
             }}
           >
             {searchTerm.trim()
-              ? `No contacts found for "${searchTerm}"`
-              : "No saved connections yet, go on and start the journey"}
+              ? t("contacts.import.no_contacts_found", { searchTerm })
+              : t("assign.no_connections")}
           </Text>
         </Animated.View>
       ) : (

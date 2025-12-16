@@ -37,6 +37,10 @@ export default function ContactInteractionItem({
     const [date, hour] = formatted.split("at");
     datePart = date.trim();
     hourPart = hour.trim();
+  } else if (formatted.includes("a las")) {
+    const [date, hour] = formatted.split("a las");
+    datePart = date.trim();
+    hourPart = hour.trim();
   }
 
   const truncatedContent =

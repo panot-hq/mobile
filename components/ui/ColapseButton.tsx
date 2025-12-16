@@ -1,4 +1,5 @@
 import * as Haptics from "expo-haptics";
+import { useTranslation } from "react-i18next";
 import { Pressable, Text } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
@@ -9,6 +10,7 @@ interface ColapseButtonProps {
 export default function ColapseButton({
   setIsListExpanded,
 }: ColapseButtonProps) {
+  const { t } = useTranslation();
   return (
     <Animated.View
       entering={FadeIn}
@@ -44,7 +46,7 @@ export default function ColapseButton({
             fontWeight: "600",
           }}
         >
-          colapse
+          {t("interactions.collapse")}
         </Text>
       </Pressable>
     </Animated.View>

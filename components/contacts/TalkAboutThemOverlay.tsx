@@ -9,6 +9,7 @@ import { ProcessQueueService } from "@/lib/database/services/process-queue";
 import { BlurView } from "expo-blur";
 import PanotSpeechModule from "panot-speech";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Keyboard, Pressable } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -30,6 +31,7 @@ export default function TalkAboutThemOverlay({
   recordButtonInitialSize = 155,
   recordButtonRecordingSize = 200,
 }: TalkAboutThemOverlayProps) {
+  const { t } = useTranslation();
   const { transcriptionLanguage } = useSettings();
   const { user } = useAuth();
   const {
@@ -242,19 +244,19 @@ export default function TalkAboutThemOverlay({
   const actions: ActionButton[] = useMemo(
     () => [
       {
-        label: "Rechazar",
+        label: t("common.reject"),
         onPress: () => handleRejectTranscription(),
         variant: "secondary",
         icon: "close",
       },
       {
-        label: "Aceptar",
+        label: t("common.accept"),
         onPress: (transcript) => handleAcceptTranscription(transcript),
         variant: "primary",
         icon: "check",
       },
     ],
-    [handleRejectTranscription, handleAcceptTranscription]
+    [handleRejectTranscription, handleAcceptTranscription, t]
   );
 
   const animatedBlurStyle = useAnimatedStyle(() => {

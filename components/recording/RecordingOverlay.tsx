@@ -12,6 +12,7 @@ import { BlurView } from "expo-blur";
 import { router } from "expo-router";
 import PanotSpeechModule from "panot-speech";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Keyboard, Pressable, Text, View } from "react-native";
 import Animated, {
   FadeIn,
@@ -41,6 +42,7 @@ export default function RecordingOverlay({
   recordButtonInitialSize = 155,
   recordButtonRecordingSize = 200,
 }: RecordingOverlayProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { createInteraction } = useInteractions();
   const { getContact } = useContacts();
@@ -210,6 +212,7 @@ export default function RecordingOverlay({
             deleted: false,
             contact_id: finalContactId,
             processed: false,
+            status: "unprocessed",
           });
 
           if (onInteractionCreated) {
@@ -257,19 +260,19 @@ export default function RecordingOverlay({
   const actions: ActionButton[] = useMemo(
     () => [
       {
-        label: "Rechazar",
+        label: t("common.reject"),
         onPress: () => handleRejectTranscription(),
         variant: "secondary",
         icon: "close",
       },
       {
-        label: "Aceptar",
+        label: t("common.accept"),
         onPress: (transcript) => handleAcceptTranscription(transcript),
         variant: "primary",
         icon: "check",
       },
     ],
-    [handleRejectTranscription, handleAcceptTranscription]
+    [handleRejectTranscription, handleAcceptTranscription, t]
   );
 
   const animatedBlurStyle = useAnimatedStyle(() => {
@@ -350,7 +353,7 @@ export default function RecordingOverlay({
                       marginBottom: 5,
                     }}
                   >
-                    Associated contact
+                    {t("recording.associated_contact")}
                   </Text>
                   <Text
                     style={{
@@ -361,7 +364,7 @@ export default function RecordingOverlay({
                   >
                     {assignedContact
                       ? `${assignedContact.first_name} ${assignedContact.last_name}`
-                      : "Unassigned"}
+                      : t("recording.unassigned")}
                   </Text>
                 </View>
                 <AssignInteractionButton

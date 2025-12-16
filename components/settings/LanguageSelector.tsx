@@ -1,5 +1,6 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Text, TouchableOpacity, View } from "react-native";
 import Animated, {
   interpolate,
@@ -17,25 +18,28 @@ interface Language {
 const LANGUAGES: Language[] = [
   { code: "es-ES", name: "Spanish" },
   { code: "en-US", name: "English" },
-  { code: "it-IT", name: "Italian" },
-  { code: "fr-FR", name: "French" },
 ];
 
 interface LanguageSelectorProps {
   selectedLanguage: string;
   onLanguageChange: (languageCode: string) => void;
+  label?: string;
 }
 
 export default function LanguageSelector({
   selectedLanguage,
   onLanguageChange,
+  label,
 }: LanguageSelectorProps) {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const rotation = useSharedValue(0);
   const height = useSharedValue(0);
 
-  const selectedLanguageName =
-    LANGUAGES.find((lang) => lang.code === selectedLanguage)?.name || "Spanish";
+  const getLanguageName = (code: string) => t(`languages.${code}`);
+
+  const selectedLanguageName = getLanguageName(selectedLanguage);
+  const displayedLabel = label || t("language_selector.label");
 
   const toggleExpanded = () => {
     const toValue = isExpanded ? 0 : 1;
@@ -95,7 +99,7 @@ export default function LanguageSelector({
                 marginBottom: 2,
               }}
             >
-              Language
+              {displayedLabel}
             </Text>
             <Text
               style={{
@@ -103,7 +107,9 @@ export default function LanguageSelector({
                 color: "#CCCCCC",
               }}
             >
-              Currently set to {selectedLanguageName}
+              {t("language_selector.currently_set_to", {
+                language: selectedLanguageName,
+              })}
             </Text>
           </View>
         </View>
@@ -141,7 +147,7 @@ export default function LanguageSelector({
                   selectedLanguage === language.code ? "#FFFFFF" : "#CCCCCC",
               }}
             >
-              {language.name}
+              {getLanguageName(language.code)}
             </Text>
           </TouchableOpacity>
         ))}

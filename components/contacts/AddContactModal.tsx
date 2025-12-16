@@ -10,6 +10,7 @@ import {
 } from "@gorhom/bottom-sheet";
 import { router } from "expo-router";
 import React, { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 import BaseButton from "../ui/BaseButton";
 
@@ -20,6 +21,7 @@ interface AddContactModalProps {
 export default function AddContactModal({
   bottomSheetModalRef,
 }: AddContactModalProps) {
+  const { t } = useTranslation();
   const { setIsOverlayVisible, isOverlayVisible } = useTalkAboutThem();
 
   const handleBackdropPress = useCallback(() => {
@@ -100,7 +102,7 @@ export default function AddContactModal({
             marginHorizontal: 50,
           }}
         >
-          How would you like to record this new conextion?
+          {t("contacts.add_modal.title")}
         </Text>
 
         <View style={{ gap: 16 }}>
@@ -132,7 +134,7 @@ export default function AddContactModal({
                     marginBottom: 4,
                   }}
                 >
-                  Add manually
+                  {t("contacts.add_modal.manual_title")}
                 </Text>
                 <Text
                   style={{
@@ -140,7 +142,7 @@ export default function AddContactModal({
                     color: "#666",
                   }}
                 >
-                  Enter contact details manually
+                  {t("contacts.add_modal.manual_subtitle")}
                 </Text>
               </View>
             </View>
@@ -174,7 +176,7 @@ export default function AddContactModal({
                     marginBottom: 4,
                   }}
                 >
-                  Import from contacts
+                  {t("contacts.add_modal.import_title")}
                 </Text>
                 <Text
                   style={{
@@ -182,7 +184,7 @@ export default function AddContactModal({
                     color: "#666",
                   }}
                 >
-                  Import from your local contacts
+                  {t("contacts.add_modal.import_subtitle")}
                 </Text>
               </View>
             </View>
@@ -215,7 +217,7 @@ export default function AddContactModal({
                     marginBottom: 4,
                   }}
                 >
-                  Talk about them
+                  {t("contacts.add_modal.talk_title")}
                 </Text>
                 <Text
                   style={{
@@ -223,7 +225,7 @@ export default function AddContactModal({
                     color: "#666",
                   }}
                 >
-                  Record your thoughts about this person
+                  {t("contacts.add_modal.talk_subtitle")}
                 </Text>
               </View>
             </View>
