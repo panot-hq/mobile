@@ -75,7 +75,7 @@
       "delete_button": "Eliminar Contacto",
       "delete_error": "No se pudo eliminar el contacto",
       "full_name_placeholder": "Nombre completo",
-      "about_badge": "Por Saber",
+      "about_badge": "detalles",
       "tap_to_add_details": "Toca para añadir detalles",
       "edit_warning": "*Aquí puedes editar el nombre y los detalles de tu contacto, una vez guardado, la información de tu contacto cambiará",
       "edit_button": "editar",
@@ -105,8 +105,8 @@
     "search_placeholder": "Buscar "
   },
   "timeline": {
-    "badge": "Momentos",
-    "empty": "Aún no hay interaccionesc apturadas con este contacto",
+    "badge": "historial de interacciones",
+    "empty": "Aún no hay interacciones capturadas con este contacto",
     "today": "Hoy"
   },
   "communication_channels": {

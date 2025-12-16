@@ -98,7 +98,7 @@ export default function ContactInteractionItem({
         <View
           style={{
             position: "absolute",
-            width: 3,
+            width: 2,
             borderRadius: 10,
             height: "110%",
             backgroundColor: "#E9E9E9",

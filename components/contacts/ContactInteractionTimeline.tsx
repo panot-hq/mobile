@@ -1,4 +1,4 @@
-import ContactInteractionItem from "@/components/contacts/ContactInteractionItem";
+import ContactInteractionItem from "@/components/contacts/ContactInteractionTimelineItem";
 import Badge from "@/components/ui/Badge";
 import { Interaction } from "@/lib/database/database.types";
 import React from "react";

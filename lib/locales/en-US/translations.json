@@ -75,7 +75,7 @@
       "delete_button": "Delete Contact",
       "delete_error": "Could not delete contact",
       "full_name_placeholder": "Full name",
-      "about_badge": "To Know",
+      "about_badge": "details",
       "tap_to_add_details": "Tap to add details",
       "edit_warning": "*Here you can edit your contact's name and details, once saved, the information of your contact will be changed",
       "edit_button": "edit",
@@ -105,7 +105,7 @@
     "search_placeholder": "Search "
   },
   "timeline": {
-    "badge": "Moments",
+    "badge": "timeline",
     "empty": "No interactions yet, go on and start connecting!",
     "today": "Today"
   },
