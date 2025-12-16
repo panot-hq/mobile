@@ -45,6 +45,7 @@ export default function AssignContactSearchBar({
           }}
           autoCapitalize="none"
           autoCorrect={false}
+          autoFocus={true}
           clearButtonMode="while-editing"
         />
       </View>

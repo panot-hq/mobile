@@ -28,7 +28,12 @@ export default function ContactsSearchBar({
       }}
     >
       <View
-        style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 10,
+          flex: 1,
+        }}
       >
         <Ionicons name="search" size={18} color="#666" />
         <TextInput

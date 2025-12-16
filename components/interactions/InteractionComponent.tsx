@@ -17,12 +17,14 @@ interface InteractionProps {
   interactionId: string;
   createdAt: string;
   rawContent: string;
+  status: string;
 }
 
 export default function Interaction({
   interactionId,
   createdAt,
   rawContent,
+  status,
 }: InteractionProps) {
   const scale = useSharedValue(1);
   const { showOverlay } = useInteractionOverlay();
@@ -54,6 +56,7 @@ export default function Interaction({
           datePart,
           hourPart,
           initialLayout: { x, y, width, height },
+          status,
         });
       });
     }
@@ -127,7 +130,10 @@ export default function Interaction({
           {truncatedContent}
         </Text>
 
-        <AssignInteractionButton onPress={handleAssignInteraction} stopPropagation />
+        <AssignInteractionButton
+          onPress={handleAssignInteraction}
+          stopPropagation
+        />
       </View>
     </AnimatedPressable>
   );

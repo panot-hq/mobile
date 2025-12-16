@@ -113,7 +113,7 @@ export default function ContactInteractionItem({
             borderColor:
               isInteractionProcessing || isInteractionProcessed
                 ? "#e9e9e9b1"
-                : "white",
+                : "#e9e9e9b1",
             backgroundColor:
               isInteractionProcessing || isInteractionProcessed
                 ? "#e9e9e9b1"
