@@ -1,6 +1,7 @@
 import { Contact } from "@/lib/database/database.types";
 import { useContacts as useLegendContacts } from "@/lib/hooks/useLegendState";
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { FlatList, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import ContactListElement from "./ContactListElement";
@@ -22,6 +23,7 @@ interface ContactListProps {
 }
 
 export default function ContactList({ searchTerm = "" }: ContactListProps) {
+  const { t } = useTranslation();
   const { contacts } = useLegendContacts();
 
   const sortedContacts = useMemo(() => {
@@ -133,8 +135,8 @@ export default function ContactList({ searchTerm = "" }: ContactListProps) {
             }}
           >
             {searchTerm.trim()
-              ? `No contacts found for "${searchTerm}"`
-              : "No saved connections yet, go on and start the journey"}
+              ? t("contacts.list.no_contacts_found_for", { searchTerm })
+              : t("contacts.list.no_saved_connections")}
           </Text>
         </Animated.View>
       ) : (

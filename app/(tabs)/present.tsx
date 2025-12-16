@@ -6,6 +6,7 @@ import PresentActionBar from "@/components/ui/PresentActionBar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRecording } from "@/contexts/RecordingContext";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 import {
   useAnimatedStyle,
@@ -14,6 +15,7 @@ import {
 } from "react-native-reanimated";
 
 export default function TabTwoScreen() {
+  const { t } = useTranslation();
   const { isListExpanded, setIsListExpanded } = useRecording();
   const recordButtonOpacity = useSharedValue(1);
   const [currentDayPeriod, setcurrentDayPeriod] = useState("morning");
@@ -75,7 +77,7 @@ export default function TabTwoScreen() {
               fontWeight: 300,
             }}
           >
-            Good {currentDayPeriod}{" "}
+            {t(`present.welcome_${currentDayPeriod}`)}{" "}
             {user?.user_metadata?.display_name.split(" ")[0]}
           </Text>
         </View>

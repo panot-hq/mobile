@@ -3,6 +3,7 @@ import { useInteractions } from "@/lib/hooks/useLegendState";
 import { formatCreatedAt } from "@/lib/utils/dateFormatter";
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Dimensions, Pressable, Text, View } from "react-native";
 import Animated, {
   Extrapolate,
@@ -27,6 +28,7 @@ export default function InteractionList({
   isExpanded,
   onExpandedChange,
 }: InteractionListProps) {
+  const { t, i18n } = useTranslation();
   const { unassignedInteractions: rawInteractions } = useInteractions();
 
   const expandedValue = useSharedValue(0);
@@ -131,12 +133,12 @@ export default function InteractionList({
                   }}
                 >
                   <Text style={{ fontSize: 13 }}>
-                    {formatCreatedAt(interaction.created_at).split("at")[0]}
+                    {formatCreatedAt(interaction.created_at).split(" ")[0]}
                   </Text>
                   <Text style={{ fontSize: 13 }}>
                     {new Date(
                       interaction.created_at || new Date()
-                    ).toLocaleTimeString([], {
+                    ).toLocaleTimeString(i18n.language, {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
@@ -162,7 +164,9 @@ export default function InteractionList({
                       marginBottom: -7,
                     }}
                   >
-                    +{interactions.length - 1} more interactions
+                    {t("interactions.more_interactions", {
+                      count: interactions.length - 1,
+                    })}
                   </Text>
                 )}
               </View>
@@ -177,7 +181,11 @@ export default function InteractionList({
     <View
       style={{ flex: 1, padding: 10, marginTop: 30, gap: 25, width: "93%" }}
     >
-      <Badge title="capture dock" color="#eee" textColor="#000" />
+      <Badge
+        title={t("interactions.capture_dock")}
+        color="#eee"
+        textColor="#000"
+      />
 
       {interactions.length === 0 ? (
         <View
@@ -198,8 +206,7 @@ export default function InteractionList({
               width: "60%",
             }}
           >
-            no interactions registered today, go on and register one, remember,
-            the world is yours
+            {t("interactions.no_registered_interactions")}
           </Text>
         </View>
       ) : (

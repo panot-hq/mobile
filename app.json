@@ -39,6 +39,7 @@
       "output": "server"
     },
     "plugins": [
+      "expo-localization",
       [
         "expo-router",
         {

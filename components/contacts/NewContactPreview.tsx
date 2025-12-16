@@ -2,6 +2,7 @@ import AudioVisualizer from "@/components/recording/AudioVisualizer";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Keyboard, ScrollView, Text, TextInput, View } from "react-native";
 import Animated, {
   FadeIn,
@@ -36,6 +37,7 @@ export default function NewContactPreview({
   onTranscriptUpdate: onExternalTranscriptUpdate,
   actions = [],
 }: NewContactPreviewProps) {
+  const { t } = useTranslation();
   const [transcript, setTranscript] = useState("");
   const [editableText, setEditableText] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -232,9 +234,7 @@ export default function NewContactPreview({
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >
           <Text style={{ fontSize: 12, color: "#999" }}>
-            * introduce your new contact or share how you met. Encourage them to
-            talk about themselves and invite them to share any details they'd
-            like you to remember.
+            {t("contacts.new.preview_hint")}
           </Text>
         </View>
       </Animated.View>

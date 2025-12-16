@@ -5,6 +5,7 @@ import { useContacts } from "@/lib/hooks/useLegendState";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActionSheetIOS,
   Alert,
@@ -17,6 +18,7 @@ import {
 } from "react-native";
 
 export default function NewContactScreen() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { createContact } = useContacts();
   const params = useLocalSearchParams<{
@@ -29,7 +31,9 @@ export default function NewContactScreen() {
     last_name: "",
     details: "",
   });
-  const [contactName, setContactName] = useState("New Contact");
+  const [contactName, setContactName] = useState(
+    t("contacts.new.default_name")
+  );
 
   const hasUnsavedChanges = () => {
     if (formData.first_name.trim() !== "" || formData.last_name.trim() !== "") {
@@ -45,8 +49,8 @@ export default function NewContactScreen() {
     if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          title: "Are you sure you want to discard this new contact?",
-          options: ["Discard Changes", "Keep Editing"],
+          title: t("contacts.new.discard_confirm_title"),
+          options: [t("common.discard_changes"), t("common.keep_editing")],
           destructiveButtonIndex: 0,
           cancelButtonIndex: 1,
         },
@@ -57,14 +61,14 @@ export default function NewContactScreen() {
         }
       );
     } else {
-      Alert.alert("Are you sure you want to discard this new contact?", "", [
+      Alert.alert(t("contacts.new.discard_confirm_title"), "", [
         {
-          text: "Keep Editing",
+          text: t("common.keep_editing"),
           style: "cancel",
           onPress: () => {},
         },
         {
-          text: "Discard Changes",
+          text: t("common.discard_changes"),
           style: "destructive",
           onPress: onDiscard,
         },
@@ -78,7 +82,7 @@ export default function NewContactScreen() {
       [field]: value,
     }));
     if (field === "first_name") {
-      setContactName(value?.trim() || "New Contact");
+      setContactName(value?.trim() || t("contacts.new.default_name"));
     }
   };
 
@@ -102,7 +106,7 @@ export default function NewContactScreen() {
 
   const handleSave = async () => {
     if (!user?.id) {
-      Alert.alert("Error", "User not authenticated");
+      Alert.alert(t("common.error"), t("common.user_not_authenticated"));
       return;
     }
 
@@ -131,7 +135,7 @@ export default function NewContactScreen() {
       router.back();
     } catch (error) {
       console.error("Error creating contact:", error);
-      Alert.alert("Error", "Failed to save contact. Please try again.");
+      Alert.alert(t("common.error"), t("contacts.new.save_error"));
     } finally {
       setIsSaving(false);
     }
@@ -201,11 +205,21 @@ export default function NewContactScreen() {
           {contactName}
         </Text>
         <View style={{ gap: 10, marginBottom: 30 }}>
-          {renderInputField("first_name", "Contact's name", false, true)}
+          {renderInputField(
+            "first_name",
+            t("contacts.new.name_placeholder"),
+            false,
+            true
+          )}
         </View>
 
         <View style={{ gap: 10, marginBottom: 30 }}>
-          {renderInputField("details", "About this contact...", true, false)}
+          {renderInputField(
+            "details",
+            t("contacts.new.details_placeholder"),
+            true,
+            false
+          )}
         </View>
       </ScrollView>
 

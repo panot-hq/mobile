@@ -1,4 +1,5 @@
 import * as Haptics from "expo-haptics";
+import { useTranslation } from "react-i18next";
 import { Text } from "react-native";
 import BaseButton, { BaseButtonProps } from "../ui/BaseButton";
 
@@ -13,6 +14,8 @@ export default function NewContactButton({
   hapticFeedback = Haptics.ImpactFeedbackStyle.Medium,
   ...props
 }: AssignInteractionButtonProps) {
+  const { t } = useTranslation();
+
   return (
     <BaseButton
       backgroundColor={backgroundColor}
@@ -21,7 +24,7 @@ export default function NewContactButton({
       borderRadius={borderRadius}
       {...props}
     >
-      <Text>ASSIGN</Text>
+      <Text>{t("common.assign")}</Text>
     </BaseButton>
   );
 }

@@ -12,6 +12,7 @@ import { ExistingContact } from "expo-contacts";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Alert, FlatList, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
@@ -22,6 +23,7 @@ interface LocalContactListItem {
 }
 
 export default function ImportContactScreen() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { createContact } = useContacts();
   const [localContacts, setLocalContacts] = useState<ExistingContact[]>([]);
@@ -67,14 +69,14 @@ export default function ImportContactScreen() {
         setLocalContacts(sortedContacts);
       } else {
         Alert.alert(
-          "Permissions required",
-          "Please enable contacts access in settings to import contacts."
+          t("contacts.import.permissions_required_title"),
+          t("contacts.import.permissions_required_message")
         );
         router.back();
       }
     } catch (error) {
       console.error("Error loading contacts:", error);
-      Alert.alert("Error", "Failed to load contacts. Please try again.");
+      Alert.alert(t("common.error"), t("contacts.import.load_error"));
       router.back();
     } finally {
       setIsLoading(false);
@@ -150,7 +152,7 @@ export default function ImportContactScreen() {
     async (localContact: ExistingContact) => {
       try {
         if (!user?.id) {
-          Alert.alert("Error", "User not authenticated");
+          Alert.alert(t("common.error"), t("common.user_not_authenticated"));
           return;
         }
 
@@ -180,7 +182,7 @@ export default function ImportContactScreen() {
         router.back();
       } catch (error) {
         console.error("Error importing contact:", error);
-        Alert.alert("Error", "Failed to import contact. Please try again.");
+        Alert.alert(t("common.error"), t("contacts.import.import_error"));
       }
     },
     [user?.id, createContact]
@@ -253,8 +255,8 @@ export default function ImportContactScreen() {
             }}
           >
             {searchTerm.trim()
-              ? `No contacts found for "${searchTerm}"`
-              : "No contacts available to import"}
+              ? t("contacts.import.no_contacts_found", { searchTerm })
+              : t("contacts.import.no_contacts_available")}
           </Text>
         </Animated.View>
       ) : (

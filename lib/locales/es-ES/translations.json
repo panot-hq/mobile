@@ -1,0 +1,135 @@
+{
+  "present": {
+    "welcome_morning": "Buenos días",
+    "welcome_afternoon": "Buenas tardes",
+    "welcome_evening": "Buenas noches"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "app_language": "Idioma de la App",
+    "transcription_language": "Idioma de Transcripción",
+    "sign_out": "Cerrar Sesión",
+    "sign_out_subtitle": "Cierra sesión en tu cuenta",
+    "sign_out_confirm_title": "Cerrar Sesión",
+    "sign_out_confirm_message": "¿Estás seguro de que quieres cerrar sesión?",
+    "sign_out_cancel": "Cancelar",
+    "sign_out_failed_title": "Error al Cerrar Sesión",
+    "sign_out_failed_message": "Ocurrió un error al cerrar sesión. Por favor, inténtalo de nuevo.",
+    "footer_curated": "Curated with care for the people",
+    "footer_version": "version 0.1.0"
+  },
+  "common": {
+    "error": "Error",
+    "cancel": "Cancelar",
+    "discard_changes": "Descartar Cambios",
+    "keep_editing": "Seguir Editando",
+    "user_not_authenticated": "Usuario no autenticado",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "assign": "ASIGNAR"
+  },
+  "recording": {
+    "associated_contact": "Contacto asociado",
+    "unassigned": "Sin asignar"
+  },
+  "contacts": {
+    "new": {
+      "title": "Nuevo Contacto",
+      "default_name": "Nuevo Contacto",
+      "discard_confirm_title": "¿Estás seguro de que quieres descartar este nuevo contacto?",
+      "save_error": "Error al guardar el contacto. Inténtalo de nuevo.",
+      "name_placeholder": "Nombre del contacto",
+      "details_placeholder": "Escribe algo sobre el contacto"
+    },
+    "import": {
+      "permissions_required_title": "Permisos requeridos",
+      "permissions_required_message": "Por favor, habilita el acceso a contactos en ajustes para importar contactos.",
+      "load_error": "Error al cargar contactos. Inténtalo de nuevo.",
+      "import_error": "Error al importar el contacto. Inténtalo de nuevo.",
+      "no_contacts_found": "No se encontraron contactos para \"{{searchTerm}}\"",
+      "no_contacts_available": "No hay contactos disponibles para importar",
+      "search_placeholder": "Buscar nombre o teléfono"
+    },
+    "add_modal": {
+      "title": "¿Cómo te gustaría registrar esta nueva conexión?",
+      "manual_title": "Añadir manualmente",
+      "manual_subtitle": "Introduce los detalles manualmente",
+      "import_title": "Importar de contactos",
+      "import_subtitle": "Importar de tus contactos locales",
+      "talk_title": "Hablar sobre ellos",
+      "talk_subtitle": "Graba tus pensamientos sobre esta persona"
+    },
+    "list": {
+      "search_placeholder": "Buscar ",
+      "no_contacts_found_for": "No se encontraron contactos para \"{{searchTerm}}\"",
+      "no_saved_connections": "Aún no hay conexiones guardadas"
+    },
+    "details": {
+      "confirm_changes_title": "Confirmar Cambios",
+      "confirm_changes_message": "¿Estás seguro de que quieres guardar los cambios realizados?",
+      "save_changes": "Guardar Cambios",
+      "save_error": "No se pudieron guardar los cambios",
+      "cancel_edit": "Cancelar",
+      "delete_title": "Eliminar Contacto",
+      "delete_message": "¿Estás seguro de que quieres eliminar a {{name}}? Esta acción no se puede deshacer.",
+      "delete_button": "Eliminar Contacto",
+      "delete_error": "No se pudo eliminar el contacto",
+      "full_name_placeholder": "Nombre completo",
+      "about_badge": "Por Saber",
+      "tap_to_add_details": "Toca para añadir detalles",
+      "edit_warning": "*Aquí puedes editar el nombre y los detalles de tu contacto, una vez guardado, la información de tu contacto cambiará",
+      "edit_button": "editar",
+      "save_button": "guardar",
+      "cancel_button": "cancelar",
+      "delete_button_small": "eliminar"
+    }
+  },
+  "interactions": {
+    "capture_dock": "capturas sin asignar",
+    "no_registered_interactions": "no hay interacciones registradas hoy, adelante, registra una, recuerda, el mundo es tuyo",
+    "more_interactions": "+{{count}} interacciones más",
+    "collapse": "cerrar",
+    "overlay": {
+      "reassign": "REASIGNAR",
+      "assign": "ASIGNAR",
+      "delete": "ELIMINAR",
+      "process": "PROCESAR",
+      "content_placeholder": "Contenido de la interacción",
+      "delete_confirm_title": "Eliminar Interacción",
+      "delete_confirm_message": "¿Estás seguro de que quieres eliminar esta interacción? Esta acción no se puede deshacer.",
+      "delete_error": "No se pudo eliminar la interacción"
+    }
+  },
+  "assign": {
+    "no_connections": "Aún no hay conexiones guardadas",
+    "search_placeholder": "Buscar "
+  },
+  "timeline": {
+    "badge": "Momentos",
+    "empty": "Aún no hay interaccionesc apturadas con este contacto",
+    "today": "Hoy"
+  },
+  "communication_channels": {
+    "type_placeholder": "Tipo",
+    "value_placeholder": "Valor",
+    "delete_title": "¿Eliminar canal de comunicación?",
+    "delete_button": "Eliminar"
+  },
+  "language_selector": {
+    "label": "Idioma",
+    "currently_set_to": "Configurado actualmente en {{language}}"
+  },
+  "languages": {
+    "es-ES": "Español",
+    "en-US": "Inglés"
+  },
+  "date_formatter": {
+    "today_at": "Hoy a las {{time}}",
+    "yesterday_at": "Ayer a las {{time}}",
+    "last_weekday_at": "El pasado {{weekday}} a las {{time}}",
+    "date_at_time": "{{date}} a las {{time}}",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "last_weekday": "El pasado {{weekday}}"
+  }
+}

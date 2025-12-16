@@ -12,6 +12,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActionSheetIOS,
   ActivityIndicator,
@@ -77,6 +78,7 @@ export const InteractionOverlayProvider = ({
 }: {
   children: ReactNode;
 }) => {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [interactionData, setInteractionData] =
     useState<InteractionData | null>(null);
@@ -165,12 +167,14 @@ export const InteractionOverlayProvider = ({
 
     ActionSheetIOS.showActionSheetWithOptions(
       {
-        options: ["Cancelar", "Eliminar Interacción"],
+        options: [
+          t("common.cancel"),
+          t("interactions.overlay.delete_confirm_title"),
+        ],
         destructiveButtonIndex: 1,
         cancelButtonIndex: 0,
-        title: "Eliminar Interacción",
-        message:
-          "¿Estás seguro de que quieres eliminar esta interacción? Esta acción no se puede deshacer.",
+        title: t("interactions.overlay.delete_confirm_title"),
+        message: t("interactions.overlay.delete_confirm_message"),
       },
       async (buttonIndex) => {
         if (buttonIndex === 1) {
@@ -181,7 +185,10 @@ export const InteractionOverlayProvider = ({
           } catch (error) {
             console.error("Error deleting interaction:", error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert("Error", "No se pudo eliminar la interacción");
+            Alert.alert(
+              t("common.error"),
+              t("interactions.overlay.delete_error")
+            );
           }
         }
       }
@@ -396,7 +403,7 @@ export const InteractionOverlayProvider = ({
                         letterSpacing: 0.5,
                       }}
                     >
-                      Associated contact
+                      {t("recording.associated_contact")}
                     </Text>
                     <Text
                       style={{
@@ -407,7 +414,7 @@ export const InteractionOverlayProvider = ({
                     >
                       {contact
                         ? `${contact.first_name} ${contact.last_name}`
-                        : "Unassigned"}
+                        : t("recording.unassigned")}
                     </Text>
                   </View>
                   {!isInteractionProcessed && !isProcessing && (
@@ -430,7 +437,7 @@ export const InteractionOverlayProvider = ({
                           color: "#000",
                         }}
                       >
-                        REASSIGN
+                        {t("interactions.overlay.reassign")}
                       </Text>
                     </BaseButton>
                   )}
@@ -473,7 +480,9 @@ export const InteractionOverlayProvider = ({
                         value={contentValue}
                         onChangeText={setContentValue}
                         onBlur={handleContentSave}
-                        placeholder="Interaction content"
+                        placeholder={t(
+                          "interactions.overlay.content_placeholder"
+                        )}
                         multiline
                         autoFocus
                       />
@@ -527,7 +536,7 @@ export const InteractionOverlayProvider = ({
                         color: "#000",
                       }}
                     >
-                      ASSIGN
+                      {t("interactions.overlay.assign")}
                     </Text>
                   </BaseButton>
                 )}
@@ -551,7 +560,7 @@ export const InteractionOverlayProvider = ({
                       color: "#fff",
                     }}
                   >
-                    DELETE
+                    {t("interactions.overlay.delete")}
                   </Text>
                 </BaseButton>
                 {isInteractionAssigned && !isInteractionProcessed && (
@@ -582,7 +591,7 @@ export const InteractionOverlayProvider = ({
                           color: "#000000ff",
                         }}
                       >
-                        PROCESS
+                        {t("interactions.overlay.process")}
                       </Text>
                     )}
                   </BaseButton>
