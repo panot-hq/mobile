@@ -42,7 +42,7 @@ export default function RootLayout() {
 
   return (
     <PostHogProvider
-      apiKey="phc_bXAlTAB2qx7BPYSW6mQRHqSQOrw6QEhWHRxhI17aGlx"
+      apiKey={process.env.POSTHOG_API_KEY}
       options={{
         host: "https://eu.i.posthog.com",
       }}
