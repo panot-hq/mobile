@@ -12,6 +12,9 @@ import { FlatList, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import ContactListElement from "../contacts/ContactListElement";
 
+import capture_event, { EVENT_TYPES } from "@/lib/posthog-helper";
+import { usePostHog } from "posthog-react-native";
+
 interface ContactGroup {
   letter: string;
   contacts: Contact[];
@@ -42,6 +45,7 @@ export default function AssignContactsList({
   const { assignContact, getInteraction, updateInteraction } =
     useInteractions();
   const { setAssignedContactId } = useRecording();
+  const posthog = usePostHog();
 
   const normalizeString = (str: string): string => {
     return str
@@ -114,12 +118,14 @@ export default function AssignContactsList({
   };
 
   const handleAssignContact = async (contactId: string) => {
+    capture_event(EVENT_TYPES.SELECT_CONTACT_TO_ASSIGN_INTERACTION, posthog);
     try {
       if (isRecordingMode) {
         setAssignedContactId(contactId);
         router.back();
       } else if (interactionId) {
         assignContact(interactionId, contactId);
+        capture_event(EVENT_TYPES.ASSIGN_INTERACTION_SUCCESS, posthog);
 
         router.back();
 

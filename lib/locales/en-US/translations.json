@@ -39,7 +39,8 @@
       "discard_confirm_title": "Are you sure you want to discard this new contact?",
       "save_error": "Failed to save contact. Please try again.",
       "name_placeholder": "Contact's name",
-      "details_placeholder": "About this contact..."
+      "details_placeholder": "About this contact...",
+      "preview_hint": "Speak about your noew conexion's hobbyes, interests, etc."
     },
     "import": {
       "permissions_required_title": "Permissions required",

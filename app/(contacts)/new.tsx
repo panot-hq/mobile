@@ -4,6 +4,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useContacts } from "@/lib/hooks/useLegendState";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
+
+import capture_event, { EVENT_TYPES } from "@/lib/posthog-helper";
+import { usePostHog } from "posthog-react-native";
+
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -21,6 +25,12 @@ export default function NewContactScreen() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { createContact } = useContacts();
+  const posthog = usePostHog();
+
+  React.useEffect(() => {
+    capture_event(EVENT_TYPES.START_MANUAL_NEW_CONTACT, posthog);
+  }, []);
+
   const params = useLocalSearchParams<{
     transcript?: string;
     mode?: string;
@@ -89,9 +99,15 @@ export default function NewContactScreen() {
   const handleClose = () => {
     if (hasUnsavedChanges()) {
       showUnsavedChangesActionSheet(() => {
+        capture_event(EVENT_TYPES.CANCEL_MANUAL_NEW_CONTACT, posthog, {
+          has_data: true,
+        });
         router.back();
       });
     } else {
+      capture_event(EVENT_TYPES.CANCEL_MANUAL_NEW_CONTACT, posthog, {
+        has_data: false,
+      });
       router.back();
     }
   };
@@ -130,6 +146,8 @@ export default function NewContactScreen() {
       };
 
       await createContact(contactData as any);
+
+      capture_event(EVENT_TYPES.MANUAL_NEW_CONTACT_SUCCESS, posthog);
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();

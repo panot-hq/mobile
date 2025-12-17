@@ -15,6 +15,7 @@ import { InteractionOverlayProvider } from "@/contexts/InteractionOverlayContext
 import { RecordingProvider } from "@/contexts/RecordingContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { TalkAboutThemProvider } from "@/contexts/TalkAboutThemContext";
+import { PostHogProvider } from "posthog-react-native";
 export { ErrorBoundary } from "expo-router";
 
 import StripeProvider from "@/components/stripe/stripe-provider";
@@ -40,27 +41,34 @@ export default function RootLayout() {
   }
 
   return (
-    <StripeProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <BottomSheetModalProvider>
-          <AuthProvider>
-            <SettingsProvider>
-              <ContactsProvider>
-                <InteractionProvider>
-                  <RecordingProvider>
-                    <TalkAboutThemProvider>
-                      <InteractionOverlayProvider>
-                        <RootLayoutNav />
-                      </InteractionOverlayProvider>
-                    </TalkAboutThemProvider>
-                  </RecordingProvider>
-                </InteractionProvider>
-              </ContactsProvider>
-            </SettingsProvider>
-          </AuthProvider>
-        </BottomSheetModalProvider>
-      </GestureHandlerRootView>
-    </StripeProvider>
+    <PostHogProvider
+      apiKey="phc_bXAlTAB2qx7BPYSW6mQRHqSQOrw6QEhWHRxhI17aGlx"
+      options={{
+        host: "https://eu.i.posthog.com",
+      }}
+    >
+      <StripeProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <BottomSheetModalProvider>
+            <AuthProvider>
+              <SettingsProvider>
+                <ContactsProvider>
+                  <InteractionProvider>
+                    <RecordingProvider>
+                      <TalkAboutThemProvider>
+                        <InteractionOverlayProvider>
+                          <RootLayoutNav />
+                        </InteractionOverlayProvider>
+                      </TalkAboutThemProvider>
+                    </RecordingProvider>
+                  </InteractionProvider>
+                </ContactsProvider>
+              </SettingsProvider>
+            </AuthProvider>
+          </BottomSheetModalProvider>
+        </GestureHandlerRootView>
+      </StripeProvider>
+    </PostHogProvider>
   );
 }
 

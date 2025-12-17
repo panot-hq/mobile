@@ -8,9 +8,19 @@ import { useTalkAboutThem } from "@/contexts/TalkAboutThemContext";
 import { ProcessQueueService } from "@/lib/database/services/process-queue";
 import { BlurView } from "expo-blur";
 import PanotSpeechModule from "panot-speech";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { Keyboard, Pressable } from "react-native";
+
+import capture_event, { EVENT_TYPES } from "@/lib/posthog-helper";
+import { usePostHog } from "posthog-react-native";
+
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -55,6 +65,10 @@ export default function TalkAboutThemOverlay({
 
   const blurOpacity = useSharedValue(0);
   const recordButtonOpacity = useSharedValue(1);
+
+  const hasTrackedEdit = useRef(false);
+
+  const posthog = usePostHog();
 
   useEffect(() => {
     if (isOverlayVisible && !hasAutoStarted && !isRecording) {
@@ -139,6 +153,10 @@ export default function TalkAboutThemOverlay({
         }
 
         setTranscript(fullTranscript);
+        if (!hasTrackedEdit.current) {
+          capture_event(EVENT_TYPES.EDIT_TEXT_RECORDING_NEW_CONTACT, posthog);
+          hasTrackedEdit.current = true;
+        }
       }
     );
 
@@ -148,6 +166,8 @@ export default function TalkAboutThemOverlay({
   }, [isRecording, previousTranscript]);
 
   const startRecording = async () => {
+    capture_event(EVENT_TYPES.START_RECORDING_NEW_CONTACT, posthog);
+
     const result = await PanotSpeechModule.requestPermissions();
 
     if (result.status === "granted") {
@@ -156,6 +176,7 @@ export default function TalkAboutThemOverlay({
       setShowPreview(true);
       PanotSpeechModule.startTranscribing(true, transcriptionLanguage);
       setIsRecording(true);
+      hasTrackedEdit.current = false;
     }
   };
 
@@ -180,6 +201,7 @@ export default function TalkAboutThemOverlay({
       }
       PanotSpeechModule.startTranscribing(true, transcriptionLanguage);
       setIsRecording(true);
+      hasTrackedEdit.current = false;
     }
   };
 
@@ -192,6 +214,10 @@ export default function TalkAboutThemOverlay({
   };
 
   const handleCancelRecording = () => {
+    capture_event(EVENT_TYPES.CANCEL_RECORDING_NEW_CONTACT, posthog, {
+      duration_ms: recordingStartTime ? Date.now() - recordingStartTime : 0,
+      has_transcript: !!(transcript || previousTranscript),
+    });
     stopRecording();
     setTranscript("");
     setPreviousTranscript("");
@@ -205,6 +231,10 @@ export default function TalkAboutThemOverlay({
 
   const handleAcceptTranscription = useCallback(
     async (acceptedTranscript: string) => {
+      capture_event(EVENT_TYPES.RECORDING_NEW_CONTACT_SUCCESS, posthog, {
+        transcript_length: acceptedTranscript.length,
+        duration_ms: recordingStartTime ? Date.now() - recordingStartTime : 0,
+      });
       setTranscript("");
       setPreviousTranscript("");
       setShowPreview(false);
@@ -227,7 +257,7 @@ export default function TalkAboutThemOverlay({
         console.error("Error enqueuing process:", error);
       }
     },
-    [setIsOverlayVisible, setShouldBlur]
+    [setIsOverlayVisible, setShouldBlur, posthog, recordingStartTime]
   );
 
   const handleRejectTranscription = useCallback(() => {

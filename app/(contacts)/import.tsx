@@ -16,6 +16,9 @@ import { useTranslation } from "react-i18next";
 import { Alert, FlatList, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
+import capture_event, { EVENT_TYPES } from "@/lib/posthog-helper";
+import { usePostHog } from "posthog-react-native";
+
 interface LocalContactListItem {
   type: "header" | "contact";
   letter?: string;
@@ -29,8 +32,10 @@ export default function ImportContactScreen() {
   const [localContacts, setLocalContacts] = useState<ExistingContact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const posthog = usePostHog();
 
   useEffect(() => {
+    capture_event(EVENT_TYPES.START_IMPORTING_NEW_CONTACT, posthog);
     loadContacts();
   }, []);
 
@@ -179,6 +184,9 @@ export default function ImportContactScreen() {
         });
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+        capture_event(EVENT_TYPES.IMPORTING_NEW_CONTACT_SUCCESS, posthog);
+
         router.back();
       } catch (error) {
         console.error("Error importing contact:", error);

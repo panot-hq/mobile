@@ -34,6 +34,9 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
+import capture_event, { EVENT_TYPES } from "@/lib/posthog-helper";
+import { usePostHog } from "posthog-react-native";
+
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function ContactDetailsScreen() {
@@ -43,6 +46,7 @@ export default function ContactDetailsScreen() {
   const { updateContact: updateContactData, deleteContact: deleteContactData } =
     useContacts();
   const { getInteractionsByContact } = useInteractions();
+  const posthog = usePostHog();
 
   const contact = useSelector(() => {
     // @ts-ignore
@@ -90,6 +94,10 @@ export default function ContactDetailsScreen() {
     isEditMode,
   ]);
 
+  useEffect(() => {
+    capture_event(EVENT_TYPES.VIEW_CONTACT, posthog);
+  }, []);
+
   const handleEnterEditMode = () => {
     if (!contact) return;
     originalName.current = `${contact.first_name || ""} ${
@@ -97,6 +105,7 @@ export default function ContactDetailsScreen() {
     }`.trim();
     originalDetails.current = getContextString(contact.details.summary);
     setIsEditMode(true);
+    capture_event(EVENT_TYPES.START_MANUAL_EDIT_CONTACT, posthog);
   };
 
   const handleSaveChanges = async () => {
@@ -166,6 +175,11 @@ export default function ContactDetailsScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
+      capture_event(EVENT_TYPES.MANUAL_EDIT_CONTACT_SUCCESS, posthog, {
+        name_changed: nameChanged,
+        details_changed: detailsChanged,
+      });
+
       setIsEditMode(false);
       setOpenedFromTapEmptyDetails(false);
     } catch (error) {
@@ -180,6 +194,7 @@ export default function ContactDetailsScreen() {
     setDetailsValue(originalDetails.current);
     setIsEditMode(false);
     setOpenedFromTapEmptyDetails(false);
+    capture_event(EVENT_TYPES.CANCEL_MANUAL_EDIT_CONTACT, posthog);
   };
 
   const handleCommunicationChannelsChange = (
@@ -215,6 +230,13 @@ export default function ContactDetailsScreen() {
           try {
             deleteContactData(contact.id);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            capture_event(EVENT_TYPES.DELETE_MANUAL_CONTACT, posthog, {
+              days_since_creation: Math.floor(
+                (new Date().getTime() -
+                  new Date(contact.created_at).getTime()) /
+                  (1000 * 60 * 60 * 24)
+              ),
+            });
             router.back();
           } catch (error) {
             console.error("Error deleting contact:", error);

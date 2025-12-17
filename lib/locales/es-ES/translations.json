@@ -39,7 +39,8 @@
       "discard_confirm_title": "¿Estás seguro de que quieres descartar este nuevo contacto?",
       "save_error": "Error al guardar el contacto. Inténtalo de nuevo.",
       "name_placeholder": "Nombre del contacto",
-      "details_placeholder": "Escribe algo sobre el contacto"
+      "details_placeholder": "Escribe algo sobre el contacto",
+      "preview_hint": "Habla sobre los intereses, hobbies, etc sobre tu nueva conexión"
     },
     "import": {
       "permissions_required_title": "Permisos requeridos",
