@@ -2,12 +2,25 @@ import NewContactPreview, {
   ActionButton,
 } from "@/components/contacts/NewContactPreview";
 import RecordButton from "@/components/recording/RecordButton";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSettings } from "@/contexts/SettingsContext";
 import { useTalkAboutThem } from "@/contexts/TalkAboutThemContext";
+import { ProcessQueueService } from "@/lib/database/services/process-queue";
 import { BlurView } from "expo-blur";
-import { router } from "expo-router";
 import PanotSpeechModule from "panot-speech";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useTranslation } from "react-i18next";
 import { Keyboard, Pressable } from "react-native";
+
+import capture_event, { EVENT_TYPES } from "@/lib/posthog-helper";
+import { usePostHog } from "posthog-react-native";
+
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -28,6 +41,9 @@ export default function TalkAboutThemOverlay({
   recordButtonInitialSize = 155,
   recordButtonRecordingSize = 200,
 }: TalkAboutThemOverlayProps) {
+  const { t } = useTranslation();
+  const { transcriptionLanguage } = useSettings();
+  const { user } = useAuth();
   const {
     isRecording,
     setIsRecording,
@@ -50,10 +66,12 @@ export default function TalkAboutThemOverlay({
   const blurOpacity = useSharedValue(0);
   const recordButtonOpacity = useSharedValue(1);
 
-  // Auto-start recording when overlay becomes visible
+  const hasTrackedEdit = useRef(false);
+
+  const posthog = usePostHog();
+
   useEffect(() => {
     if (isOverlayVisible && !hasAutoStarted && !isRecording) {
-      // Add a small delay to ensure modal is fully closed
       const timer = setTimeout(() => {
         setHasAutoStarted(true);
         startRecording();
@@ -72,19 +90,27 @@ export default function TalkAboutThemOverlay({
 
   useEffect(() => {
     if (!isRecording && recordingStartTime && showPreview) {
-      if (!transcript.trim()) {
-        // Si no hay transcripción, cerrar todo el overlay
-        setShowPreview(false);
-        setTranscript("");
-        setRecordingStartTime(undefined);
-        setShowButtons(false);
-        setShouldBlur(false);
-        setIsOverlayVisible(false);
-        setHasAutoStarted(false);
-      } else {
-        setShowButtons(true);
-        setShouldBlur(true);
-      }
+      const timer = setTimeout(() => {
+        const hasContent = transcript.trim() || previousTranscript.trim();
+        if (!hasContent) {
+          setShowPreview(false);
+          setTranscript("");
+          setPreviousTranscript("");
+          setRecordingStartTime(undefined);
+          setShowButtons(false);
+          setShouldBlur(false);
+          setIsOverlayVisible(false);
+          setHasAutoStarted(false);
+        } else {
+          if (transcript.trim() && transcript !== previousTranscript) {
+            setPreviousTranscript(transcript);
+          }
+          setShowButtons(true);
+          setShouldBlur(true);
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
     } else if (isRecording) {
       setShowButtons(false);
       setShouldBlur(true);
@@ -93,6 +119,7 @@ export default function TalkAboutThemOverlay({
     isRecording,
     recordingStartTime,
     transcript,
+    previousTranscript,
     showPreview,
     setShouldBlur,
     setIsOverlayVisible,
@@ -111,22 +138,56 @@ export default function TalkAboutThemOverlay({
     };
   }, []);
 
+  useEffect(() => {
+    if (!isRecording) return;
+
+    const transcriptSub = PanotSpeechModule.addListener(
+      "onTranscriptUpdate",
+      (event) => {
+        let fullTranscript = event.transcript;
+
+        if (previousTranscript) {
+          const needsSeparator = !previousTranscript.match(/[\s\n]$/);
+          const separator = needsSeparator ? " " : "";
+          fullTranscript = previousTranscript + separator + event.transcript;
+        }
+
+        setTranscript(fullTranscript);
+        if (!hasTrackedEdit.current) {
+          capture_event(EVENT_TYPES.EDIT_TEXT_RECORDING_NEW_CONTACT, posthog);
+          hasTrackedEdit.current = true;
+        }
+      }
+    );
+
+    return () => {
+      transcriptSub.remove();
+    };
+  }, [isRecording, previousTranscript]);
+
   const startRecording = async () => {
+    capture_event(EVENT_TYPES.START_RECORDING_NEW_CONTACT, posthog);
+
     const result = await PanotSpeechModule.requestPermissions();
 
     if (result.status === "granted") {
       const startTime = Date.now();
       setRecordingStartTime(startTime);
       setShowPreview(true);
-      PanotSpeechModule.startTranscribing(true, "es-ES");
+      PanotSpeechModule.startTranscribing(true, transcriptionLanguage);
       setIsRecording(true);
+      hasTrackedEdit.current = false;
     }
   };
 
   const stopRecording = () => {
     PanotSpeechModule.stopTranscribing();
     setIsRecording(false);
-    setPreviousTranscript(transcript);
+    if (transcript.trim()) {
+      setPreviousTranscript(transcript);
+    } else if (previousTranscript.trim()) {
+      setPreviousTranscript(previousTranscript);
+    }
   };
 
   const continueRecording = async () => {
@@ -134,9 +195,13 @@ export default function TalkAboutThemOverlay({
 
     if (result.status === "granted") {
       setShowButtons(false);
-      setPreviousTranscript(transcript);
-      PanotSpeechModule.startTranscribing(true, "es-ES");
+      const currentTranscript = transcript.trim() || previousTranscript.trim();
+      if (currentTranscript) {
+        setPreviousTranscript(currentTranscript);
+      }
+      PanotSpeechModule.startTranscribing(true, transcriptionLanguage);
       setIsRecording(true);
+      hasTrackedEdit.current = false;
     }
   };
 
@@ -149,6 +214,10 @@ export default function TalkAboutThemOverlay({
   };
 
   const handleCancelRecording = () => {
+    capture_event(EVENT_TYPES.CANCEL_RECORDING_NEW_CONTACT, posthog, {
+      duration_ms: recordingStartTime ? Date.now() - recordingStartTime : 0,
+      has_transcript: !!(transcript || previousTranscript),
+    });
     stopRecording();
     setTranscript("");
     setPreviousTranscript("");
@@ -162,7 +231,10 @@ export default function TalkAboutThemOverlay({
 
   const handleAcceptTranscription = useCallback(
     async (acceptedTranscript: string) => {
-      // Clean up overlay state first
+      capture_event(EVENT_TYPES.RECORDING_NEW_CONTACT_SUCCESS, posthog, {
+        transcript_length: acceptedTranscript.length,
+        duration_ms: recordingStartTime ? Date.now() - recordingStartTime : 0,
+      });
       setTranscript("");
       setPreviousTranscript("");
       setShowPreview(false);
@@ -172,18 +244,20 @@ export default function TalkAboutThemOverlay({
       setIsOverlayVisible(false);
       setHasAutoStarted(false);
 
-      // Small delay to ensure overlay is closed before navigation
-      setTimeout(() => {
-        router.push({
-          pathname: "/(contacts)/new",
-          params: {
-            transcript: acceptedTranscript,
-            mode: "talkAboutThem",
+      try {
+        await ProcessQueueService.enqueue({
+          userId: user?.id || "",
+          contactId: null,
+          jobType: "NEW_CONTACT",
+          payload: {
+            details: acceptedTranscript,
           },
         });
-      }, 100);
+      } catch (error) {
+        console.error("Error enqueuing process:", error);
+      }
     },
-    [setIsOverlayVisible, setShouldBlur]
+    [setIsOverlayVisible, setShouldBlur, posthog, recordingStartTime]
   );
 
   const handleRejectTranscription = useCallback(() => {
@@ -200,19 +274,19 @@ export default function TalkAboutThemOverlay({
   const actions: ActionButton[] = useMemo(
     () => [
       {
-        label: "Rechazar",
+        label: t("common.reject"),
         onPress: () => handleRejectTranscription(),
         variant: "secondary",
         icon: "close",
       },
       {
-        label: "Aceptar",
+        label: t("common.accept"),
         onPress: (transcript) => handleAcceptTranscription(transcript),
         variant: "primary",
         icon: "check",
       },
     ],
-    [handleRejectTranscription, handleAcceptTranscription]
+    [handleRejectTranscription, handleAcceptTranscription, t]
   );
 
   const animatedBlurStyle = useAnimatedStyle(() => {

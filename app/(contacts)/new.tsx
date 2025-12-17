@@ -1,12 +1,15 @@
 import KeyboardSaveButton from "@/components/contacts/KeyboardSaveButton";
 import NewContactCloseButton from "@/components/contacts/NewContactCloseButton";
-import LoadingScreen from "@/components/ui/LoadingScreen";
 import { useAuth } from "@/contexts/AuthContext";
-import { processContactFromTranscript } from "@/lib/api/process_contact";
 import { useContacts } from "@/lib/hooks/useLegendState";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+
+import capture_event, { EVENT_TYPES } from "@/lib/posthog-helper";
+import { usePostHog } from "posthog-react-native";
+
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActionSheetIOS,
   Alert,
@@ -19,8 +22,15 @@ import {
 } from "react-native";
 
 export default function NewContactScreen() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { createContact } = useContacts();
+  const posthog = usePostHog();
+
+  React.useEffect(() => {
+    capture_event(EVENT_TYPES.START_MANUAL_NEW_CONTACT, posthog);
+  }, []);
+
   const params = useLocalSearchParams<{
     transcript?: string;
     mode?: string;
@@ -29,61 +39,14 @@ export default function NewContactScreen() {
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
-    professional_context: "",
-    personal_context: "",
-    relationship_context: "",
     details: "",
   });
-  const [contactName, setContactName] = useState("New Contact");
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  useEffect(() => {
-    if (params.transcript && params.mode === "talkAboutThem") {
-      processTranscript(params.transcript);
-    }
-  }, [params.transcript, params.mode]);
-
-  const processTranscript = async (transcript: string) => {
-    setIsProcessing(true);
-    try {
-      const contactInfo = await processContactFromTranscript(transcript);
-
-      setFormData({
-        first_name: contactInfo.first_name || "",
-        last_name: contactInfo.last_name || "",
-        professional_context: contactInfo.professional_context || "",
-        personal_context: contactInfo.personal_context || "",
-        relationship_context: contactInfo.relationship_context || "",
-        details: contactInfo.details || "",
-      });
-
-      if (contactInfo.first_name) {
-        setContactName(contactInfo.first_name);
-      }
-
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (error) {
-      console.error("Error processing transcript:", error);
-      Alert.alert(
-        "Error",
-        "No se pudo procesar la información. Por favor, ingresa los datos manualmente."
-      );
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+  const [contactName, setContactName] = useState(
+    t("contacts.new.default_name")
+  );
 
   const hasUnsavedChanges = () => {
     if (formData.first_name.trim() !== "" || formData.last_name.trim() !== "") {
-      return true;
-    }
-    if (formData.professional_context.trim() !== "") {
-      return true;
-    }
-    if (formData.personal_context.trim() !== "") {
-      return true;
-    }
-    if (formData.relationship_context.trim() !== "") {
       return true;
     }
     if (formData.details.trim() !== "") {
@@ -96,8 +59,8 @@ export default function NewContactScreen() {
     if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          title: "Are you sure you want to discard this new contact?",
-          options: ["Discard Changes", "Keep Editing"],
+          title: t("contacts.new.discard_confirm_title"),
+          options: [t("common.discard_changes"), t("common.keep_editing")],
           destructiveButtonIndex: 0,
           cancelButtonIndex: 1,
         },
@@ -108,14 +71,14 @@ export default function NewContactScreen() {
         }
       );
     } else {
-      Alert.alert("Are you sure you want to discard this new contact?", "", [
+      Alert.alert(t("contacts.new.discard_confirm_title"), "", [
         {
-          text: "Keep Editing",
+          text: t("common.keep_editing"),
           style: "cancel",
           onPress: () => {},
         },
         {
-          text: "Discard Changes",
+          text: t("common.discard_changes"),
           style: "destructive",
           onPress: onDiscard,
         },
@@ -129,60 +92,70 @@ export default function NewContactScreen() {
       [field]: value,
     }));
     if (field === "first_name") {
-      setContactName(value.trim() || "New Contact");
+      setContactName(value?.trim() || t("contacts.new.default_name"));
     }
   };
 
   const handleClose = () => {
     if (hasUnsavedChanges()) {
       showUnsavedChangesActionSheet(() => {
+        capture_event(EVENT_TYPES.CANCEL_MANUAL_NEW_CONTACT, posthog, {
+          has_data: true,
+        });
         router.back();
       });
     } else {
+      capture_event(EVENT_TYPES.CANCEL_MANUAL_NEW_CONTACT, posthog, {
+        has_data: false,
+      });
       router.back();
     }
   };
 
   const isFormValid = () => {
     return (
-      formData.first_name.trim() !== "" || formData.last_name.trim() !== ""
+      formData.first_name?.trim() !== "" || formData.last_name?.trim() !== ""
     );
   };
 
-  const handleSave = () => {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
     if (!user?.id) {
-      Alert.alert("Error", "User not authenticated");
+      Alert.alert(t("common.error"), t("common.user_not_authenticated"));
       return;
     }
 
-    if (!isFormValid()) {
-      Alert.alert("Error", "Please fill in at least a name or company");
-      return;
-    }
+    if (isSaving) return;
 
+    setIsSaving(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
-      // Prepare data according to new schema (all contexts are strings)
+      const detailsJson = {
+        summary: formData.details.trim() || "",
+        updated_at: new Date().toISOString(),
+      };
+
       const contactData = {
-        first_name: formData.first_name.trim() || null,
-        last_name: formData.last_name.trim() || null,
-        professional_context: formData.professional_context.trim() || null,
-        personal_context: formData.personal_context.trim() || null,
-        relationship_context: formData.relationship_context.trim() || null,
-        details: formData.details.trim() || null,
+        first_name: formData.first_name.trim() || "",
+        last_name: formData.last_name.trim() || "",
+        details: detailsJson,
         deleted: false,
-        birthday: null,
         communication_channels: null,
       };
 
-      createContact(contactData as any);
+      await createContact(contactData as any);
+
+      capture_event(EVENT_TYPES.MANUAL_NEW_CONTACT_SUCCESS, posthog);
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (error) {
       console.error("Error creating contact:", error);
-      Alert.alert("Error", "Failed to save contact. Please try again.");
+      Alert.alert(t("common.error"), t("contacts.new.save_error"));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -219,14 +192,10 @@ export default function NewContactScreen() {
         }
         autoCorrect={false}
         spellCheck={false}
-        autoFocus={focus && !isProcessing && params.mode !== "talkAboutThem"}
+        autoFocus={focus}
       />
     </View>
   );
-
-  if (isProcessing) {
-    return <LoadingScreen />;
-  }
 
   return (
     <KeyboardAvoidingView
@@ -254,32 +223,18 @@ export default function NewContactScreen() {
           {contactName}
         </Text>
         <View style={{ gap: 10, marginBottom: 30 }}>
-          {renderInputField("first_name", "First name", false, true)}
-          {renderInputField("last_name", "Last name")}
+          {renderInputField(
+            "first_name",
+            t("contacts.new.name_placeholder"),
+            false,
+            true
+          )}
         </View>
 
         <View style={{ gap: 10, marginBottom: 30 }}>
           {renderInputField(
-            "professional_context",
-            "Describe their professional situation...",
-            true,
-            false
-          )}
-          {renderInputField(
-            "personal_context",
-            "Describe their personal information...",
-            true,
-            false
-          )}
-          {renderInputField(
-            "relationship_context",
-            "How you met or relationship context...",
-            true,
-            false
-          )}
-          {renderInputField(
             "details",
-            "Additional notes or details...",
+            t("contacts.new.details_placeholder"),
             true,
             false
           )}
@@ -288,8 +243,8 @@ export default function NewContactScreen() {
 
       <KeyboardSaveButton
         onPress={handleSave}
-        isEnabled={isFormValid()}
-        isLoading={false}
+        isEnabled={isFormValid() && !isSaving}
+        isLoading={isSaving}
       />
     </KeyboardAvoidingView>
   );

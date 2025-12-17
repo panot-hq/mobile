@@ -1,4 +1,5 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import Octicons from "@expo/vector-icons/Octicons";
 import React, { ReactNode } from "react";
 import { Text, View } from "react-native";
 import BaseButton from "../ui/BaseButton";
@@ -33,14 +34,22 @@ export default function SettingItem({
       }}
     >
       <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
-        {icon && (
-          <MaterialIcons
-            name={icon as any}
-            size={20}
-            color="#CCCCCC"
-            style={{ marginRight: 16 }}
-          />
-        )}
+        {icon &&
+          (icon === "sign-out" ? (
+            <Octicons
+              name="sign-out"
+              size={20}
+              color="#CCCCCC"
+              style={{ marginRight: 16 }}
+            />
+          ) : (
+            <MaterialIcons
+              name={icon as any}
+              size={20}
+              color="#CCCCCC"
+              style={{ marginRight: 16 }}
+            />
+          ))}
         <View style={{ flex: 1 }}>
           <Text
             style={{

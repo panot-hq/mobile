@@ -5,12 +5,20 @@ import NewInteraction, {
 import RecordButton from "@/components/recording/RecordButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRecording } from "@/contexts/RecordingContext";
+import { useSettings } from "@/contexts/SettingsContext";
 import { ProfilesService } from "@/lib/database/index";
 import { useContacts, useInteractions } from "@/lib/hooks/useLegendState";
 import { BlurView } from "expo-blur";
 import { router } from "expo-router";
 import PanotSpeechModule from "panot-speech";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useTranslation } from "react-i18next";
 import { Keyboard, Pressable, Text, View } from "react-native";
 import Animated, {
   FadeIn,
@@ -19,6 +27,9 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+
+import capture_event, { EVENT_TYPES } from "@/lib/posthog-helper";
+import { usePostHog } from "posthog-react-native";
 
 interface RecordingOverlayProps {
   onInteractionCreated?: () => void;
@@ -40,9 +51,11 @@ export default function RecordingOverlay({
   recordButtonInitialSize = 155,
   recordButtonRecordingSize = 200,
 }: RecordingOverlayProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { createInteraction } = useInteractions();
   const { getContact } = useContacts();
+  const { transcriptionLanguage } = useSettings();
   const {
     isRecording,
     setIsRecording,
@@ -51,6 +64,8 @@ export default function RecordingOverlay({
     assignedContactId,
     setAssignedContactId,
   } = useRecording();
+
+  const posthog = usePostHog();
 
   const [transcript, setTranscript] = useState("");
   const [previousTranscript, setPreviousTranscript] = useState("");
@@ -64,6 +79,8 @@ export default function RecordingOverlay({
   const blurOpacity = useSharedValue(0);
   const recordButtonOpacity = useSharedValue(1);
 
+  const hasTrackedEdit = useRef(false);
+
   useEffect(() => {
     blurOpacity.value = withSpring(shouldBlur ? 1 : 0, {
       duration: 300,
@@ -72,16 +89,25 @@ export default function RecordingOverlay({
 
   useEffect(() => {
     if (!isRecording && recordingStartTime && showInteraction) {
-      if (!transcript.trim()) {
-        setShowInteraction(false);
-        setTranscript("");
-        setRecordingStartTime(undefined);
-        setShowButtons(false);
-        setShouldBlur(false);
-      } else {
-        setShowButtons(true);
-        setShouldBlur(true);
-      }
+      const timer = setTimeout(() => {
+        const hasContent = transcript.trim() || previousTranscript.trim();
+        if (!hasContent) {
+          setShowInteraction(false);
+          setTranscript("");
+          setPreviousTranscript("");
+          setRecordingStartTime(undefined);
+          setShowButtons(false);
+          setShouldBlur(false);
+        } else {
+          if (transcript.trim() && transcript !== previousTranscript) {
+            setPreviousTranscript(transcript);
+          }
+          setShowButtons(true);
+          setShouldBlur(true);
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
     } else if (isRecording) {
       setShowButtons(false);
       setShouldBlur(true);
@@ -90,6 +116,7 @@ export default function RecordingOverlay({
     isRecording,
     recordingStartTime,
     transcript,
+    previousTranscript,
     showInteraction,
     setShouldBlur,
   ]);
@@ -107,6 +134,33 @@ export default function RecordingOverlay({
     };
   }, []);
 
+  useEffect(() => {
+    if (!isRecording) return;
+
+    const transcriptSub = PanotSpeechModule.addListener(
+      "onTranscriptUpdate",
+      (event) => {
+        let fullTranscript = event.transcript;
+
+        if (previousTranscript) {
+          const needsSeparator = !previousTranscript.match(/[\s\n]$/);
+          const separator = needsSeparator ? " " : "";
+          fullTranscript = previousTranscript + separator + event.transcript;
+        }
+
+        setTranscript(fullTranscript);
+        if (!hasTrackedEdit.current) {
+          capture_event(EVENT_TYPES.EDIT_TEXT_RECORDING_INTERACTION, posthog);
+          hasTrackedEdit.current = true;
+        }
+      }
+    );
+
+    return () => {
+      transcriptSub.remove();
+    };
+  }, [isRecording, previousTranscript]);
+
   const startRecording = async () => {
     const result = await PanotSpeechModule.requestPermissions();
 
@@ -114,15 +168,21 @@ export default function RecordingOverlay({
       const startTime = Date.now();
       setRecordingStartTime(startTime);
       setShowInteraction(true);
-      PanotSpeechModule.startTranscribing(true, "es-ES");
+      PanotSpeechModule.startTranscribing(true, transcriptionLanguage);
       setIsRecording(true);
+      capture_event(EVENT_TYPES.START_INTERACTION_RECORDING, posthog);
+      hasTrackedEdit.current = false;
     }
   };
 
   const stopRecording = () => {
     PanotSpeechModule.stopTranscribing();
     setIsRecording(false);
-    setPreviousTranscript(transcript);
+    if (transcript.trim()) {
+      setPreviousTranscript(transcript);
+    } else if (previousTranscript.trim()) {
+      setPreviousTranscript(previousTranscript);
+    }
   };
 
   const continueRecording = async () => {
@@ -130,9 +190,13 @@ export default function RecordingOverlay({
 
     if (result.status === "granted") {
       setShowButtons(false);
-      setPreviousTranscript(transcript);
-      PanotSpeechModule.startTranscribing(true, "es-ES");
+      const currentTranscript = transcript.trim() || previousTranscript.trim();
+      if (currentTranscript) {
+        setPreviousTranscript(currentTranscript);
+      }
+      PanotSpeechModule.startTranscribing(true, transcriptionLanguage);
       setIsRecording(true);
+      hasTrackedEdit.current = false;
     }
   };
 
@@ -153,6 +217,10 @@ export default function RecordingOverlay({
     setShowButtons(false);
     setShouldBlur(false);
     setAssignedContactId(null);
+    capture_event(EVENT_TYPES.CANCEL_INTERACTION_RECORDING, posthog, {
+      duration_ms: recordingStartTime ? Date.now() - recordingStartTime : 0,
+      has_transcript: !!(transcript || previousTranscript),
+    });
   };
 
   const handleAcceptTranscription = useCallback(
@@ -165,14 +233,22 @@ export default function RecordingOverlay({
         try {
           createInteraction({
             raw_content: acceptedTranscript,
-            key_concepts: "",
             deleted: false,
             contact_id: finalContactId,
+            processed: false,
+            status: "unprocessed",
           });
 
           if (onInteractionCreated) {
             onInteractionCreated();
           }
+
+          capture_event(EVENT_TYPES.INTERACTION_RECORDING_SUCCESS, posthog, {
+            duration_ms: recordingStartTime
+              ? Date.now() - recordingStartTime
+              : 0,
+            transcript_length: acceptedTranscript.length,
+          });
         } catch (error) {
           console.error("Error creating interaction:", error);
         }
@@ -194,6 +270,8 @@ export default function RecordingOverlay({
       onInteractionCreated,
       setAssignedContactId,
       setShouldBlur,
+      posthog,
+      recordingStartTime,
     ]
   );
 
@@ -215,19 +293,19 @@ export default function RecordingOverlay({
   const actions: ActionButton[] = useMemo(
     () => [
       {
-        label: "Rechazar",
+        label: t("common.reject"),
         onPress: () => handleRejectTranscription(),
         variant: "secondary",
         icon: "close",
       },
       {
-        label: "Aceptar",
+        label: t("common.accept"),
         onPress: (transcript) => handleAcceptTranscription(transcript),
         variant: "primary",
         icon: "check",
       },
     ],
-    [handleRejectTranscription, handleAcceptTranscription]
+    [handleRejectTranscription, handleAcceptTranscription, t]
   );
 
   const animatedBlurStyle = useAnimatedStyle(() => {
@@ -308,7 +386,7 @@ export default function RecordingOverlay({
                       marginBottom: 5,
                     }}
                   >
-                    Associated contact
+                    {t("recording.associated_contact")}
                   </Text>
                   <Text
                     style={{
@@ -319,7 +397,7 @@ export default function RecordingOverlay({
                   >
                     {assignedContact
                       ? `${assignedContact.first_name} ${assignedContact.last_name}`
-                      : "Unassigned"}
+                      : t("recording.unassigned")}
                   </Text>
                 </View>
                 <AssignInteractionButton

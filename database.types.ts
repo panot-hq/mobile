@@ -4,274 +4,440 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[];
+  | Json[]
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.12 (cd3cf9e)";
-  };
+    PostgrestVersion: "12.2.12 (cd3cf9e)"
+  }
   public: {
     Tables: {
       contacts: {
         Row: {
-          birthday: string | null;
-          communication_channels: Json | null;
-          created_at: string | null;
-          deleted: boolean | null;
-          details: Json | null;
-          first_name: string | null;
-          id: string;
-          last_name: string | null;
-          owner_id: string;
-          personal_context: Json | null;
-          professional_context: Json | null;
-          relationship_context: Json | null;
-          updated_at: string | null;
-        };
+          communication_channels: Json | null
+          created_at: string | null
+          deleted: boolean | null
+          details: Json | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          node_id: string
+          owner_id: string
+          updated_at: string | null
+        }
         Insert: {
-          birthday?: string | null;
-          communication_channels?: Json | null;
-          created_at?: string | null;
-          deleted?: boolean | null;
-          details?: Json | null;
-          first_name?: string | null;
-          id?: string;
-          last_name?: string | null;
-          owner_id: string;
-          personal_context?: Json | null;
-          professional_context?: Json | null;
-          relationship_context?: Json | null;
-          updated_at?: string | null;
-        };
+          communication_channels?: Json | null
+          created_at?: string | null
+          deleted?: boolean | null
+          details?: Json | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          node_id: string
+          owner_id: string
+          updated_at?: string | null
+        }
         Update: {
-          birthday?: string | null;
-          communication_channels?: Json | null;
-          created_at?: string | null;
-          deleted?: boolean | null;
-          details?: Json | null;
-          first_name?: string | null;
-          id?: string;
-          last_name?: string | null;
-          owner_id?: string;
-          personal_context?: Json | null;
-          professional_context?: Json | null;
-          relationship_context?: Json | null;
-          updated_at?: string | null;
-        };
-        Relationships: [];
-      };
-      interactions: {
-        Row: {
-          contact_id: string | null;
-          created_at: string;
-          deleted: boolean | null;
-          id: string;
-          key_concepts: string;
-          owner_id: string;
-          raw_content: string;
-          updated_at: string | null;
-        };
-        Insert: {
-          contact_id?: string | null;
-          created_at?: string;
-          deleted?: boolean | null;
-          id?: string;
-          key_concepts: string;
-          owner_id: string;
-          raw_content: string;
-          updated_at?: string | null;
-        };
-        Update: {
-          contact_id?: string | null;
-          created_at?: string;
-          deleted?: boolean | null;
-          id?: string;
-          key_concepts?: string;
-          owner_id?: string;
-          raw_content?: string;
-          updated_at?: string | null;
-        };
+          communication_channels?: Json | null
+          created_at?: string | null
+          deleted?: boolean | null
+          details?: Json | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          node_id?: string
+          owner_id?: string
+          updated_at?: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: "interactions_contact_id_fkey";
-            columns: ["contact_id"];
-            isOneToOne: false;
-            referencedRelation: "contacts";
-            referencedColumns: ["id"];
+            foreignKeyName: "contacts_node_id_fkey"
+            columns: ["node_id"]
+            isOneToOne: false
+            referencedRelation: "semantic_nodes"
+            referencedColumns: ["id"]
           },
+        ]
+      }
+      interactions: {
+        Row: {
+          contact_id: string | null
+          created_at: string
+          deleted: boolean | null
+          id: string
+          owner_id: string
+          processed: boolean
+          raw_content: string
+          status: Database["public"]["Enums"]["interaction_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string
+          deleted?: boolean | null
+          id?: string
+          owner_id: string
+          processed?: boolean
+          raw_content: string
+          status?: Database["public"]["Enums"]["interaction_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string
+          deleted?: boolean | null
+          id?: string
+          owner_id?: string
+          processed?: boolean
+          raw_content?: string
+          status?: Database["public"]["Enums"]["interaction_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
           {
-            foreignKeyName: "interactions_owner_id_fkey";
-            columns: ["owner_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["user_id"];
-          }
-        ];
-      };
+            foreignKeyName: "interactions_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      process_queue: {
+        Row: {
+          contact_id: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          job_type: Database["public"]["Enums"]["job_type"]
+          payload: Json
+          processed_at: string | null
+          status: Database["public"]["Enums"]["job_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_type: Database["public"]["Enums"]["job_type"]
+          payload?: Json
+          processed_at?: string | null
+          status?: Database["public"]["Enums"]["job_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_type?: Database["public"]["Enums"]["job_type"]
+          payload?: Json
+          processed_at?: string | null
+          status?: Database["public"]["Enums"]["job_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
-          created_at: string | null;
-          deleted: boolean | null;
-          onboarding_done: boolean;
-          updated_at: string | null;
-          user_id: string;
-        };
+          created_at: string | null
+          deleted: boolean | null
+          onboarding_done: boolean
+          subscribed: boolean
+          updated_at: string | null
+          user_id: string
+        }
         Insert: {
-          created_at?: string | null;
-          deleted?: boolean | null;
-          onboarding_done?: boolean;
-          updated_at?: string | null;
-          user_id: string;
-        };
+          created_at?: string | null
+          deleted?: boolean | null
+          onboarding_done?: boolean
+          subscribed?: boolean
+          updated_at?: string | null
+          user_id: string
+        }
         Update: {
-          created_at?: string | null;
-          deleted?: boolean | null;
-          onboarding_done?: boolean;
-          updated_at?: string | null;
-          user_id?: string;
-        };
-        Relationships: [];
-      };
-    };
+          created_at?: string | null
+          deleted?: boolean | null
+          onboarding_done?: boolean
+          subscribed?: boolean
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      semantic_edges: {
+        Row: {
+          created_at: string | null
+          id: string
+          relation_type: string
+          source_id: string
+          target_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          relation_type: string
+          source_id: string
+          target_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          relation_type?: string
+          source_id?: string
+          target_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "semantic_edges_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "semantic_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "semantic_edges_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "semantic_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      semantic_nodes: {
+        Row: {
+          concept_category: string | null
+          created_at: string
+          embedding: string | null
+          id: string
+          label: string
+          type: Database["public"]["Enums"]["node_type"]
+          user_id: string
+          weight: number
+        }
+        Insert: {
+          concept_category?: string | null
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          label: string
+          type: Database["public"]["Enums"]["node_type"]
+          user_id: string
+          weight?: number
+        }
+        Update: {
+          concept_category?: string | null
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          label?: string
+          type?: Database["public"]["Enums"]["node_type"]
+          user_id?: string
+          weight?: number
+        }
+        Relationships: []
+      }
+      workers: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_activity_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_activity_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_activity_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+    }
     Views: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Functions: {
-      is_my_contact: { Args: { c_id: string }; Returns: boolean };
-    };
+      find_shared_connections: {
+        Args: { p_contact_id: string; p_user_id: string }
+        Returns: Json
+      }
+      is_my_contact: { Args: { c_id: string }; Returns: boolean }
+      match_semantic_nodes: {
+        Args: {
+          match_count: number
+          match_threshold: number
+          p_user_id: string
+          query_embedding: string
+        }
+        Returns: {
+          concept_category: string
+          id: string
+          label: string
+          similarity: number
+          type: string
+          weight: number
+        }[]
+      }
+    }
     Enums: {
-      [_ in never]: never;
-    };
+      interaction_status: "unprocessed" | "processing" | "processed"
+      job_status:
+        | "pending"
+        | "processing"
+        | "completed"
+        | "failed"
+        | "cancelled"
+      job_type: "NEW_CONTACT" | "INTERACTION_TRANSCRIPT" | "DETAILS_UPDATE"
+      node_type: "CONTACT" | "CONCEPT"
+    }
     CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
-};
+      [_ in never]: never
+    }
+  }
+}
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<
-  keyof Database,
-  "public"
->];
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R;
+      Row: infer R
     }
     ? R
     : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-      DefaultSchema["Views"])
-  ? (DefaultSchema["Tables"] &
-      DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-      Row: infer R;
-    }
-    ? R
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
     : never
-  : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I;
+      Insert: infer I
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-      Insert: infer I;
-    }
-    ? I
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
     : never
-  : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U;
+      Update: infer U
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-      Update: infer U;
-    }
-    ? U
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
     : never
-  : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-  : never;
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-  : never;
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      interaction_status: ["unprocessed", "processing", "processed"],
+      job_status: ["pending", "processing", "completed", "failed", "cancelled"],
+      job_type: ["NEW_CONTACT", "INTERACTION_TRANSCRIPT", "DETAILS_UPDATE"],
+      node_type: ["CONTACT", "CONCEPT"],
+    },
   },
-} as const;
+} as const

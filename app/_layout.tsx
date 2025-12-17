@@ -1,3 +1,4 @@
+import "@/lib/i18n";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useFonts } from "expo-font";
@@ -12,8 +13,12 @@ import { ContactsProvider } from "@/contexts/ContactsContext";
 import { InteractionProvider } from "@/contexts/InteractionContext";
 import { InteractionOverlayProvider } from "@/contexts/InteractionOverlayContext";
 import { RecordingProvider } from "@/contexts/RecordingContext";
+import { SettingsProvider } from "@/contexts/SettingsContext";
 import { TalkAboutThemProvider } from "@/contexts/TalkAboutThemContext";
+import { PostHogProvider } from "posthog-react-native";
 export { ErrorBoundary } from "expo-router";
+
+import StripeProvider from "@/components/stripe/stripe-provider";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -36,23 +41,34 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <AuthProvider>
-          <ContactsProvider>
-            <InteractionProvider>
-              <RecordingProvider>
-                <TalkAboutThemProvider>
-                  <InteractionOverlayProvider>
-                    <RootLayoutNav />
-                  </InteractionOverlayProvider>
-                </TalkAboutThemProvider>
-              </RecordingProvider>
-            </InteractionProvider>
-          </ContactsProvider>
-        </AuthProvider>
-      </BottomSheetModalProvider>
-    </GestureHandlerRootView>
+    <PostHogProvider
+      apiKey="phc_bXAlTAB2qx7BPYSW6mQRHqSQOrw6QEhWHRxhI17aGlx"
+      options={{
+        host: "https://eu.i.posthog.com",
+      }}
+    >
+      <StripeProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <BottomSheetModalProvider>
+            <AuthProvider>
+              <SettingsProvider>
+                <ContactsProvider>
+                  <InteractionProvider>
+                    <RecordingProvider>
+                      <TalkAboutThemProvider>
+                        <InteractionOverlayProvider>
+                          <RootLayoutNav />
+                        </InteractionOverlayProvider>
+                      </TalkAboutThemProvider>
+                    </RecordingProvider>
+                  </InteractionProvider>
+                </ContactsProvider>
+              </SettingsProvider>
+            </AuthProvider>
+          </BottomSheetModalProvider>
+        </GestureHandlerRootView>
+      </StripeProvider>
+    </PostHogProvider>
   );
 }
 
@@ -79,16 +95,6 @@ function RootLayoutNav() {
         name="(auth)"
         options={{
           animation: "fade",
-        }}
-      />
-      <Stack.Screen
-        name="(interactions)/[id]"
-        options={{
-          presentation: "modal",
-          headerShown: false,
-          contentStyle: {
-            backgroundColor: "transparent",
-          },
         }}
       />
       <Stack.Screen

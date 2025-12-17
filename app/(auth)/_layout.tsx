@@ -1,17 +1,6 @@
-import { useAuth } from "@/contexts/AuthContext";
 import { SignupProvider } from "@/contexts/SignupContext";
-import { Stack, useRouter } from "expo-router";
-import { useEffect } from "react";
+import { Stack } from "expo-router";
 export default function AuthLayout() {
-  const { user } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (user?.id) {
-      router.replace("/(tabs)/present");
-    }
-  }, [user?.id]);
-
   return (
     <SignupProvider>
       <Stack>
@@ -23,7 +12,7 @@ export default function AuthLayout() {
           }}
         />
         <Stack.Screen
-          name="(continue)/email"
+          name="(continue-signup)/email"
           options={{
             animation: "slide_from_bottom",
             headerShown: false,
@@ -31,7 +20,7 @@ export default function AuthLayout() {
           }}
         />
         <Stack.Screen
-          name="(continue)/password"
+          name="(continue-signup)/password"
           options={{
             animation: "slide_from_right",
             headerShown: false,
@@ -39,7 +28,7 @@ export default function AuthLayout() {
           }}
         />
         <Stack.Screen
-          name="(continue)/name"
+          name="(continue-signup)/name"
           options={{
             animation: "slide_from_right",
             headerShown: false,
@@ -47,9 +36,25 @@ export default function AuthLayout() {
           }}
         />
         <Stack.Screen
-          name="(continue)/email-verify"
+          name="(continue-signup)/email-verify"
           options={{
             animation: "slide_from_right",
+            headerShown: false,
+            gestureEnabled: false,
+          }}
+        />
+        <Stack.Screen
+          name="restore"
+          options={{
+            animation: "fade",
+            headerShown: false,
+            gestureEnabled: false,
+          }}
+        />
+        <Stack.Screen
+          name="(paywall)/paywall"
+          options={{
+            animation: "fade",
             headerShown: false,
             gestureEnabled: false,
           }}

@@ -1,8 +1,5 @@
-import { ProfilesService } from "@/lib/database/index";
 import { supabase } from "@/lib/supabase";
-import { clearPersistedData, initializeSync } from "@/lib/supaLegend";
 import * as AppleAuthentication from "expo-apple-authentication";
-import { router } from "expo-router";
 import { Platform } from "react-native";
 
 type Props = {
@@ -28,45 +25,43 @@ export function IOSAuth({
               AppleAuthentication.AppleAuthenticationScope.EMAIL,
             ],
           });
-
-          if (!credential.identityToken) throw new Error("No identityToken");
-
-          const { data, error } = await supabase.auth.signInWithIdToken({
-            provider: "apple",
-            token: credential.identityToken,
-          });
-
-          if (error) {
-            console.log("Supabase signIn error:", error);
-            return;
-          }
-
-          if (credential.fullName || credential.email) {
-            const fullName = credential.fullName
-              ? AppleAuthentication.formatFullName(credential.fullName)
-              : undefined;
-
-            await supabase.auth.updateUser({
-              data: { full_name: fullName },
-              email: credential.email ?? undefined,
+          // Sign in via Supabase Auth.
+          if (credential.identityToken) {
+            const {
+              error,
+              data: { user },
+            } = await supabase.auth.signInWithIdToken({
+              provider: "apple",
+              token: credential.identityToken,
             });
+            console.log(JSON.stringify({ error, user }, null, 2));
+            if (!error) {
+              // Apple only provides the user's full name on the first sign-in
+              // Save it to user metadata if available
+              if (credential.fullName) {
+                const nameParts = [];
+                if (credential.fullName.givenName)
+                  nameParts.push(credential.fullName.givenName);
+                if (credential.fullName.middleName)
+                  nameParts.push(credential.fullName.middleName);
+                if (credential.fullName.familyName)
+                  nameParts.push(credential.fullName.familyName);
+                const fullName = nameParts.join(" ");
+                await supabase.auth.updateUser({
+                  data: {
+                    full_name: fullName,
+                    given_name: credential.fullName.givenName,
+                    family_name: credential.fullName.familyName,
+                  },
+                });
+              }
+              // User is signed in.
+            }
+          } else {
+            throw new Error("No identityToken.");
           }
-
-          await supabase.auth.setSession(data.session);
-
-          await new Promise((resolve) => setTimeout(resolve, 500));
-
-          const userId = data.session.user.id;
-
-          await clearPersistedData();
-
-          await ProfilesService.getOrCreate(userId);
-          await initializeSync(userId);
-
-          router.replace("/(tabs)/present");
         } catch (e: any) {
           if (e?.code === "ERR_REQUEST_CANCELED") return;
-          console.log("Apple sign-in error:", e);
         }
       }}
     />

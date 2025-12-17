@@ -1,13 +1,14 @@
 import Badge from "@/components/ui/Badge";
 import { useInteractions } from "@/lib/hooks/useLegendState";
+import { formatCreatedAt } from "@/lib/utils/dateFormatter";
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useMemo } from "react";
-import { Dimensions, FlatList, Pressable, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
+import { Dimensions, Pressable, Text, View } from "react-native";
 import Animated, {
   Extrapolate,
   FadeIn,
   FadeInDown,
-  FadeInUp,
   interpolate,
   LinearTransition,
   useAnimatedStyle,
@@ -15,16 +16,19 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import InteractionComponent from "./InteractionComponent";
+
 const { height: screenHeight } = Dimensions.get("window");
 
 interface InteractionListProps {
-  onExpandedChange?: (isExpanded: boolean) => void;
+  isExpanded: boolean;
+  onExpandedChange: (isExpanded: boolean) => void;
 }
 
 export default function InteractionList({
+  isExpanded,
   onExpandedChange,
 }: InteractionListProps) {
-  const [isExpanded, setIsExpanded] = React.useState(false);
+  const { t, i18n } = useTranslation();
   const { unassignedInteractions: rawInteractions } = useInteractions();
 
   const expandedValue = useSharedValue(0);
@@ -38,8 +42,7 @@ export default function InteractionList({
 
   useEffect(() => {
     if (isExpanded && interactions.length === 0) {
-      setIsExpanded(false);
-      onExpandedChange?.(false);
+      onExpandedChange(false);
     }
   }, [interactions.length, isExpanded, onExpandedChange]);
 
@@ -56,9 +59,7 @@ export default function InteractionList({
 
   const toggleExpanded = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const newExpanded = !isExpanded;
-    setIsExpanded(newExpanded);
-    onExpandedChange?.(newExpanded);
+    onExpandedChange(!isExpanded);
   };
 
   const stackedAnimatedStyle = useAnimatedStyle(() => {
@@ -66,14 +67,14 @@ export default function InteractionList({
       maxHeight: interpolate(
         expandedValue.value,
         [0, 1],
-        [200, screenHeight * 0.9],
+        [200, 20000],
         Extrapolate.CLAMP
       ),
     };
   });
 
   const renderStackedInteractions = () => {
-    const maxVisible = 3;
+    const maxVisible = 4;
     const visibleInteractions = interactions.slice(0, maxVisible);
 
     return (
@@ -132,14 +133,12 @@ export default function InteractionList({
                   }}
                 >
                   <Text style={{ fontSize: 13 }}>
-                    {new Date(
-                      interaction.created_at || new Date()
-                    ).toLocaleDateString()}
+                    {formatCreatedAt(interaction.created_at).split(" ")[0]}
                   </Text>
                   <Text style={{ fontSize: 13 }}>
                     {new Date(
                       interaction.created_at || new Date()
-                    ).toLocaleTimeString([], {
+                    ).toLocaleTimeString(i18n.language, {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
@@ -161,10 +160,13 @@ export default function InteractionList({
                       color: "#999",
                       fontSize: 10,
                       textAlign: "center",
-                      marginTop: 18,
+                      marginTop: 12,
+                      marginBottom: -7,
                     }}
                   >
-                    +{interactions.length - maxVisible} more interactions
+                    {t("interactions.more_interactions", {
+                      count: interactions.length - 1,
+                    })}
                   </Text>
                 )}
               </View>
@@ -177,9 +179,13 @@ export default function InteractionList({
 
   return (
     <View
-      style={{ flex: 1, padding: 10, marginTop: 100, gap: 25, width: "93%" }}
+      style={{ flex: 1, padding: 10, marginTop: 30, gap: 25, width: "93%" }}
     >
-      <Badge title="capture dock" color="#eee" textColor="#000" />
+      <Badge
+        title={t("interactions.capture_dock")}
+        color="#eee"
+        textColor="#000"
+      />
 
       {interactions.length === 0 ? (
         <View
@@ -200,8 +206,7 @@ export default function InteractionList({
               width: "60%",
             }}
           >
-            no interactions registered today, go on and register one, remember,
-            the world is yours
+            {t("interactions.no_registered_interactions")}
           </Text>
         </View>
       ) : (
@@ -218,22 +223,17 @@ export default function InteractionList({
           {!isExpanded && renderStackedInteractions()}
 
           {isExpanded && (
-            <FlatList
-              data={interactions}
-              keyExtractor={(item) => item.id.toString()}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{
+            <View
+              style={{
                 gap: 10,
                 paddingTop: 10,
                 paddingBottom: 120,
                 paddingHorizontal: 8,
               }}
-              style={{ flex: 1 }}
-              bounces={true}
-              scrollIndicatorInsets={{ right: 1 }}
-              nestedScrollEnabled={true}
-              renderItem={({ item, index }) => (
+            >
+              {interactions.map((item, index) => (
                 <Animated.View
+                  key={item.id}
                   entering={FadeInDown.delay(index * 40)
                     .duration(500)
                     .springify()}
@@ -243,43 +243,11 @@ export default function InteractionList({
                     interactionId={item.id.toString()}
                     createdAt={item.created_at}
                     rawContent={item.raw_content}
+                    status={item.status || "unprocessed"}
                   />
                 </Animated.View>
-              )}
-              ListFooterComponent={() => (
-                <Animated.View
-                  entering={FadeInUp.delay(300).duration(500).springify()}
-                  style={{
-                    marginTop: 20,
-                    marginBottom: 40,
-                    alignItems: "center",
-                  }}
-                >
-                  <Pressable
-                    onPress={toggleExpanded}
-                    style={{
-                      backgroundColor: "#000",
-                      paddingVertical: 12,
-                      paddingHorizontal: 20,
-                      borderRadius: 20,
-                      alignItems: "center",
-
-                      width: "30%",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: "#fff",
-                        fontSize: 14,
-                        fontWeight: "500",
-                      }}
-                    >
-                      colapse
-                    </Text>
-                  </Pressable>
-                </Animated.View>
-              )}
-            />
+              ))}
+            </View>
           )}
         </Animated.View>
       )}

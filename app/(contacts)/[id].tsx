@@ -1,18 +1,21 @@
 import ArrowButton from "@/components/auth/buttons/ArrowButton";
-import CommunicationChannels from "@/components/contacts/CommunicationChannels";
-import ContactInteractionItem from "@/components/contacts/ContactInteractionItem";
+import ContactInteractionTimeline from "@/components/contacts/ContactInteractionTimeline";
 import RecordingOverlay from "@/components/recording/RecordingOverlay";
 import Badge from "@/components/ui/Badge";
 import BaseButton from "@/components/ui/BaseButton";
+import { useAuth } from "@/contexts/AuthContext";
+import { ProcessQueueService } from "@/lib/database/services/process-queue";
 import { useContacts, useInteractions } from "@/lib/hooks/useLegendState";
+import { contacts$ } from "@/lib/supaLegend";
 import {
   CommunicationChannel,
-  parseCommunicationChannels,
   stringifyCommunicationChannels,
 } from "@/lib/types/communicationChannel";
+import { useSelector } from "@legendapp/state/react";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActionSheetIOS,
   Alert,
@@ -24,178 +27,174 @@ import {
 } from "react-native";
 import Animated, {
   FadeIn,
+  FadeInRight,
   FadeOut,
+  FadeOutRight,
   useAnimatedStyle,
+  withTiming,
 } from "react-native-reanimated";
+
+import capture_event, { EVENT_TYPES } from "@/lib/posthog-helper";
+import { usePostHog } from "posthog-react-native";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function ContactDetailsScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams();
 
-  // Hooks de Legend State (local-first)
-  const {
-    getContact,
-    updateContact: updateContactData,
-    deleteContact: deleteContactData,
-  } = useContacts();
+  const { updateContact: updateContactData, deleteContact: deleteContactData } =
+    useContacts();
   const { getInteractionsByContact } = useInteractions();
+  const posthog = usePostHog();
 
-  // Obtener datos reactivamente
-  const contact = getContact(id as string);
+  const contact = useSelector(() => {
+    // @ts-ignore
+    const contactData = contacts$[id as string]?.get();
+    if (!contactData || contactData.deleted) return undefined;
+    return contactData;
+  });
+
   const interactions = getInteractionsByContact(id as string);
 
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [isEditingProfessionalContext, setIsEditingProfessionalContext] =
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [openedFromTapEmptyDetails, setOpenedFromTapEmptyDetails] =
     useState(false);
-  const [isEditingPersonalContext, setIsEditingPersonalContext] =
-    useState(false);
-  const [isEditingRelationshipContext, setIsEditingRelationshipContext] =
-    useState(false);
-  const [isEditingDetails, setIsEditingDetails] = useState(false);
-  const [showOptions, setShowOptions] = useState(false);
   const [nameValue, setNameValue] = useState("");
-  const [professionalContextValue, setProfessionalContextValue] = useState("");
-  const [personalContextValue, setPersonalContextValue] = useState("");
-  const [relationshipContextValue, setRelationshipContextValue] = useState("");
   const [detailsValue, setDetailsValue] = useState("");
-  const [communicationChannels, setCommunicationChannels] = useState<
-    CommunicationChannel[]
-  >([]);
 
-  // Helper function to safely get string from Json (can be string directly or nested)
+  const originalName = useRef("");
+  const originalDetails = useRef("");
+
+  const { user } = useAuth();
+
   const getContextString = (value: any): string => {
     if (typeof value === "string") {
       return value;
     }
     if (typeof value === "object" && value !== null) {
-      // Legacy format: try to extract from nested object
-      // But ideally all contexts should be strings now
       return "";
     }
     return "";
   };
 
-  // Inicializar valores cuando cambie el contacto
   useEffect(() => {
-    if (contact) {
-      setNameValue(
-        `${contact.first_name || ""} ${contact.last_name || ""}`.trim()
-      );
-      setProfessionalContextValue(
-        getContextString(contact.professional_context)
-      );
-      setPersonalContextValue(getContextString(contact.personal_context));
-      setRelationshipContextValue(
-        getContextString(contact.relationship_context)
-      );
-      setDetailsValue(getContextString(contact.details));
-      setCommunicationChannels(
-        parseCommunicationChannels(
-          contact.communication_channels as string | null
-        )
-      );
+    if (contact && !isEditMode) {
+      const fullName = `${contact.first_name || ""} ${
+        contact.last_name || ""
+      }`.trim();
+      setNameValue(fullName);
+      setDetailsValue(getContextString(contact.details.summary));
     }
-  }, [contact]);
+  }, [
+    contact,
+    contact?.details,
+    contact?.first_name,
+    contact?.last_name,
+    isEditMode,
+  ]);
 
-  const handleNameSave = () => {
-    if (
-      contact &&
-      nameValue !==
-        `${contact.first_name || ""} ${contact.last_name || ""}`.trim()
-    ) {
-      try {
-        const [firstName, ...lastNameParts] = nameValue.trim().split(" ");
+  useEffect(() => {
+    capture_event(EVENT_TYPES.VIEW_CONTACT, posthog);
+  }, []);
+
+  const handleEnterEditMode = () => {
+    if (!contact) return;
+    originalName.current = `${contact.first_name || ""} ${
+      contact.last_name || ""
+    }`.trim();
+    originalDetails.current = getContextString(contact.details.summary);
+    setIsEditMode(true);
+    capture_event(EVENT_TYPES.START_MANUAL_EDIT_CONTACT, posthog);
+  };
+
+  const handleSaveChanges = async () => {
+    if (!contact) return;
+
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options: [
+          t("contacts.details.cancel_edit"),
+          t("contacts.details.save_changes"),
+        ],
+        cancelButtonIndex: 0,
+        title: t("contacts.details.confirm_changes_title"),
+        message: t("contacts.details.confirm_changes_message"),
+      },
+      async (buttonIndex) => {
+        if (buttonIndex === 1) {
+          await performSave();
+        }
+      }
+    );
+  };
+
+  const performSave = async () => {
+    if (!contact) return;
+
+    try {
+      let nameChanged = false;
+      let detailsChanged = false;
+
+      const trimmedName = nameValue.trim();
+      if (!trimmedName) {
+        setNameValue(originalName.current);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      } else if (trimmedName !== originalName.current) {
+        const [firstName, ...lastNameParts] = trimmedName.split(" ");
         const lastName = lastNameParts.join(" ");
 
-        // Actualizar con Legend State (instantáneo, local-first)
         updateContactData(contact.id, {
           first_name: firstName || "",
           last_name: lastName || "",
         });
-
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (error) {
-        console.error("Error updating contact:", error);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        nameChanged = true;
       }
+
+      const trimmedDetails = detailsValue.trim();
+      if (trimmedDetails !== originalDetails.current) {
+        updateContactData(contact.id, {
+          details: {
+            ...contact.details,
+            summary: trimmedDetails,
+          },
+        });
+
+        await ProcessQueueService.enqueue({
+          userId: user!.id,
+          contactId: contact.id,
+          jobType: "DETAILS_UPDATE",
+          payload: {
+            details: trimmedDetails,
+          },
+        });
+        detailsChanged = true;
+      }
+
+      if (nameChanged || detailsChanged) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+
+      capture_event(EVENT_TYPES.MANUAL_EDIT_CONTACT_SUCCESS, posthog, {
+        name_changed: nameChanged,
+        details_changed: detailsChanged,
+      });
+
+      setIsEditMode(false);
+      setOpenedFromTapEmptyDetails(false);
+    } catch (error) {
+      console.error("Error saving changes:", error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert(t("common.error"), t("contacts.details.save_error"));
     }
-    setIsEditingName(false);
   };
 
-  const handleProfessionalContextSave = () => {
-    if (!contact) return;
-
-    const currentValue = getContextString(contact.professional_context);
-
-    if (professionalContextValue !== currentValue) {
-      try {
-        updateContactData(contact.id, {
-          professional_context: professionalContextValue.trim() || null,
-        });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (error) {
-        console.error("Error updating contact:", error);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-    }
-    setIsEditingProfessionalContext(false);
-  };
-
-  const handlePersonalContextSave = () => {
-    if (!contact) return;
-
-    const currentValue = getContextString(contact.personal_context);
-
-    if (personalContextValue !== currentValue) {
-      try {
-        updateContactData(contact.id, {
-          personal_context: personalContextValue.trim() || null,
-        });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (error) {
-        console.error("Error updating contact:", error);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-    }
-    setIsEditingPersonalContext(false);
-  };
-
-  const handleRelationshipContextSave = () => {
-    const currentValue =
-      typeof contact?.relationship_context === "string"
-        ? contact.relationship_context
-        : "";
-    if (contact && relationshipContextValue !== currentValue) {
-      try {
-        updateContactData(contact.id, {
-          relationship_context: relationshipContextValue.trim() || null,
-        });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (error) {
-        console.error("Error updating contact:", error);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-    }
-    setIsEditingRelationshipContext(false);
-  };
-
-  const handleDetailsSave = () => {
-    if (!contact) return;
-
-    const currentValue = getContextString(contact.details);
-    if (detailsValue !== currentValue) {
-      try {
-        updateContactData(contact.id, {
-          details: detailsValue.trim() || null,
-        });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (error) {
-        console.error("Error updating contact:", error);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-    }
-    setIsEditingDetails(false);
+  const handleCancelEdit = () => {
+    setNameValue(originalName.current);
+    setDetailsValue(originalDetails.current);
+    setIsEditMode(false);
+    setOpenedFromTapEmptyDetails(false);
+    capture_event(EVENT_TYPES.CANCEL_MANUAL_EDIT_CONTACT, posthog);
   };
 
   const handleCommunicationChannelsChange = (
@@ -207,7 +206,6 @@ export default function ContactDetailsScreen() {
         communication_channels:
           channels.length > 0 ? stringifyCommunicationChannels(channels) : null,
       });
-      setCommunicationChannels(channels);
     } catch (error) {
       console.error("Error updating communication channels:", error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -219,46 +217,65 @@ export default function ContactDetailsScreen() {
 
     ActionSheetIOS.showActionSheetWithOptions(
       {
-        options: ["Cancelar", "Eliminar Contacto"],
+        options: [t("common.cancel"), t("contacts.details.delete_button")],
         destructiveButtonIndex: 1,
         cancelButtonIndex: 0,
-        title: "Eliminar Contacto",
-        message: `¿Estás seguro de que quieres eliminar a ${contact.first_name} ${contact.last_name}? Esta acción no se puede deshacer.`,
+        title: t("contacts.details.delete_title"),
+        message: t("contacts.details.delete_message", {
+          name: `${contact.first_name} ${contact.last_name}`,
+        }),
       },
       (buttonIndex) => {
         if (buttonIndex === 1) {
           try {
-            // Eliminar con Legend State (local-first, soft delete)
             deleteContactData(contact.id);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            capture_event(EVENT_TYPES.DELETE_MANUAL_CONTACT, posthog, {
+              days_since_creation: Math.floor(
+                (new Date().getTime() -
+                  new Date(contact.created_at).getTime()) /
+                  (1000 * 60 * 60 * 24)
+              ),
+            });
             router.back();
           } catch (error) {
             console.error("Error deleting contact:", error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert("Error", "No se pudo eliminar el contacto");
+            Alert.alert(t("common.error"), t("contacts.details.delete_error"));
           }
         }
       }
     );
   };
 
-  const handleInteractionCreated = () => {
-    // No hacer nada - Legend State actualiza automáticamente
-  };
+  const handleInteractionCreated = () => {};
 
   const nameContainerAnimatedStyle = useAnimatedStyle(() => ({
-    backgroundColor: "rgba(245, 245, 245, 0.8)",
-    borderRadius: 20,
+    backgroundColor: withTiming(isEditMode ? "#fff" : "#E9E9E9"),
+    borderRadius: 23,
     padding: 20,
-    borderWidth: isEditingName ? 0 : 1,
-    borderColor: "#ddd",
+    marginBottom: !isEditMode ? 50 : 35,
+    borderWidth: 1,
+    borderColor: withTiming(isEditMode ? "#ddd" : "transparent"),
   }));
+
+  const hasDetails = detailsValue.trim().length > 0;
+  const showEmptyState = !hasDetails && !isEditMode;
 
   const contextContainerAnimatedStyle = useAnimatedStyle(() => ({
     backgroundColor: "white",
     borderRadius: 20,
-    padding: 20,
-    borderWidth: 0,
+    paddingTop: 7,
+    padding: showEmptyState ? 0 : 12,
+    borderWidth: withTiming(isEditMode ? 1 : showEmptyState ? 1 : 0),
+    borderColor: withTiming(
+      isEditMode ? "#ddd" : showEmptyState ? "#ccc" : "transparent"
+    ),
+    borderStyle: isEditMode ? "solid" : showEmptyState ? "dashed" : "solid",
+
+    minHeight: 150,
+    justifyContent: showEmptyState ? "center" : "flex-start",
+    alignItems: showEmptyState ? "center" : "stretch",
   }));
 
   return (
@@ -276,37 +293,117 @@ export default function ContactDetailsScreen() {
           width: "100%",
         }}
       >
-        <ArrowButton
-          onPress={() => router.back()}
-          iconDimensions={23}
-          iconColor="#444"
-          backgroundColor="white"
-          borderRadius={13}
-          borderWidth={1}
-          borderColor="#ddd"
-        />
-        <BaseButton
-          backgroundColor="white"
-          borderRadius={13}
-          borderWidth={1}
-          borderColor="#ddd"
-          onPress={() => setShowOptions(!showOptions)}
+        <View style={{ flex: 1, alignItems: "flex-start" }}>
+          {!isEditMode && (
+            <Animated.View
+              entering={FadeIn.duration(200)}
+              exiting={FadeOut.duration(200)}
+            >
+              <ArrowButton
+                onPress={() => router.back()}
+                iconDimensions={23}
+                iconColor="#444"
+                backgroundColor="white"
+                borderRadius={13}
+                borderWidth={1}
+                borderColor="#ddd"
+              />
+            </Animated.View>
+          )}
+        </View>
+
+        <Animated.View
           style={{
-            paddingHorizontal: 15,
-            paddingVertical: 10,
-            elevation: 2,
+            flexDirection: "row",
+            gap: 10,
+            alignItems: "center",
+            justifyContent: "flex-end",
           }}
         >
-          <Text
-            style={{
-              color: "#444",
-              fontSize: 14,
-              fontWeight: "500",
-            }}
-          >
-            {showOptions ? "hide" : "options"}
-          </Text>
-        </BaseButton>
+          {!isEditMode && (
+            <Animated.View
+              entering={FadeInRight.duration(200)}
+              exiting={FadeOutRight.duration(200)}
+            >
+              <BaseButton
+                backgroundColor="white"
+                borderRadius={13}
+                borderWidth={1}
+                borderColor="#ddd"
+                onPress={() => {
+                  handleEnterEditMode();
+                }}
+                style={{
+                  paddingHorizontal: 15,
+                  paddingVertical: 10,
+                  elevation: 2,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#444",
+                    fontSize: 14,
+                    fontWeight: "500",
+                  }}
+                >
+                  {isEditMode
+                    ? t("contacts.details.cancel_button")
+                    : t("contacts.details.edit_button")}
+                </Text>
+              </BaseButton>
+            </Animated.View>
+          )}
+          {isEditMode && (
+            <Animated.View
+              style={{ flexDirection: "row", gap: 10 }}
+              entering={FadeInRight.duration(200)}
+              exiting={FadeOutRight.duration(200)}
+            >
+              <BaseButton
+                backgroundColor="white"
+                borderRadius={13}
+                borderWidth={1}
+                borderColor="#ddd"
+                onPress={handleCancelEdit}
+                style={{
+                  paddingHorizontal: 15,
+                  paddingVertical: 10,
+                  elevation: 2,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#444",
+                    fontSize: 14,
+                    fontWeight: "500",
+                  }}
+                >
+                  {t("contacts.details.cancel_button")}
+                </Text>
+              </BaseButton>
+              <BaseButton
+                backgroundColor="#000"
+                borderRadius={13}
+                onPress={handleSaveChanges}
+                style={{
+                  paddingHorizontal: 15,
+                  paddingVertical: 10,
+                  elevation: 2,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontSize: 14,
+                    fontWeight: "500",
+                  }}
+                >
+                  {t("contacts.details.save_button")}
+                </Text>
+              </BaseButton>
+            </Animated.View>
+          )}
+        </Animated.View>
       </View>
 
       <ScrollView
@@ -319,316 +416,186 @@ export default function ContactDetailsScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <AnimatedPressable
+        <Animated.View
           style={[
             {
-              borderWidth: 1,
-              borderColor: "#ddd",
               marginBottom: 15,
               justifyContent: "center",
             },
             nameContainerAnimatedStyle,
           ]}
-          onPress={() => setIsEditingName(true)}
         >
-          {isEditingName ? (
-            <TextInput
-              style={{
-                fontSize: 24,
-                fontWeight: "600",
-                color: "#000",
-              }}
-              value={nameValue}
-              onChangeText={setNameValue}
-              onBlur={handleNameSave}
-              placeholder="Full name"
-              autoFocus
-            />
+          {isEditMode ? (
+            <Animated.View
+              entering={FadeIn.duration(200)}
+              exiting={FadeOut.duration(200)}
+            >
+              <TextInput
+                style={{
+                  fontSize: 24,
+                  fontWeight: "600",
+                  color: "#000",
+                }}
+                value={nameValue}
+                onChangeText={setNameValue}
+                placeholder={t("contacts.details.full_name_placeholder")}
+              />
+            </Animated.View>
           ) : (
-            <Text
-              style={{
-                fontSize: 24,
-                fontWeight: "600",
-                color: "#000",
-              }}
+            <Animated.View
+              entering={FadeIn.duration(200)}
+              exiting={FadeOut.duration(200)}
             >
-              {nameValue || ""}
-            </Text>
+              <Text
+                style={{
+                  fontSize: 24,
+                  fontWeight: "600",
+                  color: "#000",
+                }}
+              >
+                {nameValue || ""}
+              </Text>
+            </Animated.View>
           )}
-        </AnimatedPressable>
+        </Animated.View>
 
-        <View style={{ marginBottom: 20 }}>
-          <CommunicationChannels
-            channels={communicationChannels}
-            onChannelsChange={handleCommunicationChannelsChange}
-          />
-        </View>
-
-        {/* Professional Context */}
-        {(professionalContextValue || isEditingProfessionalContext) && (
-          <>
-            <Badge
-              title="professional context"
-              color="#E9E9E9"
-              textColor="#000"
-              textSize={14}
-              marginBottom={5}
-            />
-
-            <AnimatedPressable
-              style={[
-                {
-                  marginBottom: 20,
-                },
-                contextContainerAnimatedStyle,
-              ]}
-              onPress={() => setIsEditingProfessionalContext(true)}
+        <>
+          {!isEditMode && (
+            <Animated.View
+              entering={FadeIn.duration(200)}
+              exiting={FadeOut.duration(200)}
+              style={{ position: "relative" }}
             >
-              {isEditingProfessionalContext ? (
+              <Badge
+                title={t("contacts.details.about_badge")}
+                color="#E9E9E9"
+                textColor="#000"
+                textSize={14}
+                marginBottom={12}
+              />
+            </Animated.View>
+          )}
+
+          <AnimatedPressable
+            style={[
+              {
+                marginBottom: 40,
+              },
+              contextContainerAnimatedStyle,
+            ]}
+            onPress={() => {
+              if (!detailsValue.trim() && !isEditMode) {
+                setOpenedFromTapEmptyDetails(true);
+                handleEnterEditMode();
+              }
+            }}
+          >
+            {isEditMode ? (
+              <Animated.View
+                key="edit-details"
+                entering={FadeIn.duration(200)}
+                exiting={FadeOut.duration(200)}
+                style={{ flex: 1, minHeight: 250 }}
+              >
                 <TextInput
                   style={{
+                    padding: 10,
                     fontSize: 16,
                     color: "#000",
                     lineHeight: 22,
-                    minHeight: 60,
-                    textAlignVertical: "top",
-                  }}
-                  value={professionalContextValue}
-                  onChangeText={setProfessionalContextValue}
-                  onBlur={handleProfessionalContextSave}
-                  placeholder="Describe their professional situation..."
-                  multiline
-                  autoFocus
-                />
-              ) : (
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: "#000",
-                    lineHeight: 22,
-                  }}
-                >
-                  {professionalContextValue || ""}
-                </Text>
-              )}
-            </AnimatedPressable>
-          </>
-        )}
-
-        {/* Personal Context */}
-        {(personalContextValue || isEditingPersonalContext) && (
-          <>
-            <Badge
-              title="personal context"
-              color="#E9E9E9"
-              textColor="#000"
-              textSize={14}
-              marginBottom={5}
-            />
-
-            <AnimatedPressable
-              style={[
-                {
-                  marginBottom: 20,
-                },
-                contextContainerAnimatedStyle,
-              ]}
-              onPress={() => setIsEditingPersonalContext(true)}
-            >
-              {isEditingPersonalContext ? (
-                <TextInput
-                  style={{
-                    fontSize: 16,
-                    color: "#000",
-                    lineHeight: 22,
-                    minHeight: 60,
-                    textAlignVertical: "top",
-                  }}
-                  value={personalContextValue}
-                  onChangeText={setPersonalContextValue}
-                  onBlur={handlePersonalContextSave}
-                  placeholder="Describe their personal information..."
-                  multiline
-                  autoFocus
-                />
-              ) : (
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: "#000",
-                    lineHeight: 22,
-                  }}
-                >
-                  {personalContextValue || ""}
-                </Text>
-              )}
-            </AnimatedPressable>
-          </>
-        )}
-
-        {/* Relationship Context */}
-        {(relationshipContextValue || isEditingRelationshipContext) && (
-          <>
-            <Badge
-              title="relationship context"
-              color="#E9E9E9"
-              textColor="#000"
-              textSize={14}
-              marginBottom={5}
-            />
-
-            <AnimatedPressable
-              style={[
-                {
-                  marginBottom: 20,
-                },
-                contextContainerAnimatedStyle,
-              ]}
-              onPress={() => setIsEditingRelationshipContext(true)}
-            >
-              {isEditingRelationshipContext ? (
-                <TextInput
-                  style={{
-                    fontSize: 16,
-                    color: "#000",
-                    lineHeight: 22,
-                    minHeight: 60,
-                    textAlignVertical: "top",
-                  }}
-                  value={relationshipContextValue}
-                  onChangeText={setRelationshipContextValue}
-                  onBlur={handleRelationshipContextSave}
-                  placeholder="How you met or relationship context..."
-                  multiline
-                  autoFocus
-                />
-              ) : (
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: "#000",
-                    lineHeight: 22,
-                  }}
-                >
-                  {relationshipContextValue || ""}
-                </Text>
-              )}
-            </AnimatedPressable>
-          </>
-        )}
-
-        {/* Details */}
-        {(detailsValue || isEditingDetails) && (
-          <>
-            <Badge
-              title="details"
-              color="#E9E9E9"
-              textColor="#000"
-              textSize={14}
-              marginBottom={5}
-            />
-
-            <AnimatedPressable
-              style={[
-                {
-                  marginBottom: 20,
-                },
-                contextContainerAnimatedStyle,
-              ]}
-              onPress={() => setIsEditingDetails(true)}
-            >
-              {isEditingDetails ? (
-                <TextInput
-                  style={{
-                    fontSize: 16,
-                    color: "#000",
-                    lineHeight: 22,
-                    minHeight: 60,
+                    height: "100%",
                     textAlignVertical: "top",
                   }}
                   value={detailsValue}
                   onChangeText={setDetailsValue}
-                  onBlur={handleDetailsSave}
-                  placeholder="Additional notes or details..."
                   multiline
-                  autoFocus
+                  autoFocus={openedFromTapEmptyDetails}
                 />
-              ) : (
                 <Text
                   style={{
-                    fontSize: 16,
-                    color: "#000",
+                    fontSize: 12,
+                    color: "#ccc",
+                    textAlign: "left",
+                    lineHeight: 15,
+                    marginTop: 30,
+                  }}
+                >
+                  {t("contacts.details.edit_warning")}
+                </Text>
+              </Animated.View>
+            ) : (
+              <Animated.View
+                key="view-details"
+                entering={FadeIn.duration(200)}
+                exiting={FadeOut.duration(200)}
+              >
+                <Text
+                  style={{
+                    fontSize: detailsValue ? 16 : 12,
+                    color: detailsValue ? "#000" : "#ccc",
+                    textAlign: detailsValue ? "left" : "center",
                     lineHeight: 22,
                   }}
                 >
-                  {detailsValue || ""}
+                  {detailsValue || t("contacts.details.tap_to_add_details")}
                 </Text>
-              )}
-            </AnimatedPressable>
-          </>
-        )}
-
-        <Badge
-          title="interactions"
-          color="#E9E9E9"
-          textColor="#000"
-          textSize={14}
-          marginBottom={5}
-        />
-
-        <View style={{ gap: 10, marginBottom: 80 }}>
-          {interactions.map((interaction) => (
-            <ContactInteractionItem
-              key={interaction.id}
-              interaction={interaction}
-            />
-          ))}
-        </View>
-        {showOptions && (
+              </Animated.View>
+            )}
+          </AnimatedPressable>
+        </>
+        {!isEditMode && (
           <Animated.View
-            entering={FadeIn.duration(300)}
+            entering={FadeIn.duration(200)}
             exiting={FadeOut.duration(200)}
-            style={{
-              position: "absolute",
-              left: 22,
-              bottom: 0,
-              zIndex: 10,
-              width: "100%",
-              height: 80,
-            }}
+            style={{ position: "relative" }}
           >
-            <BaseButton
-              backgroundColor="#111"
-              borderRadius={20}
-              width={130}
-              onPress={handleDeleteContact}
-              style={{
-                elevation: 5,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text
-                style={{
-                  textAlign: "center",
-                  color: "#fff",
-                  fontSize: 14,
-                  fontWeight: "500",
-                }}
-              >
-                delete
-              </Text>
-            </BaseButton>
+            <ContactInteractionTimeline interactions={interactions} />
           </Animated.View>
         )}
       </ScrollView>
 
-      <RecordingOverlay
-        onInteractionCreated={handleInteractionCreated}
-        contactId={id as string}
-        recordButtonPosition={{ bottom: 50, right: 20 }}
-        recordButtonInitialSize={100}
-      />
+      {!isEditMode && (
+        <RecordingOverlay
+          onInteractionCreated={handleInteractionCreated}
+          contactId={id as string}
+          recordButtonPosition={{ bottom: 50, right: 20 }}
+          recordButtonInitialSize={100}
+        />
+      )}
+
+      {isEditMode && (
+        <Animated.View
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(200)}
+          style={{
+            position: "absolute",
+            bottom: 35,
+            right: 20,
+            left: 20,
+          }}
+        >
+          <BaseButton
+            backgroundColor="#000"
+            borderRadius={20}
+            onPress={handleDeleteContact}
+            style={{
+              paddingVertical: 15,
+              elevation: 2,
+              height: 50,
+            }}
+          >
+            <Text
+              style={{
+                color: "#fff",
+                fontSize: 14,
+                fontWeight: "500",
+              }}
+            >
+              {t("contacts.details.delete_button_small")}
+            </Text>
+          </BaseButton>
+        </Animated.View>
+      )}
     </View>
   );
 }

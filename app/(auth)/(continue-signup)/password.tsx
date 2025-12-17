@@ -34,7 +34,6 @@ export default function PasswordScreen() {
       );
 
       if (result.success) {
-        // Navigate to email verification screen
         router.push("./email-verify");
       } else {
         Alert.alert(

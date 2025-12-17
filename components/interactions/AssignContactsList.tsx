@@ -2,12 +2,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useContacts as useContactsContext } from "@/contexts/ContactsContext";
 import { useRecording } from "@/contexts/RecordingContext";
 import { Contact } from "@/lib/database/database.types";
+import { ProcessQueueService } from "@/lib/database/services/process-queue";
 import { useContacts, useInteractions } from "@/lib/hooks/useLegendState";
+import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { FlatList, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import ContactListElement from "../contacts/ContactListElement";
+
+import capture_event, { EVENT_TYPES } from "@/lib/posthog-helper";
+import { usePostHog } from "posthog-react-native";
 
 interface ContactGroup {
   letter: string;
@@ -18,38 +24,40 @@ interface ContactListItem {
   type: "header" | "contact";
   letter?: string;
   contact?: Contact;
+  hasDetailsSummary?: boolean;
 }
 
 interface AssignContactsListProps {
   interactionId?: string;
   isRecordingMode?: boolean;
+  autoProcess?: boolean;
 }
 
 export default function AssignContactsList({
   interactionId,
   isRecordingMode = false,
+  autoProcess = false,
 }: AssignContactsListProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { searchTerm } = useContactsContext();
-  const { contacts } = useContacts();
-  const { assignContact } = useInteractions();
+  const { contacts, getContact } = useContacts();
+  const { assignContact, getInteraction, updateInteraction } =
+    useInteractions();
   const { setAssignedContactId } = useRecording();
+  const posthog = usePostHog();
 
-  // Sort contacts alphabetically
+  const normalizeString = (str: string): string => {
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+  };
+
   const sortedContacts = React.useMemo(() => {
     return [...contacts].sort((a, b) => {
-      const nameA = (
-        a.first_name ||
-        a.last_name ||
-        a.professional_context?.company ||
-        ""
-      ).toLowerCase();
-      const nameB = (
-        b.first_name ||
-        b.last_name ||
-        b.professional_context?.company ||
-        ""
-      ).toLowerCase();
+      const nameA = (a.first_name || a.last_name || "").toLowerCase();
+      const nameB = (b.first_name || b.last_name || "").toLowerCase();
       return nameA.localeCompare(nameB);
     });
   }, [contacts]);
@@ -62,23 +70,17 @@ export default function AssignContactsList({
       return contacts;
     }
 
-    const lowercaseSearch = searchTerm.toLowerCase().trim();
+    const normalizedSearch = normalizeString(searchTerm.trim());
 
     return contacts.filter((contact) => {
-      const firstName = (contact.first_name || "").toLowerCase();
-      const lastName = (contact.last_name || "").toLowerCase();
+      const firstName = normalizeString(contact.first_name || "");
+      const lastName = normalizeString(contact.last_name || "");
       const fullName = `${firstName} ${lastName}`.trim();
-      const company = (contact.professional_context?.company || "").toLowerCase();
-      const jobTitle = (contact.professional_context?.job_title || "").toLowerCase();
-      const department = (contact.professional_context?.department || "").toLowerCase();
 
       return (
-        firstName.includes(lowercaseSearch) ||
-        lastName.includes(lowercaseSearch) ||
-        fullName.includes(lowercaseSearch) ||
-        company.includes(lowercaseSearch) ||
-        jobTitle.includes(lowercaseSearch) ||
-        department.includes(lowercaseSearch)
+        firstName.includes(normalizedSearch) ||
+        lastName.includes(normalizedSearch) ||
+        fullName.includes(normalizedSearch)
       );
     });
   };
@@ -89,13 +91,10 @@ export default function AssignContactsList({
     const grouped: { [key: string]: Contact[] } = {};
 
     contacts.forEach((contact) => {
-      const name =
-        contact.first_name ||
-        contact.last_name ||
-        contact.professional_context?.company ||
-        "";
-      const firstLetter = name.charAt(0).toLowerCase();
-      const letter = firstLetter.match(/[a-z]/) ? firstLetter : "#";
+      const name = contact.first_name || contact.last_name || "";
+      const firstLetter = name.charAt(0);
+      const normalizedLetter = normalizeString(firstLetter);
+      const letter = normalizedLetter.match(/[a-z]/i) ? normalizedLetter : "#";
 
       if (!grouped[letter]) {
         grouped[letter] = [];
@@ -109,7 +108,9 @@ export default function AssignContactsList({
     sortedLetters.forEach((letter) => {
       flatList.push({ type: "header", letter });
       grouped[letter].forEach((contact) => {
-        flatList.push({ type: "contact", contact });
+        const hasDetailsSummary =
+          (contact.details as any)?.summary !== null ? true : false;
+        flatList.push({ type: "contact", contact, hasDetailsSummary });
       });
     });
 
@@ -117,13 +118,49 @@ export default function AssignContactsList({
   };
 
   const handleAssignContact = async (contactId: string) => {
+    capture_event(EVENT_TYPES.SELECT_CONTACT_TO_ASSIGN_INTERACTION, posthog);
     try {
       if (isRecordingMode) {
         setAssignedContactId(contactId);
         router.back();
       } else if (interactionId) {
         assignContact(interactionId, contactId);
+        capture_event(EVENT_TYPES.ASSIGN_INTERACTION_SUCCESS, posthog);
+
         router.back();
+
+        if (autoProcess) {
+          setTimeout(async () => {
+            const interaction = getInteraction(interactionId);
+            const contact = getContact(contactId);
+
+            if (interaction && contact) {
+              try {
+                await ProcessQueueService.enqueue({
+                  userId: user!.id,
+                  contactId: contact.id,
+                  jobType: "INTERACTION_TRANSCRIPT",
+                  payload: {
+                    transcript: interaction.raw_content,
+                    interaction_id: interaction.id,
+                  },
+                });
+                updateInteraction(interaction.id, {
+                  status: "processing",
+                });
+
+                Haptics.notificationAsync(
+                  Haptics.NotificationFeedbackType.Success
+                );
+              } catch (error: any) {
+                console.error("Error enqueuing auto-process:", error);
+                Haptics.notificationAsync(
+                  Haptics.NotificationFeedbackType.Error
+                );
+              }
+            }
+          }, 300);
+        }
       }
     } catch (error) {
       console.error("Error assigning contact:", error);
@@ -179,8 +216,8 @@ export default function AssignContactsList({
             }}
           >
             {searchTerm.trim()
-              ? `No contacts found for "${searchTerm}"`
-              : "No saved connections yet, go on and start the journey"}
+              ? t("contacts.import.no_contacts_found", { searchTerm })
+              : t("assign.no_connections")}
           </Text>
         </Animated.View>
       ) : (

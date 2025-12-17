@@ -2,7 +2,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSelector } from "@legendapp/state/react";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
-import type { Contact, Interaction, Profile } from "../database/database.types";
+import type {
+  Contact,
+  Interaction,
+  Profile,
+} from "../database/database.types.ts";
+import { ProcessQueueService } from "../database/services/process-queue";
+import { SemanticNodesService } from "../database/services/semantic-nodes";
 import { contacts$, interactions$, profiles$ } from "../supaLegend";
 
 export function useContacts() {
@@ -17,21 +23,64 @@ export function useContacts() {
     ) as Contact[];
   });
 
-  const createContact = (
-    contact: Omit<Contact, "id" | "created_at" | "updated_at" | "owner_id">
-  ) => {
+  const createContact = async (
+    contact: Omit<
+      Contact,
+      "id" | "created_at" | "updated_at" | "owner_id" | "node_id"
+    >
+  ): Promise<Contact> => {
     if (!user) throw new Error("User not authenticated");
+
+    const label =
+      [contact.first_name, contact.last_name]
+        .filter(Boolean)
+        .join(" ")
+        .trim() || "Unknown Contact";
+
+    const { data: node, error: nodeError } =
+      await SemanticNodesService.createContactNode(user.id, label);
+
+    if (nodeError || !node) {
+      console.error("❌ Error creating semantic node for contact:", nodeError);
+      throw new Error("Failed to create contact node");
+    }
 
     const id = uuidv4();
 
-    // @ts-ignore
     contacts$[id].assign({
       id,
       owner_id: user.id,
+      node_id: node.id,
       ...contact,
     });
 
-    return contacts$[id].peek() as Contact;
+    const createdContact = contacts$[id].peek() as Contact;
+
+    const detailsSummary =
+      typeof contact.details === "object" &&
+      contact.details !== null &&
+      "summary" in contact.details
+        ? (contact.details as { summary?: string }).summary
+        : typeof contact.details === "string"
+        ? contact.details
+        : null;
+
+    if (detailsSummary && detailsSummary.trim().length > 0) {
+      try {
+        await ProcessQueueService.enqueue({
+          userId: user.id,
+          contactId: id,
+          jobType: "NEW_CONTACT",
+          payload: {
+            details: detailsSummary.trim(),
+          },
+        });
+      } catch (enqueueError) {
+        console.error("Error enqueuing NEW_CONTACT job:", enqueueError);
+      }
+    }
+
+    return createdContact;
   };
 
   const updateContact = (id: string, updates: Partial<Contact>) => {
@@ -70,42 +119,30 @@ export function useContacts() {
     if (!allContacts || !user) return [];
 
     const term = searchTerm.toLowerCase();
-    return Object.values(allContacts).filter(
-      (contact: any) => {
-        if (contact.owner_id !== user.id || contact.deleted) {
-          return false;
-        }
-
-        // Search in name fields
-        if (
-          contact.first_name?.toLowerCase().includes(term) ||
-          contact.last_name?.toLowerCase().includes(term)
-        ) {
-          return true;
-        }
-
-        // Search in professional context
-        if (
-          contact.professional_context?.company?.toLowerCase().includes(term) ||
-          contact.professional_context?.job_title?.toLowerCase().includes(term) ||
-          contact.professional_context?.department?.toLowerCase().includes(term)
-        ) {
-          return true;
-        }
-
-        // Search in relationship context
-        if (contact.relationship_context?.toLowerCase().includes(term)) {
-          return true;
-        }
-
-        // Search in details notes
-        if (contact.details?.notes?.toLowerCase().includes(term)) {
-          return true;
-        }
-
+    return Object.values(allContacts).filter((contact: any) => {
+      if (contact.owner_id !== user.id || contact.deleted) {
         return false;
       }
-    ) as Contact[];
+
+      if (
+        contact.first_name?.toLowerCase().includes(term) ||
+        contact.last_name?.toLowerCase().includes(term)
+      ) {
+        return true;
+      }
+
+      if (contact.details) {
+        const detailsStr =
+          typeof contact.details === "string"
+            ? contact.details
+            : JSON.stringify(contact.details);
+        if (detailsStr.toLowerCase().includes(term)) {
+          return true;
+        }
+      }
+
+      return false;
+    }) as Contact[];
   };
 
   return {
@@ -168,7 +205,7 @@ export function useInteractions() {
       // @ts-ignore
       const contact = contacts$[interaction.contact_id]?.peek();
       if (!contact || contact.deleted) {
-        console.warn("⚠️ Invalid contact_id provided, setting to null");
+        console.warn("Invalid contact_id provided, setting to null");
         interaction.contact_id = null;
       }
     }
@@ -196,12 +233,11 @@ export function useInteractions() {
     const interaction = interactions$[id].peek();
     if (!interaction) throw new Error("Interaction not found");
 
-    // Validate contact_id if being updated
     if (updates.contact_id) {
       // @ts-ignore
       const contact = contacts$[updates.contact_id]?.peek();
       if (!contact || contact.deleted) {
-        console.warn("⚠️ Invalid contact_id provided, setting to null");
+        console.warn("Invalid contact_id provided, setting to null");
         updates.contact_id = null;
       }
     }
@@ -218,7 +254,9 @@ export function useInteractions() {
     // @ts-ignore
     const contact = contacts$[contactId]?.peek();
     if (!contact || contact.deleted) {
-      throw new Error("Cannot assign interaction to non-existent or deleted contact");
+      throw new Error(
+        "Cannot assign interaction to non-existent or deleted contact"
+      );
     }
     updateInteraction(interactionId, { contact_id: contactId });
   };
@@ -260,35 +298,51 @@ export function useProfile() {
   const profile = useSelector(() => {
     if (!user) return null;
     // @ts-ignore
-    const userProfile = profiles$[user.id].peek();
+    const userProfile = profiles$[user.id]?.get();
     if (!userProfile || userProfile.deleted) return null;
     return userProfile as Profile;
+  });
+
+  const isSubscribed = useSelector(() => {
+    if (!user) return false;
+    // @ts-ignore
+    const userProfile = profiles$[user.id]?.get();
+    if (!userProfile || userProfile.deleted) return false;
+    return userProfile.subscribed ?? false;
   });
 
   const updateProfile = (updates: Partial<Profile>) => {
     if (!user) throw new Error("User not authenticated");
 
     // @ts-ignore
-    const currentProfile = profiles$[user.id].peek();
+    const currentProfile = profiles$[user.id]?.peek();
     if (!currentProfile) {
       // @ts-ignore
       profiles$[user.id].set({
         user_id: user.id,
         onboarding_done: false,
+        subscribed: false,
         ...updates,
+        updated_at: new Date().toISOString(),
       });
     } else {
       // @ts-ignore
-      profiles$[user.id].set({
-        ...currentProfile,
+      profiles$[user.id].assign({
         ...updates,
+        updated_at: new Date().toISOString(),
       });
     }
   };
 
+  const updateSubscription = (subscribed: boolean) => {
+    updateProfile({ subscribed });
+  };
+
   return {
     profile,
+    isSubscribed,
     updateProfile,
+    updateSubscription,
   };
 }
 

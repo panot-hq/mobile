@@ -22,21 +22,26 @@ export default function ContactsActionBar({
 }: ContactsActionBarProps) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const buttonOpacity = useSharedValue(1);
+  const buttonWidth = useSharedValue(40); // Button width
+  const buttonMarginLeft = useSharedValue(14); // Gap between search bar and button
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { isOverlayVisible } = useTalkAboutThem();
 
   const handleSearchFocus = () => {
     setIsSearchFocused(true);
     buttonOpacity.value = withSpring(0);
+    buttonWidth.value = withSpring(0);
+    buttonMarginLeft.value = withSpring(0);
   };
 
   const handleSearchBlur = () => {
     setIsSearchFocused(false);
     buttonOpacity.value = withSpring(1);
+    buttonWidth.value = withSpring(40);
+    buttonMarginLeft.value = withSpring(14);
   };
 
   const handleAddContact = () => {
-    // Only open modal if overlay is not visible
     if (!isOverlayVisible) {
       bottomSheetModalRef.current?.present();
     }
@@ -45,6 +50,9 @@ export default function ContactsActionBar({
   const buttonAnimatedStyle = useAnimatedStyle(() => {
     return {
       opacity: buttonOpacity.value,
+      width: buttonWidth.value,
+      marginLeft: buttonMarginLeft.value,
+      overflow: "hidden",
     };
   });
 
@@ -54,7 +62,6 @@ export default function ContactsActionBar({
         position: "absolute",
         top: 68,
         width: "100%",
-        gap: 14,
         paddingHorizontal: 16,
         flexDirection: "row",
         alignItems: "center",

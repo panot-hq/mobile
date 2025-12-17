@@ -1,8 +1,8 @@
-import FadingTranscript from "@/components/recording/FadingTranscript";
-import Badge from "@/components/ui/Badge";
+import AudioVisualizer from "@/components/recording/AudioVisualizer";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Keyboard, ScrollView, Text, TextInput, View } from "react-native";
 import Animated, {
   FadeIn,
@@ -37,6 +37,7 @@ export default function NewContactPreview({
   onTranscriptUpdate: onExternalTranscriptUpdate,
   actions = [],
 }: NewContactPreviewProps) {
+  const { t } = useTranslation();
   const [transcript, setTranscript] = useState("");
   const [editableText, setEditableText] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -58,23 +59,16 @@ export default function NewContactPreview({
     }
   }, [showButtons]);
 
+  // Actualizar el transcript y editableText cuando previousTranscript cambia o cuando se pausa
   useEffect(() => {
-    if (showButtons && !isEditing) {
-      setEditableText(transcript);
+    if (previousTranscript) {
+      const textToShow = previousTranscript;
+      setTranscript(textToShow);
+      if (!isEditing && !isRecording) {
+        setEditableText(textToShow);
+      }
     }
-  }, [showButtons, transcript, isEditing]);
-
-  const handleTranscriptUpdate = (newTranscript: string) => {
-    setTranscript(newTranscript);
-
-    if (onExternalTranscriptUpdate) {
-      onExternalTranscriptUpdate(newTranscript);
-    }
-
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-  };
+  }, [previousTranscript, isEditing, isRecording]);
 
   const handleTextInputBlur = () => {
     setIsEditing(false);
@@ -104,7 +98,7 @@ export default function NewContactPreview({
 
   const handleActionPress = (action: ActionButton) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    action.onPress(transcript);
+    action.onPress(editableText || transcript);
   };
 
   const getButtonStyle = (
@@ -167,7 +161,7 @@ export default function NewContactPreview({
           animatedStyle,
           {
             width: "100%",
-            height: 300,
+            height: 200,
             backgroundColor: "#E9E9E9",
             borderRadius: 29,
             elevation: 8,
@@ -175,13 +169,17 @@ export default function NewContactPreview({
         ]}
       >
         <View>
-          {isRecording && (
-            <View style={{ padding: 24, height: 40 }}>
-              <Badge title="●    recording" color="#999" textColor="#fff" />
-            </View>
-          )}
-          {showButtons ? (
+          {isRecording ? (
+            <Animated.View
+              entering={FadeIn.duration(200)}
+              exiting={FadeOut.duration(150)}
+              style={{ flex: 1, marginTop: 80 }}
+            >
+              <AudioVisualizer color="#000" />
+            </Animated.View>
+          ) : (
             <ScrollView
+              ref={scrollViewRef}
               style={{
                 marginTop: 20,
                 height: 180,
@@ -211,43 +209,37 @@ export default function NewContactPreview({
                   paddingTop: 10,
                   color: "#000",
                 }}
-                placeholder="tell me about the contact..."
                 placeholderTextColor="#999"
               />
-            </ScrollView>
-          ) : (
-            <ScrollView
-              ref={scrollViewRef}
-              style={{
-                marginTop: isRecording ? 10 : 20,
-                height: 140,
-                paddingHorizontal: 20,
-              }}
-              contentContainerStyle={{
-                paddingBottom: 15,
-                flexGrow: 1,
-              }}
-              showsVerticalScrollIndicator={false}
-            >
-              <View
-                style={{
-                  minHeight: 60,
-                  flexDirection: "row",
-                  flexWrap: "wrap",
-                }}
-              >
-                <FadingTranscript
-                  isRecording={isRecording}
-                  onTranscriptUpdate={handleTranscriptUpdate}
-                  previousTranscript={previousTranscript}
-                />
-              </View>
             </ScrollView>
           )}
         </View>
       </Animated.View>
+      <Animated.View
+        style={[
+          animatedStyle,
+          {
+            width: "100%",
+            height: 85,
+            backgroundColor: "#E9E9E9",
+            borderRadius: 29,
+            elevation: 8,
+            //marginBottom: 10,
+            marginTop: 20,
+            padding: 20,
+          },
+        ]}
+      >
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <Text style={{ fontSize: 12, color: "#999" }}>
+            {t("contacts.new.preview_hint")}
+          </Text>
+        </View>
+      </Animated.View>
 
-      {showButtons && actions.length > 0 && (
+      {!isRecording && showButtons && actions.length > 0 && (
         <Animated.View
           style={[
             buttonsAnimatedStyle,

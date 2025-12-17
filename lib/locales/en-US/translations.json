@@ -1,0 +1,136 @@
+{
+  "present": {
+    "welcome_morning": "Good morning",
+    "welcome_afternoon": "Good afternoon",
+    "welcome_evening": "Good evening"
+  },
+  "settings": {
+    "title": "Settings",
+    "app_language": "App Language",
+    "transcription_language": "Transcription Language",
+    "sign_out": "Sign Out",
+    "sign_out_subtitle": "Sign out of your account",
+    "sign_out_confirm_title": "Sign Out",
+    "sign_out_confirm_message": "Are you sure you want to sign out?",
+    "sign_out_cancel": "Cancel",
+    "sign_out_failed_title": "Sign Out Failed",
+    "sign_out_failed_message": "An error occurred while signing out. Please try again.",
+    "footer_curated": "Curated with care for the people",
+    "footer_version": "version 0.1.0"
+  },
+  "common": {
+    "error": "Error",
+    "cancel": "Cancel",
+    "discard_changes": "Discard Changes",
+    "keep_editing": "Keep Editing",
+    "user_not_authenticated": "User not authenticated",
+    "accept": "Accept",
+    "reject": "Reject",
+    "assign": "ASSIGN"
+  },
+  "recording": {
+    "associated_contact": "Associated contact",
+    "unassigned": "Unassigned"
+  },
+  "contacts": {
+    "new": {
+      "title": "New Contact",
+      "default_name": "New Contact",
+      "discard_confirm_title": "Are you sure you want to discard this new contact?",
+      "save_error": "Failed to save contact. Please try again.",
+      "name_placeholder": "Contact's name",
+      "details_placeholder": "About this contact...",
+      "preview_hint": "Speak about your noew conexion's hobbyes, interests, etc."
+    },
+    "import": {
+      "permissions_required_title": "Permissions required",
+      "permissions_required_message": "Please enable contacts access in settings to import contacts.",
+      "load_error": "Failed to load contacts. Please try again.",
+      "import_error": "Failed to import contact. Please try again.",
+      "no_contacts_found": "No contacts found for \"{{searchTerm}}\"",
+      "no_contacts_available": "No contacts available to import",
+      "search_placeholder": "Search name or phone"
+    },
+    "add_modal": {
+      "title": "How would you like to record this new connection?",
+      "manual_title": "Add manually",
+      "manual_subtitle": "Enter contact details manually",
+      "import_title": "Import from contacts",
+      "import_subtitle": "Import from your local contacts",
+      "talk_title": "Talk about them",
+      "talk_subtitle": "Record your thoughts about this person"
+    },
+    "list": {
+      "search_placeholder": "Search ",
+      "no_contacts_found_for": "No contacts found for \"{{searchTerm}}\"",
+      "no_saved_connections": "No saved connections yet, go on and start the journey"
+    },
+    "details": {
+      "confirm_changes_title": "Confirm Changes",
+      "confirm_changes_message": "Are you sure you want to save the changes made?",
+      "save_changes": "Save Changes",
+      "save_error": "Could not save changes",
+      "cancel_edit": "Cancel",
+      "delete_title": "Delete Contact",
+      "delete_message": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+      "delete_button": "Delete Contact",
+      "delete_error": "Could not delete contact",
+      "full_name_placeholder": "Full name",
+      "about_badge": "details",
+      "tap_to_add_details": "Tap to add details",
+      "edit_warning": "*Here you can edit your contact's name and details, once saved, the information of your contact will be changed",
+      "edit_button": "edit",
+      "save_button": "save",
+      "cancel_button": "cancel",
+      "delete_button_small": "delete"
+    }
+  },
+  "interactions": {
+    "capture_dock": "capture dock",
+    "no_registered_interactions": "no interactions registered today, go on and register one, remember, the world is yours",
+    "more_interactions": "+{{count}} more interactions",
+    "collapse": "collapse",
+    "overlay": {
+      "reassign": "REASSIGN",
+      "assign": "ASSIGN",
+      "delete": "DELETE",
+      "process": "PROCESS",
+      "content_placeholder": "Interaction content",
+      "delete_confirm_title": "Delete Interaction",
+      "delete_confirm_message": "Are you sure you want to delete this interaction? This action cannot be undone.",
+      "delete_error": "Could not delete interaction"
+    }
+  },
+  "assign": {
+    "no_connections": "No saved connections yet, go on and start the journey",
+    "search_placeholder": "Search "
+  },
+  "timeline": {
+    "badge": "timeline",
+    "empty": "No interactions yet, go on and start connecting!",
+    "today": "Today"
+  },
+  "communication_channels": {
+    "type_placeholder": "Type",
+    "value_placeholder": "Value",
+    "delete_title": "Delete communication channel?",
+    "delete_button": "Delete"
+  },
+  "language_selector": {
+    "label": "Language",
+    "currently_set_to": "Currently set to {{language}}"
+  },
+  "languages": {
+    "es-ES": "Spanish",
+    "en-US": "English"
+  },
+  "date_formatter": {
+    "today_at": "Today at {{time}}",
+    "yesterday_at": "Yesterday at {{time}}",
+    "last_weekday_at": "Last {{weekday}} at {{time}}",
+    "date_at_time": "{{date}} at {{time}}",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "last_weekday": "Last {{weekday}}"
+  }
+}

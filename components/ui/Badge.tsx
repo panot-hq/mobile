@@ -6,6 +6,8 @@ interface BadgeProps {
   textColor?: string;
   textSize?: number;
   marginBottom?: number;
+  borderColor?: string;
+  borderWidth?: number;
 }
 export default function Badge({
   title,
@@ -13,6 +15,8 @@ export default function Badge({
   textColor,
   textSize,
   marginBottom,
+  borderColor,
+  borderWidth,
 }: BadgeProps) {
   return (
     <View
@@ -27,6 +31,8 @@ export default function Badge({
         justifyContent: "center",
         alignItems: "center",
         marginBottom: marginBottom,
+        borderColor: borderColor,
+        borderWidth: borderWidth,
       }}
     >
       <Text

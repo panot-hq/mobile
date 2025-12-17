@@ -1,13 +1,29 @@
 import BaseButton from "@/components/ui/BaseButton";
+import { useAuth } from "@/contexts/AuthContext";
+import { ProcessQueueService } from "@/lib/database/services/process-queue";
+import { useContacts, useInteractions } from "@/lib/hooks/useLegendState";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
-import React, { ReactNode, createContext, useContext, useState } from "react";
+import { router } from "expo-router";
+import React, {
+  ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { useTranslation } from "react-i18next";
 import {
+  ActionSheetIOS,
+  ActivityIndicator,
+  Alert,
   Dimensions,
+  Keyboard,
   Modal,
   Pressable,
   ScrollView,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import Animated, {
@@ -18,6 +34,9 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+
+import capture_event, { EVENT_TYPES } from "@/lib/posthog-helper";
+import { usePostHog } from "posthog-react-native";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -35,18 +54,12 @@ interface InteractionData {
     width: number;
     height: number;
   };
+  status: string;
 }
 
 interface InteractionOverlayContextType {
-  showOverlay: (data: InteractionData, actions: OverlayAction[]) => void;
+  showOverlay: (data: InteractionData) => void;
   hideOverlay: (callback?: () => void) => void;
-}
-
-interface OverlayAction {
-  label: string;
-  onPress: (hideOverlay?: () => void) => void;
-  icon?: string;
-  destructive?: boolean;
 }
 
 const InteractionOverlayContext = createContext<
@@ -68,29 +81,62 @@ export const InteractionOverlayProvider = ({
 }: {
   children: ReactNode;
 }) => {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [interactionData, setInteractionData] =
     useState<InteractionData | null>(null);
-  const [actions, setActions] = useState<OverlayAction[]>([]);
+  const [isEditingContent, setIsEditingContent] = useState(false);
+  const [contentValue, setContentValue] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [autoProcessOnAssign, setAutoProcessOnAssign] = useState(false);
   const progress = useSharedValue(0);
   const blurOpacity = useSharedValue(0);
+  const posthog = usePostHog();
 
-  const showOverlay = (
-    data: InteractionData,
-    overlayActions: OverlayAction[]
-  ) => {
+  const { user } = useAuth();
+  const { getInteraction, updateInteraction, deleteInteraction } =
+    useInteractions();
+  const { getContact } = useContacts();
+  const interaction = interactionData
+    ? getInteraction(interactionData.id)
+    : null;
+  const contact = interaction?.contact_id
+    ? getContact(interaction.contact_id)
+    : null;
+
+  const isInteractionAssigned =
+    interaction !== null && interaction?.contact_id !== null;
+  const isInteractionProcessed = interaction !== null && interaction?.processed;
+
+  useEffect(() => {
+    if (interaction) {
+      setContentValue(interaction.raw_content || "");
+      if (interaction.status == "processing") {
+        setIsProcessing(true);
+      } else {
+        setIsProcessing(false);
+      }
+    }
+  }, [interaction]);
+
+  const showOverlay = (data: InteractionData) => {
     setInteractionData(data);
-    setActions(overlayActions);
+    setContentValue(data.rawContent);
+    setIsEditingContent(false);
+    setAutoProcessOnAssign(true);
     setVisible(true);
     progress.value = withSpring(1);
     blurOpacity.value = withTiming(1, {
       duration: 300,
       easing: Easing.out(Easing.ease),
     });
+    capture_event(EVENT_TYPES.VIEW_INTERACTION, posthog);
   };
 
   const hideOverlay = (callback?: () => void) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Keyboard.dismiss();
+    setIsEditingContent(false);
     progress.value = withTiming(0, {
       duration: 250,
       easing: Easing.out(Easing.cubic),
@@ -102,11 +148,57 @@ export const InteractionOverlayProvider = ({
     setTimeout(() => {
       setVisible(false);
       setInteractionData(null);
-      setActions([]);
       if (callback) {
         callback();
       }
     }, 300);
+  };
+
+  const handleContentSave = async () => {
+    if (interaction && contentValue !== interaction.raw_content) {
+      try {
+        updateInteraction(interaction.id, { raw_content: contentValue });
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch (error) {
+        console.error("Error updating interaction:", error);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    }
+    setIsEditingContent(false);
+  };
+
+  const handleDeleteInteraction = () => {
+    if (!interaction) return;
+
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options: [
+          t("common.cancel"),
+          t("interactions.overlay.delete_confirm_title"),
+        ],
+        destructiveButtonIndex: 1,
+        cancelButtonIndex: 0,
+        title: t("interactions.overlay.delete_confirm_title"),
+        message: t("interactions.overlay.delete_confirm_message"),
+      },
+      async (buttonIndex) => {
+        if (buttonIndex === 1) {
+          try {
+            deleteInteraction(interaction.id);
+            capture_event(EVENT_TYPES.DELETE_INTERACTION, posthog);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            hideOverlay();
+          } catch (error) {
+            console.error("Error deleting interaction:", error);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert(
+              t("common.error"),
+              t("interactions.overlay.delete_error")
+            );
+          }
+        }
+      }
+    );
   };
 
   const cardAnimatedStyle = useAnimatedStyle(() => {
@@ -115,9 +207,9 @@ export const InteractionOverlayProvider = ({
     const { x, y, width, height } = interactionData.initialLayout;
 
     const targetWidth = SCREEN_WIDTH * 0.9;
-    const targetHeight = Math.min(SCREEN_HEIGHT * 0.6, 500);
+    const targetHeight = SCREEN_HEIGHT * 0.55;
     const targetX = (SCREEN_WIDTH - targetWidth) / 2;
-    const targetY = (SCREEN_HEIGHT - targetHeight - 15) / 2;
+    const targetY = (SCREEN_HEIGHT - targetHeight) / 2;
 
     return {
       position: "absolute",
@@ -126,14 +218,10 @@ export const InteractionOverlayProvider = ({
       width: interpolate(progress.value, [0, 1], [width, targetWidth]),
       height: interpolate(progress.value, [0, 1], [height, targetHeight]),
       opacity: interpolate(progress.value, [0, 0.3, 1], [0, 1, 1]),
+      backgroundColor: "white",
       borderRadius: 30,
       borderWidth: 1,
       borderColor: "#ddd",
-      padding: 20,
-      backgroundColor: "white",
-      gap: 15,
-
-      elevation: 20,
     };
   });
 
@@ -154,27 +242,58 @@ export const InteractionOverlayProvider = ({
     opacity: blurOpacity.value,
   }));
 
-  const handleActionPress = (action: OverlayAction) => {
-    if (action.destructive) {
-      action.onPress(hideOverlay);
-    } else {
-      hideOverlay(() => {
-        action.onPress();
-      });
-    }
-  };
-
-  const handleCardPress = () => {
-    const viewDetailsAction = actions.find((action) =>
-      action.label.toLowerCase().includes("view")
-    );
-    if (viewDetailsAction) {
-      handleActionPress(viewDetailsAction);
-    }
-  };
-
   const handleOverlayPress = () => {
-    hideOverlay();
+    if (!isEditingContent) {
+      hideOverlay();
+    }
+  };
+
+  const handleContentPress = () => {
+    if (!isEditingContent && !isInteractionProcessed) {
+      setIsEditingContent(true);
+    } else {
+      Keyboard.dismiss();
+    }
+  };
+
+  const handleAssignPress = () => {
+    hideOverlay(() => {
+      router.push(
+        `/(interactions)/assign?interactionId=${interactionData?.id}&autoProcess=${autoProcessOnAssign}`
+      );
+    });
+  };
+
+  const handleProcessInteraction = async () => {
+    if (!interaction || !contact || isProcessing) return;
+
+    setIsProcessing(true);
+
+    try {
+      await ProcessQueueService.enqueue({
+        userId: user!.id,
+        contactId: contact.id,
+        jobType: "INTERACTION_TRANSCRIPT",
+        payload: {
+          transcript: interaction.raw_content,
+          interaction_id: interaction.id,
+          contact_name: `${contact.first_name || ""} ${
+            contact.last_name || ""
+          }`.trim(),
+        },
+      });
+      updateInteraction(interaction.id, {
+        status: "processing",
+      });
+
+      capture_event(EVENT_TYPES.MANUAL_PROCESS_INTERACTION, posthog);
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error: any) {
+      setIsProcessing(false);
+      console.error("Error enqueuing interaction processing:", error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
   };
 
   return (
@@ -228,90 +347,263 @@ export const InteractionOverlayProvider = ({
           </Animated.View>
           <AnimatedPressable
             style={cardAnimatedStyle}
-            onPress={handleCardPress}
             onTouchEnd={(e) => e.stopPropagation()}
           >
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                paddingTop: 10,
-                paddingHorizontal: 10,
-              }}
-            >
-              <Text style={{ fontSize: 13, color: "#666" }}>
-                {interactionData?.datePart}
-              </Text>
-              <Text style={{ fontSize: 13, color: "#666" }}>
-                {interactionData?.hourPart}
-              </Text>
-            </View>
+            {interactionData?.createdAt && (
+              <Pressable
+                onPress={() => Keyboard.dismiss()}
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  paddingTop: 25,
+                  paddingHorizontal: 25,
+                  paddingBottom: 10,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 13,
+                    color: "#666",
+                  }}
+                >
+                  {interactionData.datePart}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    color: "#666",
+                  }}
+                >
+                  {interactionData.hourPart}
+                </Text>
+              </Pressable>
+            )}
+
+            {isInteractionAssigned && (
+              <Pressable
+                onPress={() => Keyboard.dismiss()}
+                style={{
+                  backgroundColor: "rgba(245, 245, 245, 0.8)",
+                  borderRadius: 16,
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  marginHorizontal: 20,
+                  marginBottom: 30,
+                  marginTop: 20,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        color: "#666",
+                        marginBottom: 4,
+                        fontWeight: "300",
+                        textTransform: "uppercase",
+                        letterSpacing: 0.5,
+                      }}
+                    >
+                      {t("recording.associated_contact")}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        color: "#000",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {contact
+                        ? `${contact.first_name} ${contact.last_name}`
+                        : t("recording.unassigned")}
+                    </Text>
+                  </View>
+                  {!isInteractionProcessed && !isProcessing && (
+                    <BaseButton
+                      onPress={handleAssignPress}
+                      backgroundColor="#fff"
+                      borderRadius={12}
+                      scaleValue={0.95}
+                      style={{
+                        paddingVertical: 8,
+                        paddingHorizontal: 14,
+                        borderWidth: 1,
+                        borderColor: "#ddd",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 13,
+                          fontWeight: "500",
+                          color: "#000",
+                        }}
+                      >
+                        {t("interactions.overlay.reassign")}
+                      </Text>
+                    </BaseButton>
+                  )}
+                </View>
+              </Pressable>
+            )}
 
             <Animated.View
               style={[
                 {
                   flex: 1,
-                  paddingVertical: 10,
+                  paddingHorizontal: 25,
                 },
                 contentOpacityStyle,
               ]}
             >
-              <ScrollView
+              <Pressable
                 style={{ flex: 1 }}
-                showsVerticalScrollIndicator={true}
-                bounces={true}
+                onPress={() => {
+                  if (isEditingContent) {
+                    Keyboard.dismiss();
+                  }
+                }}
               >
-                <Text
-                  style={{
-                    fontSize: 15,
-                    color: "#000",
-                    lineHeight: 22,
-                  }}
+                <ScrollView
+                  style={{ flex: 1, marginTop: 15 }}
+                  showsVerticalScrollIndicator={true}
+                  bounces={true}
                 >
-                  {interactionData?.rawContent}
-                </Text>
-              </ScrollView>
+                  <Pressable onPress={handleContentPress}>
+                    {isEditingContent ? (
+                      <TextInput
+                        style={{
+                          fontSize: 15,
+                          color: "#000",
+                          lineHeight: 22,
+                          fontWeight: "400",
+                          minHeight: 120,
+                        }}
+                        value={contentValue}
+                        onChangeText={setContentValue}
+                        onBlur={handleContentSave}
+                        placeholder={t(
+                          "interactions.overlay.content_placeholder"
+                        )}
+                        multiline
+                        autoFocus
+                      />
+                    ) : (
+                      <Text
+                        style={{
+                          fontSize: 15,
+                          color: "#000",
+                          lineHeight: 22,
+                        }}
+                      >
+                        {contentValue}
+                      </Text>
+                    )}
+                  </Pressable>
+                </ScrollView>
+              </Pressable>
             </Animated.View>
-            {actions.length > 0 && (
+
+            {!(isInteractionAssigned && isInteractionProcessed) && (
               <Animated.View
                 style={[
-                  { marginTop: 10, gap: 10, flexDirection: "row" },
+                  {
+                    marginTop: 15,
+                    marginHorizontal: 20,
+                    marginBottom: 20,
+                    gap: 10,
+                    flexDirection: "row",
+                  },
                   actionsAnimatedStyle,
                 ]}
                 onStartShouldSetResponder={() => true}
               >
-                {actions.map((action, index) => {
-                  // Detect the "View Details" action button
-                  const isViewDetails = action.label
-                    .toLowerCase()
-                    .includes("view details");
-                  return (
-                    <BaseButton
-                      key={index}
-                      onPress={() => handleActionPress(action)}
-                      backgroundColor={action.destructive ? "#000" : "#f5f5f5"}
-                      borderRadius={20}
-                      scaleValue={0.97}
+                {!isInteractionAssigned && (
+                  <BaseButton
+                    onPress={handleAssignPress}
+                    backgroundColor="#f5f5f5"
+                    borderRadius={20}
+                    scaleValue={0.97}
+                    style={{
+                      paddingVertical: 14,
+                      paddingHorizontal: 20,
+                      width: "48.5%",
+                      height: 55,
+                    }}
+                  >
+                    <Text
                       style={{
-                        paddingVertical: 14,
-                        paddingHorizontal: 20,
-                        width: "48.5%",
-                        height: 60,
+                        fontSize: 16,
+                        fontWeight: "400",
+                        color: "#000",
                       }}
                     >
+                      {t("interactions.overlay.assign")}
+                    </Text>
+                  </BaseButton>
+                )}
+
+                <BaseButton
+                  onPress={handleDeleteInteraction}
+                  backgroundColor="#000"
+                  borderRadius={20}
+                  scaleValue={0.97}
+                  style={{
+                    paddingVertical: 14,
+                    paddingHorizontal: 20,
+                    width: "48.5%",
+                    height: 55,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: "400",
+                      color: "#fff",
+                    }}
+                  >
+                    {t("interactions.overlay.delete")}
+                  </Text>
+                </BaseButton>
+                {isInteractionAssigned && !isInteractionProcessed && (
+                  <BaseButton
+                    onPress={handleProcessInteraction}
+                    backgroundColor="#ffffffff"
+                    borderColor={"#000000ff"}
+                    borderWidth={1}
+                    borderRadius={20}
+                    scaleValue={0.97}
+                    disabled={isProcessing}
+                    style={{
+                      paddingVertical: 14,
+                      paddingHorizontal: 20,
+                      width: isInteractionAssigned ? "48.5%" : "100%",
+
+                      height: 55,
+                      opacity: isProcessing ? 0.7 : 1,
+                    }}
+                  >
+                    {isProcessing ? (
+                      <ActivityIndicator size="small" color="#000000ff" />
+                    ) : (
                       <Text
                         style={{
                           fontSize: 16,
                           fontWeight: "400",
-                          color: action.destructive ? "#fff" : "#000",
+                          color: "#000000ff",
                         }}
                       >
-                        {action.label}
+                        {t("interactions.overlay.process")}
                       </Text>
-                    </BaseButton>
-                  );
-                })}
+                    )}
+                  </BaseButton>
+                )}
               </Animated.View>
             )}
           </AnimatedPressable>

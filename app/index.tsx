@@ -1,15 +1,23 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/lib/hooks/useSubscription";
 import { Redirect } from "expo-router";
 
 export default function IndexRedirect() {
   const { user, loading } = useAuth();
+  const { isSubscribed, profile } = useSubscription();
+
   if (loading) {
     return null;
   }
 
   if (user?.id) {
-    return <Redirect href="/(tabs)/present" />;
+    if (isSubscribed) {
+      return <Redirect href="/(tabs)/present" />;
+    } else {
+      return <Redirect href="/(auth)/(paywall)/paywall" />;
+    }
   } else {
+    console.log("Redirecting to auth (no user)");
     return <Redirect href="/(auth)" />;
   }
 }

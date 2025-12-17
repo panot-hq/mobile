@@ -1,6 +1,7 @@
 import { CommunicationChannel } from "@/lib/types/communicationChannel";
 import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActionSheetIOS, Pressable, Text, TextInput, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
@@ -15,6 +16,7 @@ export default function CommunicationChannels({
   onChannelsChange,
   editable = true,
 }: CommunicationChannelsProps) {
+  const { t } = useTranslation();
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingType, setEditingType] = useState("");
   const [editingValue, setEditingValue] = useState("");
@@ -63,10 +65,13 @@ export default function CommunicationChannels({
   const handleDelete = (index: number) => {
     ActionSheetIOS.showActionSheetWithOptions(
       {
-        options: ["Cancelar", "Eliminar"],
+        options: [
+          t("common.cancel"),
+          t("communication_channels.delete_button"),
+        ],
         destructiveButtonIndex: 1,
         cancelButtonIndex: 0,
-        title: "¿Eliminar canal de comunicación?",
+        title: t("communication_channels.delete_title"),
       },
       (buttonIndex) => {
         if (buttonIndex === 1) {
@@ -100,7 +105,6 @@ export default function CommunicationChannels({
     setNewType("");
     setNewValue("");
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // Reset the flag after a short delay
     setTimeout(() => setIsCancelling(false), 100);
   };
 
@@ -141,7 +145,7 @@ export default function CommunicationChannels({
             }}
             value={newType}
             onChangeText={setNewType}
-            placeholder="Type"
+            placeholder={t("communication_channels.type_placeholder")}
             placeholderTextColor="#999"
           />
         </View>
@@ -162,14 +166,16 @@ export default function CommunicationChannels({
             }}
             value={newValue}
             onChangeText={setNewValue}
-            placeholder="Value"
+            placeholder={t("communication_channels.value_placeholder")}
             placeholderTextColor="#999"
             onSubmitEditing={handleSaveNew}
             onBlur={handleBlurNew}
           />
           {(newType.trim() || newValue.trim()) && (
             <Pressable onPressIn={handleClearNew}>
-              <Text style={{ color: "#999", fontSize: 14 }}>Cancel</Text>
+              <Text style={{ color: "#999", fontSize: 14 }}>
+                {t("common.cancel")}
+              </Text>
             </Pressable>
           )}
         </View>
@@ -213,7 +219,7 @@ export default function CommunicationChannels({
                   }}
                   value={editingType}
                   onChangeText={setEditingType}
-                  placeholder="Type"
+                  placeholder={t("communication_channels.type_placeholder")}
                   autoFocus={focusField === "type"}
                 />
               </View>
@@ -234,13 +240,15 @@ export default function CommunicationChannels({
                   }}
                   value={editingValue}
                   onChangeText={setEditingValue}
-                  placeholder="Value"
+                  placeholder={t("communication_channels.value_placeholder")}
                   autoFocus={focusField === "value"}
                   onBlur={handleSaveEdit}
                   onSubmitEditing={handleSaveEdit}
                 />
                 <Pressable onPressIn={handleCancelEdit}>
-                  <Text style={{ color: "#999", fontSize: 14 }}>Cancel</Text>
+                  <Text style={{ color: "#999", fontSize: 14 }}>
+                    {t("common.cancel")}
+                  </Text>
                 </Pressable>
               </View>
             </>
@@ -320,7 +328,7 @@ export default function CommunicationChannels({
               }}
               value={newType}
               onChangeText={setNewType}
-              placeholder="Type"
+              placeholder={t("communication_channels.type_placeholder")}
               placeholderTextColor="#999"
             />
           </View>
@@ -341,14 +349,16 @@ export default function CommunicationChannels({
               }}
               value={newValue}
               onChangeText={setNewValue}
-              placeholder="Value"
+              placeholder={t("communication_channels.value_placeholder")}
               placeholderTextColor="#999"
               onSubmitEditing={handleSaveNew}
               onBlur={handleBlurNew}
             />
             {(newType.trim() || newValue.trim()) && (
               <Pressable onPressIn={handleClearNew}>
-                <Text style={{ color: "#999", fontSize: 14 }}>Cancel</Text>
+                <Text style={{ color: "#999", fontSize: 14 }}>
+                  {t("common.cancel")}
+                </Text>
               </Pressable>
             )}
           </View>

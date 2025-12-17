@@ -12,8 +12,12 @@ import { ExistingContact } from "expo-contacts";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Alert, FlatList, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
+
+import capture_event, { EVENT_TYPES } from "@/lib/posthog-helper";
+import { usePostHog } from "posthog-react-native";
 
 interface LocalContactListItem {
   type: "header" | "contact";
@@ -22,13 +26,16 @@ interface LocalContactListItem {
 }
 
 export default function ImportContactScreen() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { createContact } = useContacts();
   const [localContacts, setLocalContacts] = useState<ExistingContact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const posthog = usePostHog();
 
   useEffect(() => {
+    capture_event(EVENT_TYPES.START_IMPORTING_NEW_CONTACT, posthog);
     loadContacts();
   }, []);
 
@@ -48,7 +55,6 @@ export default function ImportContactScreen() {
           ],
         });
 
-        // Sort contacts alphabetically
         const sortedContacts = data.sort((a, b) => {
           const nameA = (
             a.firstName ||
@@ -68,18 +74,25 @@ export default function ImportContactScreen() {
         setLocalContacts(sortedContacts);
       } else {
         Alert.alert(
-          "Permissions required",
-          "Please enable contacts access in settings to import contacts."
+          t("contacts.import.permissions_required_title"),
+          t("contacts.import.permissions_required_message")
         );
         router.back();
       }
     } catch (error) {
       console.error("Error loading contacts:", error);
-      Alert.alert("Error", "Failed to load contacts. Please try again.");
+      Alert.alert(t("common.error"), t("contacts.import.load_error"));
       router.back();
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const normalizeString = (str: string): string => {
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
   };
 
   const filterContacts = (
@@ -90,25 +103,22 @@ export default function ImportContactScreen() {
       return contacts;
     }
 
-    const lowercaseSearch = searchTerm.toLowerCase().trim();
+    const normalizedSearch = normalizeString(searchTerm.trim());
 
     return contacts.filter((contact) => {
-      const firstName = (contact.firstName || "").toLowerCase();
-      const lastName = (contact.lastName || "").toLowerCase();
+      const firstName = normalizeString(contact.firstName || "");
+      const lastName = normalizeString(contact.lastName || "");
       const fullName = `${firstName} ${lastName}`.trim();
-      const name = (contact.name || "").toLowerCase();
+      const name = normalizeString(contact.name || "");
       const phoneNumbers =
-        contact.phoneNumbers
-          ?.map((p) => p.number || "")
-          .join(" ")
-          .toLowerCase() || "";
+        contact.phoneNumbers?.map((p) => p.number || "").join(" ") || "";
 
       return (
-        firstName.includes(lowercaseSearch) ||
-        lastName.includes(lowercaseSearch) ||
-        fullName.includes(lowercaseSearch) ||
-        name.includes(lowercaseSearch) ||
-        phoneNumbers.includes(lowercaseSearch)
+        firstName.includes(normalizedSearch) ||
+        lastName.includes(normalizedSearch) ||
+        fullName.includes(normalizedSearch) ||
+        name.includes(normalizedSearch) ||
+        phoneNumbers.includes(normalizedSearch)
       );
     });
   };
@@ -120,8 +130,9 @@ export default function ImportContactScreen() {
 
     contacts.forEach((contact) => {
       const name = contact.firstName || contact.lastName || contact.name || "";
-      const firstLetter = name.charAt(0).toLowerCase();
-      const letter = firstLetter.match(/[a-z]/) ? firstLetter : "#";
+      const firstLetter = name.charAt(0);
+      const normalizedLetter = normalizeString(firstLetter);
+      const letter = normalizedLetter.match(/[a-z]/i) ? normalizedLetter : "#";
 
       if (!grouped[letter]) {
         grouped[letter] = [];
@@ -146,13 +157,12 @@ export default function ImportContactScreen() {
     async (localContact: ExistingContact) => {
       try {
         if (!user?.id) {
-          Alert.alert("Error", "User not authenticated");
+          Alert.alert(t("common.error"), t("common.user_not_authenticated"));
           return;
         }
 
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-        // Crear canales de comunicación desde los números de teléfono
         const communicationChannels: CommunicationChannel[] = [];
         if (localContact.phoneNumbers && localContact.phoneNumbers.length > 0) {
           localContact.phoneNumbers.forEach((phone) => {
@@ -163,27 +173,24 @@ export default function ImportContactScreen() {
           });
         }
 
-        createContact({
+        await createContact({
           first_name: localContact.firstName || "",
           last_name: localContact.lastName || "",
-          company: "",
-          job_title: "",
-          department: "",
-          address: "",
-          notes: "Imported from local contacts",
+          details: "",
+          communication_channels: stringifyCommunicationChannels(
+            communicationChannels
+          ),
           deleted: false,
-          birthday: null,
-          communication_channels:
-            communicationChannels.length > 0
-              ? stringifyCommunicationChannels(communicationChannels)
-              : null,
         });
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+        capture_event(EVENT_TYPES.IMPORTING_NEW_CONTACT_SUCCESS, posthog);
+
         router.back();
       } catch (error) {
         console.error("Error importing contact:", error);
-        Alert.alert("Error", "Failed to import contact. Please try again.");
+        Alert.alert(t("common.error"), t("contacts.import.import_error"));
       }
     },
     [user?.id, createContact]
@@ -256,8 +263,8 @@ export default function ImportContactScreen() {
             }}
           >
             {searchTerm.trim()
-              ? `No contacts found for "${searchTerm}"`
-              : "No contacts available to import"}
+              ? t("contacts.import.no_contacts_found", { searchTerm })
+              : t("contacts.import.no_contacts_available")}
           </Text>
         </Animated.View>
       ) : (
@@ -282,7 +289,6 @@ export default function ImportContactScreen() {
               paddingHorizontal: 16,
               paddingBottom: 120,
             }}
-            // Performance optimizations
             removeClippedSubviews={true}
             initialNumToRender={20}
             maxToRenderPerBatch={10}

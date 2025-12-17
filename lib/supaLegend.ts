@@ -1,4 +1,4 @@
-import { observable, Observable } from "@legendapp/state";
+import { observable, Observable, syncState } from "@legendapp/state";
 import { observablePersistAsyncStorage } from "@legendapp/state/persist-plugins/async-storage";
 import { configureSynced } from "@legendapp/state/sync";
 import { syncedSupabase } from "@legendapp/state/sync-plugins/supabase";
@@ -14,9 +14,12 @@ const customSynced = configureSynced(syncedSupabase, {
       AsyncStorage,
     }),
   },
+  retry: {
+    infinite: true,
+  },
   generateId,
   supabase,
-  changesSince: "last-sync",
+  changesSince: "all",
   fieldCreatedAt: "created_at",
   fieldUpdatedAt: "updated_at",
   fieldDeleted: "deleted",
@@ -29,7 +32,7 @@ export const contacts$: Observable<any> = observable(
     collection: "contacts",
     select: (from: any) =>
       from.select(
-        "id,owner_id,first_name,last_name,professional_context,personal_context,relationship_context,details,birthday,created_at,updated_at,deleted,communication_channels"
+        "id,owner_id,first_name,last_name,details,created_at,updated_at,deleted,communication_channels,node_id"
       ),
     actions: ["read", "create", "update", "delete"],
     realtime: true,
@@ -63,7 +66,7 @@ export const interactions$: Observable<any> = observable(
     collection: "interactions",
     select: (from: any) =>
       from.select(
-        "id,owner_id,raw_content,key_concepts,contact_id,created_at,updated_at,deleted"
+        "id,owner_id,raw_content,contact_id,created_at,updated_at,deleted,processed,status"
       ),
     actions: ["read", "create", "update", "delete"],
     realtime: true,
@@ -96,7 +99,9 @@ export const profiles$: Observable<any> = observable(
     supabase,
     collection: "profiles",
     select: (from: any) =>
-      from.select("user_id,onboarding_done,created_at,updated_at,deleted"),
+      from.select(
+        "user_id,onboarding_done,subscribed,created_at,updated_at,deleted"
+      ),
     actions: ["read", "create", "update"],
     realtime: true,
     persist: {
@@ -106,13 +111,25 @@ export const profiles$: Observable<any> = observable(
     retry: {
       infinite: true,
     },
+    fieldId: "user_id",
+    onError: (error: any) => {
+      const errorMessage = error?.message || String(error);
+      const isNetworkError =
+        errorMessage.includes("fetch") ||
+        errorMessage.includes("network") ||
+        errorMessage.includes("Failed to fetch") ||
+        errorMessage.includes("NetworkError") ||
+        errorMessage.includes("Unable to resolve host");
+
+      if (!isNetworkError) {
+        console.error("❌ Profiles sync error:", error);
+      }
+    },
   })
 );
 
 export async function initializeSync(userId: string) {
   try {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -121,20 +138,23 @@ export async function initializeSync(userId: string) {
       return;
     }
 
-    if (session.user.id !== userId) {
-      return;
-    }
+    const contactsSyncState$ = syncState(contacts$);
+    const interactionsSyncState$ = syncState(interactions$);
+    const profilesSyncState$ = syncState(profiles$);
 
-    const contactsData = contacts$.get();
-    const interactionsData = interactions$.get();
-    const profilesData = profiles$.get();
+    contactsSyncState$.sync();
+    interactionsSyncState$.sync();
+    profilesSyncState$.sync();
 
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Log profile data after sync is initiated
+    setTimeout(() => {
+      // @ts-ignore
+      const profile = profiles$[userId]?.get();
+    }, 1000);
 
-    // Clean up any orphaned interactions after data is loaded
     await cleanupOrphanedInteractions();
   } catch (error) {
-    console.error("Error initializing sync:", error);
+    console.error("❌ Error initializing sync:", error);
   }
 }
 
@@ -159,16 +179,10 @@ export async function cleanupOrphanedInteractions() {
 
     Object.entries(allInteractions).forEach(
       ([id, interaction]: [string, any]) => {
-        // Skip if no contact_id (these are valid unassigned interactions)
         if (!interaction.contact_id) return;
 
-        // Check if the contact exists
         const contact = allContacts[interaction.contact_id];
         if (!contact || contact.deleted) {
-          console.warn(
-            `🧹 Cleaning up orphaned interaction ${id} with invalid contact_id: ${interaction.contact_id}`
-          );
-          // Set contact_id to null instead of deleting the interaction
           // @ts-ignore
           interactions$[id].assign({
             contact_id: null,
@@ -178,10 +192,6 @@ export async function cleanupOrphanedInteractions() {
         }
       }
     );
-
-    if (cleanedCount > 0) {
-      console.log(`✅ Cleaned up ${cleanedCount} orphaned interaction(s)`);
-    }
   } catch (error) {
     console.error("Error cleaning up orphaned interactions:", error);
   }
