@@ -14,7 +14,7 @@ import {
   withTiming,
 } from "react-native-reanimated";
 
-export default function TabTwoScreen() {
+export default function HomeScreen() {
   const { t } = useTranslation();
   const { isListExpanded, setIsListExpanded } = useRecording();
   const recordButtonOpacity = useSharedValue(1);

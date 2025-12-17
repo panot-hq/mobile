@@ -1,10 +1,19 @@
 import AssignContactSearchBar from "@/components/interactions/AssignContactSearchBar";
 import AssignContactsList from "@/components/interactions/AssignContactsList";
-import { useLocalSearchParams } from "expo-router";
+import React, { useEffect } from "react";
 import { Keyboard, TouchableWithoutFeedback, View } from "react-native";
+
+import capture_event, { EVENT_TYPES } from "@/lib/posthog-helper";
+import { useLocalSearchParams } from "expo-router";
+import { usePostHog } from "posthog-react-native";
 
 export default function AssignInteractionScreen() {
   const { interactionId, mode, autoProcess } = useLocalSearchParams();
+  const posthog = usePostHog();
+
+  useEffect(() => {
+    capture_event(EVENT_TYPES.ASSIGN_UNASSIGNED_INTERACTION, posthog);
+  }, []);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -35,7 +44,7 @@ export default function AssignInteractionScreen() {
           <AssignContactsList
             interactionId={interactionId as string | undefined}
             isRecordingMode={mode === "recording"}
-            autoProcess={autoProcess === "true"}
+            autoProcess={autoProcess === "false"}
           />
         </View>
       </View>

@@ -4,7 +4,7 @@ import { useTalkAboutThem } from "@/contexts/TalkAboutThemContext";
 import { useState } from "react";
 import { Keyboard, TouchableWithoutFeedback, View } from "react-native";
 
-export default function TabThreeScreen() {
+export default function ContactsScreen() {
   const [searchTerm, setSearchTerm] = useState("");
   const { shouldBlur } = useTalkAboutThem();
 

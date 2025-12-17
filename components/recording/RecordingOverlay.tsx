@@ -11,7 +11,13 @@ import { useContacts, useInteractions } from "@/lib/hooks/useLegendState";
 import { BlurView } from "expo-blur";
 import { router } from "expo-router";
 import PanotSpeechModule from "panot-speech";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { Keyboard, Pressable, Text, View } from "react-native";
 import Animated, {
@@ -21,6 +27,9 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+
+import capture_event, { EVENT_TYPES } from "@/lib/posthog-helper";
+import { usePostHog } from "posthog-react-native";
 
 interface RecordingOverlayProps {
   onInteractionCreated?: () => void;
@@ -56,6 +65,8 @@ export default function RecordingOverlay({
     setAssignedContactId,
   } = useRecording();
 
+  const posthog = usePostHog();
+
   const [transcript, setTranscript] = useState("");
   const [previousTranscript, setPreviousTranscript] = useState("");
   const [volume, setVolume] = useState(0);
@@ -67,6 +78,8 @@ export default function RecordingOverlay({
 
   const blurOpacity = useSharedValue(0);
   const recordButtonOpacity = useSharedValue(1);
+
+  const hasTrackedEdit = useRef(false);
 
   useEffect(() => {
     blurOpacity.value = withSpring(shouldBlur ? 1 : 0, {
@@ -136,6 +149,10 @@ export default function RecordingOverlay({
         }
 
         setTranscript(fullTranscript);
+        if (!hasTrackedEdit.current) {
+          capture_event(EVENT_TYPES.EDIT_TEXT_RECORDING_INTERACTION, posthog);
+          hasTrackedEdit.current = true;
+        }
       }
     );
 
@@ -153,6 +170,8 @@ export default function RecordingOverlay({
       setShowInteraction(true);
       PanotSpeechModule.startTranscribing(true, transcriptionLanguage);
       setIsRecording(true);
+      capture_event(EVENT_TYPES.START_INTERACTION_RECORDING, posthog);
+      hasTrackedEdit.current = false;
     }
   };
 
@@ -177,6 +196,7 @@ export default function RecordingOverlay({
       }
       PanotSpeechModule.startTranscribing(true, transcriptionLanguage);
       setIsRecording(true);
+      hasTrackedEdit.current = false;
     }
   };
 
@@ -197,6 +217,10 @@ export default function RecordingOverlay({
     setShowButtons(false);
     setShouldBlur(false);
     setAssignedContactId(null);
+    capture_event(EVENT_TYPES.CANCEL_INTERACTION_RECORDING, posthog, {
+      duration_ms: recordingStartTime ? Date.now() - recordingStartTime : 0,
+      has_transcript: !!(transcript || previousTranscript),
+    });
   };
 
   const handleAcceptTranscription = useCallback(
@@ -218,6 +242,13 @@ export default function RecordingOverlay({
           if (onInteractionCreated) {
             onInteractionCreated();
           }
+
+          capture_event(EVENT_TYPES.INTERACTION_RECORDING_SUCCESS, posthog, {
+            duration_ms: recordingStartTime
+              ? Date.now() - recordingStartTime
+              : 0,
+            transcript_length: acceptedTranscript.length,
+          });
         } catch (error) {
           console.error("Error creating interaction:", error);
         }
@@ -239,6 +270,8 @@ export default function RecordingOverlay({
       onInteractionCreated,
       setAssignedContactId,
       setShouldBlur,
+      posthog,
+      recordingStartTime,
     ]
   );
 

@@ -35,6 +35,9 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
+import capture_event, { EVENT_TYPES } from "@/lib/posthog-helper";
+import { usePostHog } from "posthog-react-native";
+
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -88,6 +91,7 @@ export const InteractionOverlayProvider = ({
   const [autoProcessOnAssign, setAutoProcessOnAssign] = useState(false);
   const progress = useSharedValue(0);
   const blurOpacity = useSharedValue(0);
+  const posthog = usePostHog();
 
   const { user } = useAuth();
   const { getInteraction, updateInteraction, deleteInteraction } =
@@ -126,6 +130,7 @@ export const InteractionOverlayProvider = ({
       duration: 300,
       easing: Easing.out(Easing.ease),
     });
+    capture_event(EVENT_TYPES.VIEW_INTERACTION, posthog);
   };
 
   const hideOverlay = (callback?: () => void) => {
@@ -180,6 +185,7 @@ export const InteractionOverlayProvider = ({
         if (buttonIndex === 1) {
           try {
             deleteInteraction(interaction.id);
+            capture_event(EVENT_TYPES.DELETE_INTERACTION, posthog);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             hideOverlay();
           } catch (error) {
@@ -279,6 +285,8 @@ export const InteractionOverlayProvider = ({
       updateInteraction(interaction.id, {
         status: "processing",
       });
+
+      capture_event(EVENT_TYPES.MANUAL_PROCESS_INTERACTION, posthog);
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error: any) {
