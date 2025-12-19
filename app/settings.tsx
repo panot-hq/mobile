@@ -47,28 +47,15 @@ export default function SettingsScreen() {
   };
 
   const handleAccountSettings = () => {
-    // TODO: Navigate to account settings
+    // TODO Navigate to account settings
     Alert.alert(
       "Account Settings",
       "Account settings functionality coming soon!"
     );
   };
 
-  const handleDataPrivacy = () => {
-    // TODO: Navigate to data privacy page
-    Alert.alert("Data Privacy", "Data privacy settings coming soon!");
-  };
-
   const handleLanguageChange = (languageCode: string) => {
     setTranscriptionLanguage(languageCode);
-  };
-
-  const handleNotificationSettings = () => {
-    // TODO: Navigate to detailed notification settings
-    Alert.alert(
-      "Notification Settings",
-      "Detailed notification settings coming soon!"
-    );
   };
 
   return (
@@ -114,10 +101,28 @@ export default function SettingsScreen() {
             selectedLanguage={transcriptionLanguage}
             onLanguageChange={handleLanguageChange}
           />
+        </SettingsSection>
+
+        <SettingsSection>
           <SettingItem
             title={t("settings.sign_out")}
             subtitle={t("settings.sign_out_subtitle")}
             icon="sign-out"
+            onPress={handleSignOut}
+          />
+          <SettingItem
+            title={t("settings.sign_out")}
+            subtitle={t("settings.sign_out_subtitle")}
+            icon="sign-out"
+            onPress={handleSignOut}
+          />
+        </SettingsSection>
+
+        <SettingsSection>
+          <SettingItem
+            title={t("settings.sign_out")}
+            subtitle={t("settings.sign_out_subtitle")}
+            icon="help-outline"
             onPress={handleSignOut}
           />
         </SettingsSection>

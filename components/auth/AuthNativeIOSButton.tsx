@@ -25,43 +25,49 @@ export function IOSAuth({
               AppleAuthentication.AppleAuthenticationScope.EMAIL,
             ],
           });
-          // Sign in via Supabase Auth.
-          if (credential.identityToken) {
-            const {
-              error,
-              data: { user },
-            } = await supabase.auth.signInWithIdToken({
-              provider: "apple",
-              token: credential.identityToken,
-            });
-            console.log(JSON.stringify({ error, user }, null, 2));
-            if (!error) {
-              // Apple only provides the user's full name on the first sign-in
-              // Save it to user metadata if available
-              if (credential.fullName) {
-                const nameParts = [];
-                if (credential.fullName.givenName)
-                  nameParts.push(credential.fullName.givenName);
-                if (credential.fullName.middleName)
-                  nameParts.push(credential.fullName.middleName);
-                if (credential.fullName.familyName)
-                  nameParts.push(credential.fullName.familyName);
-                const fullName = nameParts.join(" ");
-                await supabase.auth.updateUser({
-                  data: {
-                    full_name: fullName,
-                    given_name: credential.fullName.givenName,
-                    family_name: credential.fullName.familyName,
-                  },
-                });
-              }
-              // User is signed in.
+
+          if (!credential.identityToken) {
+            throw new Error("No identityToken received from Apple.");
+          }
+
+          const {
+            error: signInError,
+            data: { user, session },
+          } = await supabase.auth.signInWithIdToken({
+            provider: "apple",
+            token: credential.identityToken,
+          });
+
+          if (signInError) {
+            throw signInError;
+          }
+
+          if (
+            credential.fullName &&
+            (credential.fullName.givenName || credential.fullName.familyName)
+          ) {
+            const nameParts = [];
+            if (credential.fullName.givenName)
+              nameParts.push(credential.fullName.givenName);
+            if (credential.fullName.middleName)
+              nameParts.push(credential.fullName.middleName);
+            if (credential.fullName.familyName)
+              nameParts.push(credential.fullName.familyName);
+            const fullName = nameParts.join(" ");
+
+            if (fullName.trim()) {
+              const { error: updateError } = await supabase.auth.updateUser({
+                data: {
+                  display_name: fullName,
+                  full_name: fullName,
+                  given_name: credential.fullName.givenName,
+                  family_name: credential.fullName.familyName,
+                },
+              });
             }
-          } else {
-            throw new Error("No identityToken.");
           }
         } catch (e: any) {
-          if (e?.code === "ERR_REQUEST_CANCELED") return;
+          throw e;
         }
       }}
     />

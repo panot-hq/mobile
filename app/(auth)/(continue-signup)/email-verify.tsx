@@ -80,7 +80,7 @@ export default function EmailVerifyScreen() {
       const result = await resendOTP(signupData.email);
 
       if (result.success) {
-        setResendCooldown(60); // 60 second cooldown
+        setResendCooldown(60);
         Alert.alert(
           "Code Sent",
           "A new verification code has been sent to your email."
@@ -175,12 +175,6 @@ export default function EmailVerifyScreen() {
             onSubmitEditing={handleVerifyOTP}
           />
         </View>
-
-        {otp.length > 0 && otp.length < 6 && (
-          <Text style={{ color: "#ff6b6b", fontSize: 14, marginTop: 8 }}>
-            Please enter all 6 digits
-          </Text>
-        )}
 
         <View style={styles.resendContainer}>
           <Text style={{ color: "#868686", fontSize: 16 }}>

@@ -17,7 +17,6 @@ export default function IndexRedirect() {
       return <Redirect href="/(auth)/(paywall)/paywall" />;
     }
   } else {
-    console.log("Redirecting to auth (no user)");
     return <Redirect href="/(auth)" />;
   }
 }
