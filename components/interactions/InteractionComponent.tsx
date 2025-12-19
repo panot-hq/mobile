@@ -1,5 +1,5 @@
 import { useInteractionOverlay } from "@/contexts/InteractionOverlayContext";
-import { formatCreatedAt } from "@/lib/utils/dateFormatter";
+import { formatCreatedAt } from "@/lib/utils/date-formatter";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useRef } from "react";
