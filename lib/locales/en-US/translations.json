@@ -16,7 +16,21 @@
     "sign_out_failed_title": "Sign Out Failed",
     "sign_out_failed_message": "An error occurred while signing out. Please try again.",
     "footer_curated": "Curated with care for the people",
-    "footer_version": "version 0.1.0"
+    "footer_version": "version 0.1.0",
+    "feedback_title": "Feedback",
+    "feedback_subtitle": "Report a problem or request a new feature"
+  },
+  "feedback": {
+    "title": "Feedback",
+    "bug_report": "Bug Report",
+    "feature_request": "Feature Request",
+    "bug_placeholder": "Describe the bug you encountered...",
+    "feature_placeholder": "Describe the feature you'd like to see...",
+    "submit_anonymously": "Submit anonymously",
+    "submit": "Submit",
+    "submitted_title": "Feedback submitted successfully",
+    "submitted_subtitle": "We will try our best to improve the app based on your feedback.",
+    "submitted_button": "Go back to home"
   },
   "common": {
     "error": "Error",

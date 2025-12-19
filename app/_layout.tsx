@@ -141,6 +141,24 @@ function RootLayoutNav() {
           },
         }}
       />
+      <Stack.Screen
+        name="(feedback)/feedback"
+        options={{
+          presentation: "card",
+          animation: "slide_from_right",
+          headerShown: false,
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
+        name="(feedback)/submitted"
+        options={{
+          presentation: "card",
+          animation: "slide_from_right",
+          headerShown: false,
+          gestureEnabled: false,
+        }}
+      />
     </Stack>
   );
 }

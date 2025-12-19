@@ -16,7 +16,21 @@
     "sign_out_failed_title": "Error al Cerrar Sesión",
     "sign_out_failed_message": "Ocurrió un error al cerrar sesión. Por favor, inténtalo de nuevo.",
     "footer_curated": "Curated with care for the people",
-    "footer_version": "version 0.1.0"
+    "footer_version": "version 0.1.0",
+    "feedback_title": "Feedback",
+    "feedback_subtitle": "Reporta un problema o solicita una nueva funcionalidad"
+  },
+  "feedback": {
+    "title": "Feedback",
+    "bug_report": "Reportar Bug",
+    "feature_request": "Solicitar Función",
+    "bug_placeholder": "Describe el bug que encontraste...",
+    "feature_placeholder": "Describe la función que te gustaría ver...",
+    "submit_anonymously": "Enviar de forma anónima",
+    "submit": "Enviar",
+    "submitted_title": "Hemos recibido tu feedback",
+    "submitted_subtitle": "Gracias por tomarte el tiempo para escribirnos, haremos todo lo posible para mejorar la app en base a lo que nos has dicho.",
+    "submitted_button": "Regresar al inicio"
   },
   "common": {
     "error": "Error",

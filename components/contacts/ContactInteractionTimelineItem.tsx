@@ -1,7 +1,7 @@
 import { Shimmer } from "@/components/ui/Shimmer";
 import { useInteractionOverlay } from "@/contexts/InteractionOverlayContext";
 import { Interaction } from "@/lib/database/database.types";
-import { formatCreatedAt } from "@/lib/utils/dateFormatter";
+import { formatCreatedAt } from "@/lib/utils/date-formatter";
 import * as Haptics from "expo-haptics";
 import { useRef } from "react";
 import { Pressable, Text, View } from "react-native";

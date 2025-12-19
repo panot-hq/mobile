@@ -8,6 +8,7 @@ import PanotLogo from "@/assets/icons/panot-logo-white.svg";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
+import { router } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert, ScrollView, Text, View } from "react-native";
@@ -56,6 +57,10 @@ export default function SettingsScreen() {
 
   const handleLanguageChange = (languageCode: string) => {
     setTranscriptionLanguage(languageCode);
+  };
+
+  const handleFeedback = () => {
+    router.navigate("/(feedback)/feedback");
   };
 
   return (
@@ -120,10 +125,10 @@ export default function SettingsScreen() {
 
         <SettingsSection>
           <SettingItem
-            title={t("settings.sign_out")}
-            subtitle={t("settings.sign_out_subtitle")}
+            title={t("settings.feedback_title")}
+            subtitle={t("settings.feedback_subtitle")}
             icon="help-outline"
-            onPress={handleSignOut}
+            onPress={handleFeedback}
           />
         </SettingsSection>
       </ScrollView>
