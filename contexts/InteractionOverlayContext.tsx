@@ -93,7 +93,8 @@ export const InteractionOverlayProvider = ({
   const blurOpacity = useSharedValue(0);
   const posthog = usePostHog();
 
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const isSubscribed = profile?.subscribed ?? false;
   const { getInteraction, updateInteraction, deleteInteraction } =
     useInteractions();
   const { getContact } = useContacts();
@@ -265,7 +266,7 @@ export const InteractionOverlayProvider = ({
   };
 
   const handleProcessInteraction = async () => {
-    if (!interaction || !contact || isProcessing) return;
+    if (!interaction || !contact || isProcessing || !isSubscribed) return;
 
     setIsProcessing(true);
 
@@ -579,28 +580,65 @@ export const InteractionOverlayProvider = ({
                     borderWidth={1}
                     borderRadius={20}
                     scaleValue={0.97}
-                    disabled={isProcessing}
+                    disabled={isProcessing || !isSubscribed}
                     style={{
                       paddingVertical: 14,
                       paddingHorizontal: 20,
                       width: isInteractionAssigned ? "48.5%" : "100%",
 
                       height: 55,
-                      opacity: isProcessing ? 0.7 : 1,
+                      opacity: isProcessing || !isSubscribed ? 0.5 : 1,
                     }}
                   >
                     {isProcessing ? (
                       <ActivityIndicator size="small" color="#000000ff" />
                     ) : (
-                      <Text
+                      <View
                         style={{
-                          fontSize: 16,
-                          fontWeight: "400",
-                          color: "#000000ff",
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 8,
                         }}
                       >
-                        {t("interactions.overlay.process")}
-                      </Text>
+                        {!isSubscribed && (
+                          <View
+                            style={{
+                              position: "absolute",
+                              top: -25,
+                              right: -47,
+                              zIndex: 10,
+                              backgroundColor: "#ffffffff",
+                              borderRadius: 10,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontSize: 10,
+                                fontWeight: "500",
+                                color: "#000000ff",
+                                marginBottom: 2,
+                                marginLeft: 8,
+                                borderWidth: 1,
+                                borderColor: "#000000ff",
+                                borderRadius: 20,
+                                paddingHorizontal: 8,
+                                paddingVertical: 2,
+                              }}
+                            >
+                              enhanced
+                            </Text>
+                          </View>
+                        )}
+                        <Text
+                          style={{
+                            fontSize: 16,
+                            fontWeight: "400",
+                            color: "#000000ff",
+                          }}
+                        >
+                          {t("interactions.overlay.process")}
+                        </Text>
+                      </View>
                     )}
                   </BaseButton>
                 )}

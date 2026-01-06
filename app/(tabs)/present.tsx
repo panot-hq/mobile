@@ -60,6 +60,7 @@ export default function HomeScreen() {
           paddingBottom: 20,
         }}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={isListExpanded}
       >
         <PresentActionBar />
 

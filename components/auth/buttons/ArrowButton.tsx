@@ -33,7 +33,7 @@ export default function ArrowButton({
     >
       {settings ? (
         <MaterialIcons
-          name="arrow-back-ios-new"
+          name="keyboard-arrow-left"
           size={iconDimensions}
           color={iconColor}
         />

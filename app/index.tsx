@@ -14,7 +14,8 @@ export default function IndexRedirect() {
     if (isSubscribed) {
       return <Redirect href="/(tabs)/present" />;
     } else {
-      return <Redirect href="/(auth)/(paywall)/paywall" />;
+      //return <Redirect href="/(auth)/(paywall)/paywall" />;
+      return <Redirect href="/(tabs)/present" />;
     }
   } else {
     return <Redirect href="/(auth)" />;

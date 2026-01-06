@@ -159,6 +159,15 @@ function RootLayoutNav() {
           gestureEnabled: false,
         }}
       />
+
+      <Stack.Screen
+        name="(account)/settings"
+        options={{
+          presentation: "card",
+          animation: "slide_from_right",
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

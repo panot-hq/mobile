@@ -2,12 +2,14 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Octicons from "@expo/vector-icons/Octicons";
 
+import { useAuth } from "@/contexts/AuthContext";
 import { useTalkAboutThem } from "@/contexts/TalkAboutThemContext";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+
 import { router } from "expo-router";
 import React, { useCallback } from "react";
 import { useTranslation } from "react-i18next";
@@ -23,6 +25,8 @@ export default function AddContactModal({
 }: AddContactModalProps) {
   const { t } = useTranslation();
   const { setIsOverlayVisible, isOverlayVisible } = useTalkAboutThem();
+  const { profile } = useAuth();
+  const isSubscribed = profile?.subscribed ?? false;
 
   const handleBackdropPress = useCallback(() => {
     bottomSheetModalRef.current?.dismiss();
@@ -36,11 +40,12 @@ export default function AddContactModal({
   }, [bottomSheetModalRef]);
 
   const handleTalkCreate = useCallback(() => {
+    if (!isSubscribed) return;
     bottomSheetModalRef.current?.close();
     setTimeout(() => {
       setIsOverlayVisible(true);
     }, 300);
-  }, [bottomSheetModalRef, setIsOverlayVisible]);
+  }, [bottomSheetModalRef, setIsOverlayVisible, isSubscribed]);
 
   const handleImportFromContacts = useCallback(() => {
     bottomSheetModalRef.current?.dismiss();
@@ -198,6 +203,7 @@ export default function AddContactModal({
             style={{
               paddingVertical: 16,
               paddingHorizontal: 20,
+              opacity: isSubscribed ? 1 : 0.5,
             }}
           >
             <View
@@ -207,7 +213,38 @@ export default function AddContactModal({
                 gap: 16,
               }}
             >
-              <Octicons name="dot-fill" size={24} color="black" />
+              {!isSubscribed && (
+                <View
+                  style={{
+                    position: "absolute",
+                    top: -23,
+                    right: -23,
+                    zIndex: 10,
+                    backgroundColor: "#ffffffff",
+                    borderRadius: 10,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      fontWeight: "500",
+                      color: "#000000ff",
+                      marginBottom: 2,
+                      marginLeft: 8,
+                      borderWidth: 1,
+                      borderColor: "#000000ff",
+                      borderRadius: 20,
+                      paddingHorizontal: 8,
+                      paddingVertical: 2,
+                    }}
+                  >
+                    enhanced
+                  </Text>
+                </View>
+              )}
+              <View>
+                <Octicons name="dot-fill" size={24} color="black" />
+              </View>
               <View style={{ flex: 1 }}>
                 <Text
                   style={{
