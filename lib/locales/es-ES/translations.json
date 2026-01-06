@@ -18,7 +18,9 @@
     "footer_curated": "Curated with care for the people",
     "footer_version": "version 0.1.0",
     "feedback_title": "Feedback",
-    "feedback_subtitle": "Reporta un Bug o solicita una nueva Funcionalidad"
+    "feedback_subtitle": "Reporta un Bug o solicita una nueva Funcionalidad",
+    "account_title": "Cuenta",
+    "account_subtitle": "Gestiona tu Cuenta de Usuario"
   },
   "feedback": {
     "title": "Feedback",
@@ -31,6 +33,35 @@
     "submitted_title": "Hemos recibido tu feedback",
     "submitted_subtitle": "Gracias por tomarte el tiempo para escribirnos, haremos todo lo posible para mejorar la app en base a lo que nos has dicho.",
     "submitted_button": "Regresar al inicio"
+  },
+  "account": {
+    "title": "Cuenta",
+    "personal_info": "Información Personal",
+    "name_label": "Cambia como PANOT te llamará",
+    "name_placeholder": "Tu nombre",
+    "email_label": "Email",
+    "email_placeholder": "tu.email@ejemplo.com",
+    "subscription": "Suscripción",
+    "subscription_status": "PANOT Pro",
+    "subscription_active": "Activa",
+    "subscription_inactive": "Inactiva",
+    "unsubscribe": "Cancelar PANOT Pro",
+    "unsubscribe_subtitle": "Cancela tu suscripción",
+    "danger_zone": "Zona de Peligro",
+    "delete_account": "Eliminar Cuenta",
+    "delete_account_subtitle": "Elimina permanentemente tu cuenta y todos tus datos",
+    "save_changes": "Guardar Cambios",
+    "changes_saved": "Cambios guardados correctamente",
+    "save_error": "Error al guardar los cambios",
+    "delete_confirm_title": "Eliminar Cuenta",
+    "delete_confirm_message": "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer y todos tus datos serán eliminados permanentemente.",
+    "delete_confirm_button": "Eliminar Cuenta",
+    "delete_error": "Error al eliminar la cuenta",
+    "manage_membership_title": "Gestionar membresía",
+    "manage_membership_subtitle": "Gestiona tu membresía de PANOT",
+    "subscription_title": "Desbloquea PANOT",
+    "subscription_description": "Accede a funciones premium y mejora tu experiencia",
+    "subscription_button": "Mejora PANOT"
   },
   "common": {
     "error": "Error",

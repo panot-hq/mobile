@@ -18,7 +18,9 @@
     "footer_curated": "Curated with care for the people",
     "footer_version": "version 0.1.0",
     "feedback_title": "Feedback",
-    "feedback_subtitle": "Report a Bug or request a new Feature"
+    "feedback_subtitle": "Report a Bug or request a new Feature",
+    "account_title": "Account",
+    "account_subtitle": "Manage your account"
   },
   "feedback": {
     "title": "Feedback",
@@ -31,6 +33,33 @@
     "submitted_title": "Feedback submitted successfully",
     "submitted_subtitle": "We will try our best to improve the app based on your feedback.",
     "submitted_button": "Go back to home"
+  },
+  "account": {
+    "title": "Account",
+    "personal_info": "Personal Information",
+    "name_label": "Change how PANOT will call you",
+    "name_placeholder": "Your name",
+    "email_label": "Email",
+    "email_placeholder": "your.email@example.com",
+    "subscription": "Subscription",
+    "subscription_status": "PANOT Pro",
+    "subscription_active": "Active",
+    "subscription_inactive": "Inactive",
+    "danger_zone": "Danger Zone",
+    "delete_account": "Delete Account",
+    "delete_account_subtitle": "Permanently delete your account and all data",
+    "save_changes": "Save Changes",
+    "changes_saved": "Changes saved successfully",
+    "save_error": "Failed to save changes",
+    "delete_confirm_title": "Delete Account",
+    "delete_confirm_message": "Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.",
+    "delete_confirm_button": "Delete Account",
+    "delete_error": "Failed to delete account",
+    "manage_membership_title": "Manage Membership",
+    "manage_membership_subtitle": "Manage your PANOT membership tier",
+    "subscription_title": "Unlock PANOT",
+    "subscription_description": "Access premium features and enhance your experience",
+    "subscription_button": "Enhance PANOT"
   },
   "common": {
     "error": "Error",
@@ -54,7 +83,7 @@
       "save_error": "Failed to save contact. Please try again.",
       "name_placeholder": "Contact's name",
       "details_placeholder": "About this contact...",
-      "preview_hint": "Speak about your noew conexion's hobbyes, interests, etc."
+      "preview_hint": "*Speak about your new connection's hobbyes, interests, etc."
     },
     "import": {
       "permissions_required_title": "Permissions required",

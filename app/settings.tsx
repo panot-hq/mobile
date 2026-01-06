@@ -1,8 +1,8 @@
+import AppLanguageSelector from "@/components/settings/AppLanguageSelector";
 import CloseSettingsButton from "@/components/settings/CloseSettingsButton";
-import LanguageSelector from "@/components/settings/LanguageSelector";
 import SettingItem from "@/components/settings/SettingItem";
 import SettingsSection from "@/components/settings/SettingsSection";
-import { changeLanguage } from "@/lib/i18n";
+import TranscriptLanguageSelector from "@/components/settings/TranscriptLanguageSelector";
 
 import PanotLogo from "@/assets/icons/panot-logo-white.svg";
 
@@ -48,11 +48,7 @@ export default function SettingsScreen() {
   };
 
   const handleAccountSettings = () => {
-    // TODO Navigate to account settings
-    Alert.alert(
-      "Account Settings",
-      "Account settings functionality coming soon!"
-    );
+    router.navigate("/(account)/settings");
   };
 
   const handleLanguageChange = (languageCode: string) => {
@@ -78,6 +74,7 @@ export default function SettingsScreen() {
           paddingTop: 60,
           paddingBottom: 100,
         }}
+        showsVerticalScrollIndicator={false}
       >
         <View
           style={{ paddingHorizontal: 20, marginBottom: 40, marginTop: 20 }}
@@ -96,24 +93,22 @@ export default function SettingsScreen() {
         </View>
 
         <SettingsSection>
-          <LanguageSelector
+          <AppLanguageSelector
             label={t("settings.app_language")}
             selectedLanguage={i18n.language}
-            onLanguageChange={changeLanguage}
           />
-          <LanguageSelector
+          <TranscriptLanguageSelector
             label={t("settings.transcription_language")}
             selectedLanguage={transcriptionLanguage}
-            onLanguageChange={handleLanguageChange}
           />
         </SettingsSection>
 
         <SettingsSection>
           <SettingItem
-            title={t("settings.sign_out")}
-            subtitle={t("settings.sign_out_subtitle")}
-            icon="sign-out"
-            onPress={handleSignOut}
+            title={t("settings.account_title")}
+            subtitle={t("settings.account_subtitle")}
+            icon="account-circle"
+            onPress={handleAccountSettings}
           />
           <SettingItem
             title={t("settings.sign_out")}
@@ -131,24 +126,20 @@ export default function SettingsScreen() {
             onPress={handleFeedback}
           />
         </SettingsSection>
+        <View
+          style={{
+            alignItems: "center",
+          }}
+        >
+          <PanotLogo width={100} height={100} color="#fff" />
+          <Text style={{ color: "#fff", fontSize: 12, fontWeight: "200" }}>
+            {t("settings.footer_curated")}
+          </Text>
+          <Text style={{ color: "#fff", fontSize: 12, fontWeight: "200" }}>
+            {t("settings.footer_version")}
+          </Text>
+        </View>
       </ScrollView>
-      <View
-        style={{
-          alignItems: "center",
-          position: "absolute",
-          bottom: 100,
-          left: 0,
-          right: 0,
-        }}
-      >
-        <PanotLogo width={100} height={100} color="#fff" />
-        <Text style={{ color: "#fff", fontSize: 12, fontWeight: "200" }}>
-          {t("settings.footer_curated")}
-        </Text>
-        <Text style={{ color: "#fff", fontSize: 12, fontWeight: "200" }}>
-          {t("settings.footer_version")}
-        </Text>
-      </View>
     </>
   );
 }
