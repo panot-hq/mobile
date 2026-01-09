@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useTalkAboutThem } from "@/contexts/TalkAboutThemContext";
 import { ProcessQueueService } from "@/lib/database/services/process-queue";
+import { useContacts } from "@/lib/hooks/useLegendState";
 import { BlurView } from "expo-blur";
 import PanotSpeechModule from "panot-speech";
 import React, {
@@ -44,6 +45,7 @@ export default function TalkAboutThemOverlay({
   const { t } = useTranslation();
   const { transcriptionLanguage } = useSettings();
   const { user } = useAuth();
+  const { createContact } = useContacts();
   const {
     isRecording,
     setIsRecording,
@@ -245,19 +247,53 @@ export default function TalkAboutThemOverlay({
       setHasAutoStarted(false);
 
       try {
+        const tempContact = await createContact({
+          first_name: t("contacts.new.default_name"),
+          last_name: "",
+          details: {
+            summary: null,
+            updated_at: new Date().toISOString(),
+          },
+          deleted: false,
+          communication_channels: null,
+        });
+
         await ProcessQueueService.enqueue({
           userId: user?.id || "",
-          contactId: null,
+          contactId: tempContact.id,
           jobType: "NEW_CONTACT",
           payload: {
             details: acceptedTranscript,
           },
         });
       } catch (error) {
-        console.error("Error enqueuing process:", error);
+        console.error(
+          "Error creating temporary contact or enqueuing process:",
+          error
+        );
+        try {
+          await ProcessQueueService.enqueue({
+            userId: user?.id || "",
+            contactId: null,
+            jobType: "NEW_CONTACT",
+            payload: {
+              details: acceptedTranscript,
+            },
+          });
+        } catch (fallbackError) {
+          console.error("Error enqueuing process (fallback):", fallbackError);
+        }
       }
     },
-    [setIsOverlayVisible, setShouldBlur, posthog, recordingStartTime]
+    [
+      setIsOverlayVisible,
+      setShouldBlur,
+      posthog,
+      recordingStartTime,
+      user,
+      createContact,
+      t,
+    ]
   );
 
   const handleRejectTranscription = useCallback(() => {

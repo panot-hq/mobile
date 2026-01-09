@@ -1,3 +1,4 @@
+import PanotLogo from "@/assets/icons/panot-white.svg";
 import BaseButton from "@/components/ui/BaseButton";
 import { MeshGradientView } from "expo-mesh-gradient";
 import { router } from "expo-router";
@@ -22,7 +23,106 @@ export default function BaseMemberSettingsSection({
   };
 
   if (isSubscribed) {
-    return null;
+    return (
+      <View
+        style={{
+          marginTop: 130,
+          marginHorizontal: 24,
+          borderRadius: 20,
+          overflow: "hidden",
+          height: 120,
+        }}
+      >
+        <MeshGradientView
+          columns={3}
+          rows={3}
+          colors={[
+            "#1a1a1a",
+            "#1a1a1a",
+            "#1a1a1a",
+
+            "#2a2a2a",
+            "#2a2a2a",
+            "#2a2a2a",
+
+            "#3a3a3a",
+            "#3a3a3a",
+            "#3a3a3a",
+          ]}
+          points={[
+            [0.0, 0.0],
+            [0.5, 0.0],
+            [1.0, 0.0],
+
+            [0.0, 0.5],
+            [0.5, 0.5],
+            [1.0, 0.5],
+
+            [0.0, 1.0],
+            [0.5, 1.0],
+            [1.0, 1.0],
+          ]}
+          style={{
+            flex: 1,
+          }}
+        />
+
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            paddingHorizontal: 20,
+            justifyContent: "center",
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <PanotLogo width={96} height={32} />
+              <View
+                style={{
+                  marginLeft: 8,
+                  borderWidth: 1,
+                  borderColor: "#FFFFFF",
+                  borderRadius: 20,
+                  paddingHorizontal: 10,
+                  paddingVertical: 3,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 10,
+                    fontWeight: "400",
+                    color: "#FFFFFF",
+                  }}
+                >
+                  enhanced
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <Text
+            style={{
+              fontSize: 13,
+              color: "#888888",
+              marginTop: 12,
+              fontWeight: "300",
+            }}
+          >
+            {t("account.subscription_thanks")}
+          </Text>
+        </View>
+      </View>
+    );
   }
 
   return (

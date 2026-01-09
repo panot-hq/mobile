@@ -59,7 +59,8 @@
     "manage_membership_subtitle": "Manage your PANOT membership tier",
     "subscription_title": "Unlock PANOT",
     "subscription_description": "Access premium features and enhance your experience",
-    "subscription_button": "Enhance PANOT"
+    "subscription_button": "Enhance PANOT",
+    "subscription_thanks": "Thanks for being part of the journey"
   },
   "common": {
     "error": "Error",

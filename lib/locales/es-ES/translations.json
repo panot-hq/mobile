@@ -61,7 +61,8 @@
     "manage_membership_subtitle": "Gestiona tu membresía de PANOT",
     "subscription_title": "Desbloquea PANOT",
     "subscription_description": "Accede a funciones premium y mejora tu experiencia",
-    "subscription_button": "Mejora PANOT"
+    "subscription_button": "Mejora PANOT",
+    "subscription_thanks": "Gracias por ser parte del viaje"
   },
   "common": {
     "error": "Error",

@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "panot",
+    "name": "Panot",
     "slug": "Panot",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "panot",
+    "scheme": "Panot",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

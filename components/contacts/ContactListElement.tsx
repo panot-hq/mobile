@@ -53,6 +53,7 @@ export default function ContactListElement({
     const displayName =
       `${contact.first_name || ""} ${contact.last_name || ""}`.trim() ||
       "Sin nombre";
+    const hasSummary = item.hasDetailsSummary ?? false;
 
     return (
       <Animated.View
@@ -60,17 +61,18 @@ export default function ContactListElement({
         layout={LinearTransition.springify()}
       >
         <BaseButton
-          onPress={handlePress}
+          onPress={hasSummary ? handlePress : () => {}}
+          disabled={!hasSummary}
           {...baseButtonProps}
           style={{
             flex: 1,
             alignItems: "flex-start",
-            backgroundColor: "#E9E9E9",
+            backgroundColor: hasSummary ? "#E9E9E9" : "#e9e9e9b1",
             marginBottom: 8,
             overflow: "hidden",
           }}
         >
-          {!item.hasDetailsSummary && <Shimmer />}
+          {!hasSummary && <Shimmer />}
           <View
             style={{
               flex: 1,

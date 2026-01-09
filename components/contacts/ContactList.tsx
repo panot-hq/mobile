@@ -67,31 +67,66 @@ export default function ContactList({ searchTerm = "" }: ContactListProps) {
   const groupContactsAlphabetically = (
     contacts: Contact[]
   ): ContactListItem[] => {
-    const grouped: { [key: string]: Contact[] } = {};
+    const contactsWithSummary: Contact[] = [];
+    const contactsWithoutSummary: Contact[] = [];
 
     contacts.forEach((contact) => {
-      const name = contact.first_name || contact.last_name || "";
-      const firstLetter = name.charAt(0);
-      const normalizedLetter = normalizeString(firstLetter);
-      const letter = normalizedLetter.match(/[a-z]/i) ? normalizedLetter : "#";
+      const summary = (contact.details as any)?.summary;
+      const hasDetailsSummary =
+        summary !== null &&
+        summary !== undefined &&
+        typeof summary === "string" &&
+        summary.trim().length > 0;
 
-      if (!grouped[letter]) {
-        grouped[letter] = [];
+      if (hasDetailsSummary) {
+        contactsWithSummary.push(contact);
+      } else {
+        contactsWithoutSummary.push(contact);
       }
-      grouped[letter].push(contact);
     });
 
     const flatList: ContactListItem[] = [];
-    const sortedLetters = Object.keys(grouped).sort();
 
-    sortedLetters.forEach((letter) => {
-      flatList.push({ type: "header", letter });
-      grouped[letter].forEach((contact) => {
-        const hasDetailsSummary =
-          (contact.details as any)?.summary !== null ? true : false;
-        flatList.push({ type: "contact", contact, hasDetailsSummary });
+    if (contactsWithoutSummary.length > 0) {
+      contactsWithoutSummary.forEach((contact) => {
+        flatList.push({
+          type: "contact",
+          contact,
+          hasDetailsSummary: false,
+        });
       });
-    });
+    }
+
+    if (contactsWithSummary.length > 0) {
+      const grouped: { [key: string]: Contact[] } = {};
+
+      contactsWithSummary.forEach((contact) => {
+        const name = contact.first_name || contact.last_name || "";
+        const firstLetter = name.charAt(0);
+        const normalizedLetter = normalizeString(firstLetter);
+        const letter = normalizedLetter.match(/[a-z]/i)
+          ? normalizedLetter
+          : "#";
+
+        if (!grouped[letter]) {
+          grouped[letter] = [];
+        }
+        grouped[letter].push(contact);
+      });
+
+      const sortedLetters = Object.keys(grouped).sort();
+
+      sortedLetters.forEach((letter) => {
+        flatList.push({ type: "header", letter });
+        grouped[letter].forEach((contact) => {
+          flatList.push({
+            type: "contact",
+            contact,
+            hasDetailsSummary: true,
+          });
+        });
+      });
+    }
 
     return flatList;
   };
