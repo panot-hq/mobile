@@ -20,6 +20,10 @@ export default function RestoreScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
   const emailInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
 
@@ -135,20 +139,28 @@ export default function RestoreScreen() {
                 autoCorrect={false}
                 spellCheck={false}
                 autoFocus={false}
+                onFocus={() => setEmailFocused(true)}
+                onBlur={() => {
+                  setEmailFocused(false);
+                  setEmailTouched(true);
+                }}
                 onSubmitEditing={() => passwordInputRef.current?.focus()}
               />
-              {email.length > 0 && !isEmailValid() && (
-                <Text
-                  style={{
-                    color: "#ff6b6b",
-                    fontSize: 14,
-                    marginTop: 8,
-                    paddingHorizontal: 4,
-                  }}
-                >
-                  Please enter a valid email address
-                </Text>
-              )}
+              {emailTouched &&
+                !emailFocused &&
+                email.length > 0 &&
+                !isEmailValid() && (
+                  <Text
+                    style={{
+                      color: "#ff6b6b",
+                      fontSize: 14,
+                      marginTop: 8,
+                      paddingHorizontal: 4,
+                    }}
+                  >
+                    Please enter a valid email address
+                  </Text>
+                )}
             </View>
 
             <View>
@@ -174,20 +186,28 @@ export default function RestoreScreen() {
                 autoCorrect={false}
                 spellCheck={false}
                 secureTextEntry={true}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => {
+                  setPasswordFocused(false);
+                  setPasswordTouched(true);
+                }}
                 onSubmitEditing={handleSignIn}
               />
-              {password.length > 0 && !isPasswordValid() && (
-                <Text
-                  style={{
-                    color: "#ff6b6b",
-                    fontSize: 14,
-                    marginTop: 8,
-                    paddingHorizontal: 4,
-                  }}
-                >
-                  Password must be at least 6 characters long
-                </Text>
-              )}
+              {passwordTouched &&
+                !passwordFocused &&
+                password.length > 0 &&
+                !isPasswordValid() && (
+                  <Text
+                    style={{
+                      color: "#ff6b6b",
+                      fontSize: 14,
+                      marginTop: 8,
+                      paddingHorizontal: 4,
+                    }}
+                  >
+                    Password must be at least 6 characters long
+                  </Text>
+                )}
             </View>
             <View style={{ marginTop: 15 }}>
               <BaseButton

@@ -38,9 +38,9 @@ export default function SettingItem({
           (icon === "sign-out" ? (
             <Octicons
               name="sign-out"
-              size={20}
+              size={18}
               color="#CCCCCC"
-              style={{ marginRight: 16 }}
+              style={{ marginRight: 16, transform: [{ rotate: "180deg" }] }}
             />
           ) : (
             <MaterialIcons
@@ -54,7 +54,7 @@ export default function SettingItem({
           <Text
             style={{
               fontSize: 16,
-              fontWeight: "500",
+              fontWeight: "300",
               color: "#FFFFFF",
               marginBottom: subtitle ? 2 : 0,
             }}
@@ -66,6 +66,7 @@ export default function SettingItem({
               style={{
                 fontSize: 14,
                 color: "#CCCCCC",
+                fontWeight: "200",
               }}
             >
               {subtitle}

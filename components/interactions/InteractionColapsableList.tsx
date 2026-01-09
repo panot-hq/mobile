@@ -1,6 +1,6 @@
 import Badge from "@/components/ui/Badge";
 import { useInteractions } from "@/lib/hooks/useLegendState";
-import { formatCreatedAt } from "@/lib/utils/dateFormatter";
+import { formatCreatedAt } from "@/lib/utils/date-formatter";
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";

@@ -39,6 +39,16 @@ import { usePostHog } from "posthog-react-native";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+const getContextString = (value: any): string => {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (typeof value === "object" && value !== null) {
+    return "";
+  }
+  return "";
+};
+
 export default function ContactDetailsScreen() {
   const { t } = useTranslation();
   const { id } = useLocalSearchParams();
@@ -60,23 +70,24 @@ export default function ContactDetailsScreen() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [openedFromTapEmptyDetails, setOpenedFromTapEmptyDetails] =
     useState(false);
-  const [nameValue, setNameValue] = useState("");
-  const [detailsValue, setDetailsValue] = useState("");
+  const [nameValue, setNameValue] = useState(() => {
+    if (contact) {
+      return `${contact.first_name || ""} ${contact.last_name || ""}`.trim();
+    }
+    return "";
+  });
+  const [detailsValue, setDetailsValue] = useState(() => {
+    if (contact) {
+      return getContextString(contact.details.summary);
+    }
+    return "";
+  });
 
   const originalName = useRef("");
   const originalDetails = useRef("");
 
-  const { user } = useAuth();
-
-  const getContextString = (value: any): string => {
-    if (typeof value === "string") {
-      return value;
-    }
-    if (typeof value === "object" && value !== null) {
-      return "";
-    }
-    return "";
-  };
+  const { user, profile } = useAuth();
+  const isSubscribed = profile?.subscribed ?? false;
 
   useEffect(() => {
     if (contact && !isEditMode) {
@@ -160,14 +171,16 @@ export default function ContactDetailsScreen() {
           },
         });
 
-        await ProcessQueueService.enqueue({
-          userId: user!.id,
-          contactId: contact.id,
-          jobType: "DETAILS_UPDATE",
-          payload: {
-            details: trimmedDetails,
-          },
-        });
+        if (isSubscribed) {
+          await ProcessQueueService.enqueue({
+            userId: user!.id,
+            contactId: contact.id,
+            jobType: "DETAILS_UPDATE",
+            payload: {
+              details: trimmedDetails,
+            },
+          });
+        }
         detailsChanged = true;
       }
 
@@ -260,7 +273,7 @@ export default function ContactDetailsScreen() {
   }));
 
   const hasDetails = detailsValue.trim().length > 0;
-  const showEmptyState = !hasDetails && !isEditMode;
+  const showEmptyState = !!contact && !hasDetails && !isEditMode;
 
   const contextContainerAnimatedStyle = useAnimatedStyle(() => ({
     backgroundColor: "white",

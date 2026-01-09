@@ -34,6 +34,8 @@ async function fetchPaymentSheetParams(
   return data;
 }
 
+const items = [];
+
 export default function CheckoutForm({ amount }: { amount: number }) {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [loading, setLoading] = useState(false);
@@ -88,14 +90,14 @@ export default function CheckoutForm({ amount }: { amount: number }) {
         width: "100%",
         alignItems: "center",
         position: "absolute",
-        bottom: 50,
+        bottom: 55,
       }}
     >
       <PlatformPayButton
         onPress={pay}
-        type={PlatformPay.ButtonType.Pay}
+        type={PlatformPay.ButtonType.Continue}
         appearance={PlatformPay.ButtonStyle.Black}
-        borderRadius={16}
+        borderRadius={20}
         disabled={loading}
         style={{ width: 350, height: 50 }}
       />

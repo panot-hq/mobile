@@ -76,13 +76,14 @@ export class ProfilesService {
    */
   static async delete(userId: string): Promise<DatabaseResponse<null>> {
     try {
-      const { error } = await supabase
-        .from(this.TABLE_NAME)
-        .delete()
-        .eq("user_id", userId);
-
+      const { data, error } = await supabase.rpc("delete_user");
+      if (error) {
+        console.error("Error deleting user:", error);
+        return { data: null, error };
+      }
       return { data: null, error };
     } catch (error) {
+      console.error("Error deleting user:", error);
       return { data: null, error: error as Error };
     }
   }

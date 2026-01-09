@@ -60,6 +60,7 @@ export default function HomeScreen() {
           paddingBottom: 20,
         }}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={isListExpanded}
       >
         <PresentActionBar />
 
@@ -78,7 +79,7 @@ export default function HomeScreen() {
             }}
           >
             {t(`present.welcome_${currentDayPeriod}`)}{" "}
-            {user?.user_metadata?.display_name.split(" ")[0]}
+            {user?.user_metadata?.display_name?.split(" ")[0] || ""}
           </Text>
         </View>
 

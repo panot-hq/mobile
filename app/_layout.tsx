@@ -42,7 +42,7 @@ export default function RootLayout() {
 
   return (
     <PostHogProvider
-      apiKey={process.env.POSTHOG_API_KEY}
+      apiKey={process.env.EXPO_PUBLIC_POSTHOG_API_KEY}
       options={{
         host: "https://eu.i.posthog.com",
       }}
@@ -139,6 +139,33 @@ function RootLayoutNav() {
           contentStyle: {
             backgroundColor: "black",
           },
+        }}
+      />
+      <Stack.Screen
+        name="(feedback)/feedback"
+        options={{
+          presentation: "card",
+          animation: "slide_from_right",
+          headerShown: false,
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
+        name="(feedback)/submitted"
+        options={{
+          presentation: "card",
+          animation: "slide_from_right",
+          headerShown: false,
+          gestureEnabled: false,
+        }}
+      />
+
+      <Stack.Screen
+        name="(account)/settings"
+        options={{
+          presentation: "card",
+          animation: "slide_from_right",
+          headerShown: false,
         }}
       />
     </Stack>

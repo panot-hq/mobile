@@ -1,4 +1,5 @@
 import LoadingScreen from "@/components/ui/LoadingScreen";
+import { Profile } from "@/lib/database/database.types";
 import { ProfilesService } from "@/lib/database/index";
 import { supabase } from "@/lib/supabase";
 import { clearPersistedData, initializeSync } from "@/lib/supaLegend";
@@ -16,6 +17,7 @@ import React, {
 interface AuthContextType {
   user: User | null;
   session: Session | null;
+  profile: Profile | null;
   loading: boolean;
   isSyncing: boolean;
   signOut: () => Promise<void>;
@@ -43,6 +45,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
+  profile: null,
   loading: true,
   isSyncing: false,
   signOut: async () => {},
@@ -60,6 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [initialCheckComplete, setInitialCheckComplete] = useState(false);
@@ -84,7 +88,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (session?.user) {
           setIsSyncing(true);
-          await ProfilesService.getOrCreate(session.user.id);
+          const profileResponse = await ProfilesService.getOrCreate(
+            session.user.id
+          );
+          if (profileResponse.data) {
+            setProfile(profileResponse.data);
+          }
           await initializeSync(session.user.id);
           setIsSyncing(false);
         }
@@ -111,13 +120,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               if (event === "SIGNED_IN") {
                 setIsSyncing(true);
                 await clearPersistedData();
-                await ProfilesService.getOrCreate(session.user.id);
+                const profileResponse = await ProfilesService.getOrCreate(
+                  session.user.id
+                );
+                if (profileResponse.data) {
+                  setProfile(profileResponse.data);
+                }
                 await initializeSync(session.user.id);
                 setIsSyncing(false);
 
                 router.replace("/(tabs)/present");
               }
             } else {
+              setProfile(null);
               await clearPersistedData();
             }
 
@@ -151,6 +166,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signOut = async () => {
     await clearPersistedData();
     await supabase.auth.signOut();
+    setProfile(null);
     router.replace("/(auth)");
   };
 
@@ -304,6 +320,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         user,
         session,
+        profile,
         loading,
         isSyncing,
         signOut,

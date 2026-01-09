@@ -1,4 +1,5 @@
 import Feather from "@expo/vector-icons/Feather";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React from "react";
 import BaseButton, { BaseButtonProps } from "../../ui/BaseButton";
 
@@ -8,6 +9,7 @@ interface ArrowButtonProps extends Omit<BaseButtonProps, "children"> {
   orientation?: "right" | "left";
   borderWidth?: number;
   borderColor?: string;
+  settings?: boolean;
 }
 
 export default function ArrowButton({
@@ -18,6 +20,7 @@ export default function ArrowButton({
   orientation = "left",
   borderWidth = 0,
   borderColor = "transparent",
+  settings = false,
   ...props
 }: ArrowButtonProps) {
   return (
@@ -28,11 +31,19 @@ export default function ArrowButton({
       borderColor={borderColor}
       {...props}
     >
-      <Feather
-        name={orientation === "right" ? "arrow-right" : "arrow-left"}
-        size={iconDimensions}
-        color={iconColor}
-      />
+      {settings ? (
+        <MaterialIcons
+          name="keyboard-arrow-left"
+          size={iconDimensions}
+          color={iconColor}
+        />
+      ) : (
+        <Feather
+          name={orientation === "right" ? "arrow-right" : "arrow-left"}
+          size={iconDimensions}
+          color={iconColor}
+        />
+      )}
     </BaseButton>
   );
 }
