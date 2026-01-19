@@ -1,4 +1,4 @@
-import PaywallBanner from "@/assets/images/paywall-banner.svg";
+import PaywallValueProviders from "@/assets/images/value-providers.svg";
 import CloseButton from "@/components/auth/buttons/CloseButton";
 import CheckoutForm from "@/components/stripe/checkout-form";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,8 +31,10 @@ export default function PaywallScreen() {
           iconDimensions={25}
         />
       </View>
-      <PaywallBanner style={{ position: "absolute", top: 125 }} />
-      <CheckoutForm amount={299} />
+      <PaywallValueProviders style={{ position: "absolute", top: 125, marginHorizontal: 20 }} />
+
+      
+      <CheckoutForm amount={499} />
     </View>
   );
 }

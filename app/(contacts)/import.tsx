@@ -3,10 +3,6 @@ import LocalContactListElement from "@/components/contacts/LocalContactListEleme
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import { useAuth } from "@/contexts/AuthContext";
 import { useContacts } from "@/lib/hooks/useLegendState";
-import {
-  CommunicationChannel,
-  stringifyCommunicationChannels,
-} from "@/lib/types/communicationChannel";
 import * as Contacts from "expo-contacts";
 import { ExistingContact } from "expo-contacts";
 import * as Haptics from "expo-haptics";
@@ -110,15 +106,14 @@ export default function ImportContactScreen() {
       const lastName = normalizeString(contact.lastName || "");
       const fullName = `${firstName} ${lastName}`.trim();
       const name = normalizeString(contact.name || "");
-      const phoneNumbers =
-        contact.phoneNumbers?.map((p) => p.number || "").join(" ") || "";
+      //const phoneNumbers = contact.phoneNumbers?.map((p) => p.number || "").join(" ") || "";
 
       return (
         firstName.includes(normalizedSearch) ||
         lastName.includes(normalizedSearch) ||
         fullName.includes(normalizedSearch) ||
-        name.includes(normalizedSearch) ||
-        phoneNumbers.includes(normalizedSearch)
+        name.includes(normalizedSearch)
+        //phoneNumbers.includes(normalizedSearch)
       );
     });
   };
@@ -163,7 +158,7 @@ export default function ImportContactScreen() {
 
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-        const communicationChannels: CommunicationChannel[] = [];
+        /*const communicationChannels: CommunicationChannel[] = [];
         if (localContact.phoneNumbers && localContact.phoneNumbers.length > 0) {
           localContact.phoneNumbers.forEach((phone) => {
             communicationChannels.push({
@@ -171,16 +166,15 @@ export default function ImportContactScreen() {
               value: phone.number || "",
             });
           });
-        }
+        }*/
 
         await createContact({
           first_name: localContact.firstName || "",
           last_name: localContact.lastName || "",
-          details: "",
-          communication_channels: stringifyCommunicationChannels(
-            communicationChannels
-          ),
+          details: {
+            "summary": ""},
           deleted: false,
+          communication_channels: null,
         });
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

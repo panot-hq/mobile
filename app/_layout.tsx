@@ -136,9 +136,7 @@ function RootLayoutNav() {
           animation: "fade",
           headerShown: false,
           gestureEnabled: false,
-          contentStyle: {
-            backgroundColor: "black",
-          },
+          
         }}
       />
       <Stack.Screen
@@ -168,6 +166,7 @@ function RootLayoutNav() {
           headerShown: false,
         }}
       />
+
     </Stack>
   );
 }

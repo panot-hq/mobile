@@ -83,7 +83,7 @@ export default function Feedback() {
       height: buttonHeight,
       transform: [
         {
-          translateX: switcherPosition.value * (buttonWidth + containerPadding),
+          translateX: switcherPosition.value * (buttonWidth + containerPadding -4),
         },
       ],
     };
@@ -155,7 +155,7 @@ export default function Feedback() {
             flexDirection: "row",
             backgroundColor: "#1a1a1a",
             borderRadius: 17,
-            padding: 4,
+            padding: 6,
             marginBottom: 24,
             position: "relative",
           }}
@@ -164,10 +164,10 @@ export default function Feedback() {
             style={[
               {
                 position: "absolute",
-                top: 4,
+                top: 4.5,
                 left: 4,
                 backgroundColor: "#ffffff",
-                borderRadius: 17,
+                borderRadius: 15,
               },
               switcherAnimatedStyle,
             ]}
@@ -186,7 +186,7 @@ export default function Feedback() {
             <Text
               style={{
                 fontSize: 16,
-                fontWeight: "400",
+                fontWeight: "300",
                 color: feedbackType === "bug" ? "#000000" : "#999999",
               }}
             >
@@ -208,7 +208,7 @@ export default function Feedback() {
             <Text
               style={{
                 fontSize: 16,
-                fontWeight: "400",
+                fontWeight: "300",
                 color: feedbackType === "feature" ? "#000000" : "#999999",
               }}
             >

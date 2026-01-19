@@ -20,7 +20,11 @@
     "feedback_title": "Feedback",
     "feedback_subtitle": "Reporta un Bug o solicita una nueva Funcionalidad",
     "account_title": "Cuenta",
-    "account_subtitle": "Gestiona tu Cuenta de Usuario"
+    "account_subtitle": "Gestiona tu cuenta de usuario",
+    "privacy_policy_title": "Política de Privacidad",
+    "privacy_policy_subtitle": "Ver nuestra política de privacidad",
+    "terms_of_use_title": "Términos de Uso",
+    "terms_of_use_subtitle": "Ver nuestros términos de uso"
   },
   "feedback": {
     "title": "Feedback",
@@ -59,10 +63,13 @@
     "delete_error": "Error al eliminar la cuenta",
     "manage_membership_title": "Gestionar membresía",
     "manage_membership_subtitle": "Gestiona tu membresía de PANOT",
-    "subscription_title": "Desbloquea PANOT",
-    "subscription_description": "Accede a funciones premium y mejora tu experiencia",
     "subscription_button": "Mejora PANOT",
     "subscription_thanks": "Gracias por ser parte del viaje"
+  },
+  "paywall": {
+    "congrats_title": "Bienvenido a PANOT Enhanced",
+    "congrats_subtitle": "Gracias por ser parte de este viaje y disfruta de todas las funciones mejoradas!",
+    "congrats_button": "¡Vamos!"
   },
   "common": {
     "error": "Error",

@@ -20,7 +20,11 @@
     "feedback_title": "Feedback",
     "feedback_subtitle": "Report a Bug or request a new Feature",
     "account_title": "Account",
-    "account_subtitle": "Manage your account"
+    "account_subtitle": "Manage your account",
+    "privacy_policy_title": "Privacy Policy",
+    "privacy_policy_subtitle": "View our privacy policy",
+    "terms_of_use_title": "Terms of Use",
+    "terms_of_use_subtitle": "View our terms of use"
   },
   "feedback": {
     "title": "Feedback",
@@ -47,7 +51,7 @@
     "subscription_inactive": "Inactive",
     "danger_zone": "Danger Zone",
     "delete_account": "Delete Account",
-    "delete_account_subtitle": "Permanently delete your account and all data",
+    "delete_account_subtitle": "Permanently delete your account and all your data",
     "save_changes": "Save Changes",
     "changes_saved": "Changes saved successfully",
     "save_error": "Failed to save changes",
@@ -57,10 +61,13 @@
     "delete_error": "Failed to delete account",
     "manage_membership_title": "Manage Membership",
     "manage_membership_subtitle": "Manage your PANOT membership tier",
-    "subscription_title": "Unlock PANOT",
-    "subscription_description": "Access premium features and enhance your experience",
     "subscription_button": "Enhance PANOT",
     "subscription_thanks": "Thanks for being part of the journey"
+  },
+  "paywall": {
+    "congrats_title": "Welcome to PANOT Enhanced",
+    "congrats_subtitle": "Thanks for being part of this journey and enjoy all the enhanced features!",
+    "congrats_button": "Let's go!"
   },
   "common": {
     "error": "Error",

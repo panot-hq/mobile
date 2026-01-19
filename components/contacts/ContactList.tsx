@@ -56,39 +56,98 @@ export default function ContactList({ searchTerm = "" }: ContactListProps) {
       const lastName = normalizeString(contact.last_name || "");
       const fullName = `${firstName} ${lastName}`.trim();
 
-      return (
+      const matchesName =
         firstName.includes(normalizedSearch) ||
         lastName.includes(normalizedSearch) ||
-        fullName.includes(normalizedSearch)
-      );
+        fullName.includes(normalizedSearch);
+
+      let matchesSummary = false;
+      if (contact.details) {
+        const summary =
+          typeof contact.details === "object" &&
+          contact.details !== null &&
+          "summary" in contact.details
+            ? (contact.details as { summary?: string }).summary
+            : typeof contact.details === "string"
+            ? contact.details
+            : null;
+
+        if (summary && typeof summary === "string" && summary.trim().length > 0) {
+          const normalizedSummary = normalizeString(summary);
+          matchesSummary = normalizedSummary.includes(normalizedSearch);
+        }
+      }
+
+      return matchesName || matchesSummary;
     });
   };
 
   const groupContactsAlphabetically = (
     contacts: Contact[]
   ): ContactListItem[] => {
+    const defaultName = t("contacts.new.default_name");
+    const defaultNameLower = defaultName.toLowerCase();
+
     const contactsWithSummary: Contact[] = [];
     const contactsWithoutSummary: Contact[] = [];
+    const temporaryContacts: Contact[] = [];
 
     contacts.forEach((contact) => {
       const summary = (contact.details as any)?.summary;
       const hasDetailsSummary =
         summary !== null &&
         summary !== undefined &&
-        typeof summary === "string" &&
-        summary.trim().length > 0;
+        typeof summary === "string"
 
       if (hasDetailsSummary) {
         contactsWithSummary.push(contact);
       } else {
-        contactsWithoutSummary.push(contact);
+        const fullName = `${contact.first_name || ""} ${contact.last_name || ""}`.trim().toLowerCase();
+        const isTemporary = fullName === defaultNameLower;
+
+        if (isTemporary) {
+          temporaryContacts.push(contact);
+        } else {
+          contactsWithoutSummary.push(contact);
+        }
       }
     });
 
+    const recentContactsWithoutSummary = contactsWithoutSummary.filter((contact) => {
+      const createdAt = contact.created_at
+        ? new Date(contact.created_at).getTime()
+        : 0;
+      return createdAt;
+    });
+
+    const recentContactsWithRealName = recentContactsWithoutSummary.filter((contact) => {
+      const fullName = `${contact.first_name || ""} ${contact.last_name || ""}`.trim().toLowerCase();
+      return fullName !== defaultNameLower && fullName.length > 0;
+    });
+
+    const shouldShowTemporaryContacts = recentContactsWithRealName.length === 0;
+
     const flatList: ContactListItem[] = [];
 
-    if (contactsWithoutSummary.length > 0) {
-      contactsWithoutSummary.forEach((contact) => {
+    if (shouldShowTemporaryContacts && temporaryContacts.length > 0) {
+      const recentTemporaryContacts = temporaryContacts.filter((contact) => {
+        const createdAt = contact.created_at
+          ? new Date(contact.created_at).getTime()
+          : 0;
+        return createdAt;
+      });
+
+      recentTemporaryContacts.forEach((contact) => {
+        flatList.push({
+          type: "contact",
+          contact,
+          hasDetailsSummary: false,
+        });
+      });
+    }
+
+    if (recentContactsWithRealName.length > 0) {
+      recentContactsWithRealName.forEach((contact) => {
         flatList.push({
           type: "contact",
           contact,

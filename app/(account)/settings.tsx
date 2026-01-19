@@ -1,6 +1,5 @@
 import ArrowButton from "@/components/auth/buttons/ArrowButton";
 import BaseMemberSettingsSection from "@/components/settings/BaseMemberSettingsSection";
-import SettingItem from "@/components/settings/SettingItem";
 import SettingsSection from "@/components/settings/SettingsSection";
 import BaseButton from "@/components/ui/BaseButton";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,6 +27,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 
+
 export default function AccountSettingsScreen() {
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
@@ -43,7 +43,6 @@ export default function AccountSettingsScreen() {
   const saveButtonPosition = useSharedValue(screenHeight);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
-  // Use a ref to access the latest values inside the keyboard listener without triggering re-renders
   const stateRef = useRef({ hasChanges, name });
   useEffect(() => {
     stateRef.current = { hasChanges, name };
@@ -196,7 +195,6 @@ export default function AccountSettingsScreen() {
           onPress={() => router.back()}
           iconDimensions={28}
           iconColor="white"
-          backgroundColor="#000000ff"
           borderRadius={13}
           settings={true}
         />
@@ -245,18 +243,62 @@ export default function AccountSettingsScreen() {
           </View>
         </SettingsSection>
 
-        <SettingsSection>
-          <SettingItem
-            title={t("account.delete_account")}
-            subtitle={t("account.delete_account_subtitle")}
-            onPress={handleDeleteAccount}
-            showBorder={false}
+          <BaseMemberSettingsSection
+            isSubscribed={isSubscribed}
+            setIsSubscribed={setIsSubscribed}
           />
-        </SettingsSection>
-        <BaseMemberSettingsSection
-          isSubscribed={isSubscribed}
-          setIsSubscribed={setIsSubscribed}
-        />
+
+            
+
+        <View style={{ 
+          marginTop: 15, 
+          marginBottom: 32, 
+          padding: 20, 
+          marginHorizontal: 20,
+          borderWidth: .7,
+          borderStyle: "dashed",
+          borderColor: "#444",
+          borderRadius: 16,
+        }}>
+        
+        <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "400",
+                color: "#fff",
+                marginBottom: 8,
+              }}
+            >
+              {t("account.delete_account")}
+            </Text>
+            <Text
+              style={{
+                fontSize: 13,
+                color: "#fff",
+                fontWeight: "300",
+                marginBottom: 20,
+                lineHeight: 18,
+              }}
+            >
+              {t("account.delete_account_subtitle")}
+            </Text>
+            <BaseButton
+              onPress={handleDeleteAccount}
+              backgroundColor="#fff"
+              borderRadius={22}
+              height={44}
+            >
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: "500",
+                  color: "#000",
+                }}
+              >
+                {t("account.delete_account")}
+              </Text>
+            </BaseButton>
+        </View>
       </ScrollView>
 
       {hasChanges && isKeyboardVisible && (
