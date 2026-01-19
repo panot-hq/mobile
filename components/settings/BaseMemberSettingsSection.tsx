@@ -1,10 +1,15 @@
-import PanotLogo from "@/assets/icons/panot-white.svg";
+import EnhanceUnlockedSvg from "@/assets/images/enhance-unlocked.svg";
+import UnlockEnhanceSvg from "@/assets/images/unlock-enhance.svg";
 import BaseButton from "@/components/ui/BaseButton";
-import { MeshGradientView } from "expo-mesh-gradient";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Text, View } from "react-native";
+import { Dimensions, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 interface BaseMemberSettingsSectionProps {
   isSubscribed: boolean;
@@ -16,7 +21,16 @@ export default function BaseMemberSettingsSection({
   setIsSubscribed,
 }: BaseMemberSettingsSectionProps) {
   const { t } = useTranslation();
-  const [shouldRedirect, setShouldRedirect] = useState(false);
+  const screenWidth = Dimensions.get("window").width;
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 600 });
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
 
   const handleSubscribePress = () => {
     router.push("/(auth)/(paywall)/paywall");
@@ -26,152 +40,46 @@ export default function BaseMemberSettingsSection({
     return (
       <View
         style={{
-          marginTop: 130,
-          marginHorizontal: 24,
-          borderRadius: 20,
-          overflow: "hidden",
-          height: 120,
+          borderRadius: 20, overflow: "hidden", height: 280
         }}
       >
-        <MeshGradientView
-          columns={3}
-          rows={3}
-          colors={[
-            "#1a1a1a",
-            "#1a1a1a",
-            "#1a1a1a",
+        <Animated.View style={[{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, paddingHorizontal: 20 }, animatedStyle]}>
+          <EnhanceUnlockedSvg
+            width={screenWidth - 48}
+            height={240}
+            preserveAspectRatio="none"
+          />
+        </Animated.View>
+      </View>
+    );
+  }
 
-            "#2a2a2a",
-            "#2a2a2a",
-            "#2a2a2a",
-
-            "#3a3a3a",
-            "#3a3a3a",
-            "#3a3a3a",
-          ]}
-          points={[
-            [0.0, 0.0],
-            [0.5, 0.0],
-            [1.0, 0.0],
-
-            [0.0, 0.5],
-            [0.5, 0.5],
-            [1.0, 0.5],
-
-            [0.0, 1.0],
-            [0.5, 1.0],
-            [1.0, 1.0],
-          ]}
-          style={{
-            flex: 1,
-          }}
-        />
-
-        <View
-          style={{
+  return (
+    <View style={{ borderRadius: 20, overflow: "hidden", height: 280 }}>
+      <Animated.View
+        style={[
+          {
             position: "absolute",
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
             paddingHorizontal: 20,
-            justifyContent: "center",
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <PanotLogo width={96} height={32} />
-              <View
-                style={{
-                  marginLeft: 8,
-                  borderWidth: 1,
-                  borderColor: "#FFFFFF",
-                  borderRadius: 20,
-                  paddingHorizontal: 10,
-                  paddingVertical: 3,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 10,
-                    fontWeight: "400",
-                    color: "#FFFFFF",
-                  }}
-                >
-                  enhanced
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          <Text
-            style={{
-              fontSize: 13,
-              color: "#888888",
-              marginTop: 12,
-              fontWeight: "300",
-            }}
-          >
-            {t("account.subscription_thanks")}
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View
-      style={{
-        marginTop: 90,
-        borderRadius: 20,
-        overflow: "hidden",
-        height: 280,
-      }}
-    >
-      <MeshGradientView
-        columns={3}
-        rows={3}
-        colors={[
-          "#000000",
-          "#000000",
-          "#000000",
-
-          "#333333ff",
-          "#333333ff",
-          "#333333ff",
-
-          "#ffffffc8",
-          "#ffffffc8",
-          "#ffffffc8",
+          },
+          animatedStyle,
         ]}
-        points={[
-          [0.0, 0.0],
-          [0.5, 0.0],
-          [1.0, 0.0],
-
-          [0.0, 0.32],
-          [0.5, 0.45],
-          [1.0, 0.4],
-
-          [0.0, 1.1],
-          [0.5, 1.1],
-          [1.0, 1.1],
-        ]}
-        style={{
-          flex: 1,
-        }}
-      />
+      >
+        <UnlockEnhanceSvg
+          width={screenWidth - 40}
+          height={240}
+          preserveAspectRatio="none"
+        />
+      </Animated.View>
 
       <View
         style={{
           position: "absolute",
-          bottom: 0,
+          bottom: 10,
           left: 0,
           right: 0,
           paddingHorizontal: 24,
@@ -179,78 +87,17 @@ export default function BaseMemberSettingsSection({
           alignItems: "center",
         }}
       >
-        <View
-          style={{
-            width: "100%",
-            alignItems: "center",
-          }}
+        <BaseButton
+          onPress={handleSubscribePress}
+          backgroundColor="#000000ff"
+          borderRadius={50}
+          height={45}
+          width={300}
         >
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: 12,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 24,
-                fontWeight: "400",
-                color: "#FFFFFF",
-              }}
-            >
-              {t("account.subscription_title")}
-            </Text>
-            <Text
-              style={{
-                fontSize: 10,
-                fontWeight: "400",
-                color: "#FFFFFF",
-                marginBottom: 2,
-                marginLeft: 8,
-                borderWidth: 1,
-                borderColor: "#FFFFFF",
-                borderRadius: 20,
-                paddingHorizontal: 8,
-                paddingVertical: 2,
-              }}
-            >
-              enhanced
-            </Text>
-          </View>
-
-          <Text
-            style={{
-              fontSize: 14,
-              color: "#868686ff",
-              textAlign: "center",
-              marginBottom: 28,
-              lineHeight: 20,
-              paddingHorizontal: 24,
-            }}
-          >
-            {t("account.subscription_description")}
+          <Text style={{ fontSize: 16, fontWeight: "400", color: "#ffffffff" }}>
+            {t("account.subscription_button")}
           </Text>
-
-          <BaseButton
-            onPress={handleSubscribePress}
-            backgroundColor="#000000ff"
-            borderRadius={50}
-            height={45}
-            width={350}
-          >
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: "400",
-                color: "#ffffffff",
-              }}
-            >
-              {t("account.subscription_button")}
-            </Text>
-          </BaseButton>
-        </View>
+        </BaseButton>
       </View>
     </View>
   );

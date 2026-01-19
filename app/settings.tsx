@@ -9,6 +9,7 @@ import PanotLogo from "@/assets/icons/panot-logo-white.svg";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
 import { router } from "expo-router";
+import * as WebBrowser from 'expo-web-browser';
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert, ScrollView, Text, View } from "react-native";
@@ -115,6 +116,23 @@ export default function SettingsScreen() {
             subtitle={t("settings.sign_out_subtitle")}
             icon="sign-out"
             onPress={handleSignOut}
+          />
+        </SettingsSection>
+
+        <SettingsSection>
+          <SettingItem
+            title={t("settings.privacy_policy_title")}
+            icon="privacy-tip"
+            subtitle={t("settings.privacy_policy_subtitle")}
+            onPress={() => WebBrowser.openBrowserAsync('https://panotapp.com/en/privacy')}
+            showBorder={false}
+          />
+          <SettingItem
+            title={t("settings.terms_of_use_title")}
+            icon="contact-page"
+            subtitle={t("settings.terms_of_use_subtitle")}
+            onPress={() => WebBrowser.openBrowserAsync('https://panotapp.com/en/terms')}
+            showBorder={false}
           />
         </SettingsSection>
 

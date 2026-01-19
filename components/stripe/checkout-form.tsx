@@ -8,8 +8,10 @@ import {
   useStripe,
 } from "@stripe/stripe-react-native";
 import { User } from "@supabase/supabase-js";
+import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
-import { View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 async function fetchPaymentSheetParams(
   amount: number,
@@ -41,6 +43,20 @@ export default function CheckoutForm({ amount }: { amount: number }) {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { subscribe, syncSubscriptionState, isSubscribed } = useSubscription();
+
+  const handleOpenTermsOfUse = async () => {
+    const termsUrl = "https://panotapp.com/en/terms"; 
+    if (termsUrl) {
+      await WebBrowser.openBrowserAsync(termsUrl);
+    }
+  };
+
+  const handleOpenPrivacyPolicy = async () => {
+    const privacyUrl = "https://panotapp.com/en/privacy"; 
+    if (privacyUrl) {
+      await WebBrowser.openBrowserAsync(privacyUrl);
+    }
+  };
   const pay = async () => {
     setLoading(true);
     const { clientSecret, ephemeralKey, customer } =
@@ -53,7 +69,7 @@ export default function CheckoutForm({ amount }: { amount: number }) {
         cartItems: [
           {
             label: "Panot Subscription",
-            amount: "2.99",
+            amount: "4.99",
             paymentType: PlatformPay.PaymentType.Recurring,
             intervalUnit: PlatformPay.IntervalUnit.Month,
             intervalCount: 1,
@@ -68,7 +84,7 @@ export default function CheckoutForm({ amount }: { amount: number }) {
             intervalUnit: PlatformPay.IntervalUnit.Month,
             intervalCount: 1,
             label: "Panot Subscription",
-            amount: "2.99",
+            amount: "4.99",
           },
         },
       },
@@ -77,6 +93,7 @@ export default function CheckoutForm({ amount }: { amount: number }) {
       setLoading(false);
     } else {
       await subscribe();
+      router.replace("/(auth)/(paywall)/congrats");
       if (!isSubscribed) {
         syncSubscriptionState(true);
       }
@@ -90,9 +107,16 @@ export default function CheckoutForm({ amount }: { amount: number }) {
         width: "100%",
         alignItems: "center",
         position: "absolute",
-        bottom: 55,
+        bottom: 40,
+        flex: 1,
+        flexDirection: "column",
+        gap: 2,
       }}
     >
+      <View style={{ width: "100%", alignItems: "center" }}>
+        <Text style={{ fontSize: 12, fontWeight: "300", color: "#000" }}>start for only 4.99€/month</Text>
+      </View>
+      
       <PlatformPayButton
         onPress={pay}
         type={PlatformPay.ButtonType.Continue}
@@ -101,6 +125,19 @@ export default function CheckoutForm({ amount }: { amount: number }) {
         disabled={loading}
         style={{ width: 350, height: 50 }}
       />
+      <View style={{ width: "100%", alignItems: "center", paddingHorizontal: 15, marginBottom: 12 }}>
+        <Text style={{ fontSize: 10, fontWeight: "300", color: "#000", textAlign: "center" }}>Subscription auto-renews unless canceled at least 24-hours before the end of the current period.</Text>
+      </View>
+
+      <View style={{ width: "100%", alignItems: "center", flexDirection: "row", gap: 10, justifyContent: "center" }}>
+        <Pressable onPress={handleOpenTermsOfUse}>
+          <Text style={{ fontSize: 11, fontWeight: "300", color: "#000", textDecorationLine: "underline" }}>Terms of Use</Text>
+        </Pressable>
+        <Text style={{ fontSize: 10, fontWeight: "300", color: "#000" }}>-</Text>
+        <Pressable onPress={handleOpenPrivacyPolicy}>
+          <Text style={{ fontSize: 11, fontWeight: "300", color: "#000", textDecorationLine: "underline" }}>Privacy Policy</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }

@@ -59,6 +59,15 @@ export default function AuthLayout() {
             gestureEnabled: false,
           }}
         />
+        <Stack.Screen
+          name="(paywall)/congrats"
+          options={{
+            presentation: "card",
+            animation: "slide_from_right",
+            headerShown: false,
+            gestureEnabled: false,
+          }}
+        />
       </Stack>
     </SignupProvider>
   );
