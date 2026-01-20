@@ -40,6 +40,7 @@ interface AuthContextType {
     token: string
   ) => Promise<{ success: boolean; error?: string }>;
   resendOTP: (email: string) => Promise<{ success: boolean; error?: string }>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -54,6 +55,7 @@ const AuthContext = createContext<AuthContextType>({
   signUpWithOTP: async () => ({ success: false }),
   verifyOTP: async () => ({ success: false }),
   resendOTP: async () => ({ success: false }),
+  refreshProfile: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -311,6 +313,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const refreshProfile = async () => {
+    if (!user) return;
+    try {
+      const profileResponse = await ProfilesService.getByUserId(user.id);
+      if (profileResponse.data) {
+        setProfile(profileResponse.data);
+      }
+    } catch (error) {
+      console.error("Error refreshing profile:", error);
+    }
+  };
+
   if (!initialCheckComplete) {
     return <LoadingScreen />;
   }
@@ -329,6 +343,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         signUpWithOTP,
         verifyOTP,
         resendOTP,
+        refreshProfile,
       }}
     >
       {children}

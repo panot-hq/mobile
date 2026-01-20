@@ -1,4 +1,5 @@
 import InteractionList from "@/components/interactions/InteractionColapsableList";
+import OnboardingModal from "@/components/onboarding/OnboardingModal";
 import RecordingOverlay from "@/components/recording/RecordingOverlay";
 import ColapseButton from "@/components/ui/ColapseButton";
 import PresentActionBar from "@/components/ui/PresentActionBar";
@@ -19,7 +20,8 @@ export default function HomeScreen() {
   const { isListExpanded, setIsListExpanded } = useRecording();
   const recordButtonOpacity = useSharedValue(1);
   const [currentDayPeriod, setcurrentDayPeriod] = useState("morning");
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -37,6 +39,13 @@ export default function HomeScreen() {
       duration: 300,
     });
   }, [isListExpanded, recordButtonOpacity]);
+
+  useEffect(() => {
+    // Show onboarding modal if user hasn't completed onboarding
+    if (profile && !profile.onboarding_done && user) {
+      setShowOnboarding(true);
+    }
+  }, [profile, user]);
 
   const animatedRecordButtonStyle = useAnimatedStyle(() => {
     return {
@@ -101,6 +110,11 @@ export default function HomeScreen() {
       )}
 
       <RecordingOverlay hideRecordButton={isListExpanded} />
+
+      <OnboardingModal
+        visible={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+      />
     </View>
   );
 }

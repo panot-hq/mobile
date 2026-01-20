@@ -71,6 +71,12 @@
     "congrats_subtitle": "Gracias por ser parte de este viaje y disfruta de todas las funciones mejoradas!",
     "congrats_button": "¡Vamos!"
   },
+  "onboarding": {
+    "welcome": "¡Bienvenido a bordo {{name}}!",
+    "description_1": "Esta es la versión 1.0 de PANOT, una herramienta que te permite grabar interacciones y almacenar información relevante e interesante sobre tus conexiones.",
+    "description_2": "El equipo de PANOT te desea buena suerte en tu viaje para dominar tus conexiones y no dudes en darnos cualquier tipo de feedback en Ajustes > Feedback",
+    "button": "¡VAMOS A POR ELLO!"
+  },
   "common": {
     "error": "Error",
     "cancel": "Cancelar",
