@@ -69,7 +69,7 @@ export default function CheckoutForm({ amount }: { amount: number }) {
         cartItems: [
           {
             label: "Panot Subscription",
-            amount: "4.99",
+            amount: "3.99",
             paymentType: PlatformPay.PaymentType.Recurring,
             intervalUnit: PlatformPay.IntervalUnit.Month,
             intervalCount: 1,
@@ -84,7 +84,7 @@ export default function CheckoutForm({ amount }: { amount: number }) {
             intervalUnit: PlatformPay.IntervalUnit.Month,
             intervalCount: 1,
             label: "Panot Subscription",
-            amount: "4.99",
+            amount: "3.99",
           },
         },
       },
@@ -114,7 +114,7 @@ export default function CheckoutForm({ amount }: { amount: number }) {
       }}
     >
       <View style={{ width: "100%", alignItems: "center" }}>
-        <Text style={{ fontSize: 12, fontWeight: "300", color: "#000" }}>start for only 4.99€/month</Text>
+        <Text style={{ fontSize: 12, fontWeight: "300", color: "#000" }}>start for only 3.99€/month</Text>
       </View>
       
       <PlatformPayButton

@@ -34,7 +34,7 @@ export default function PaywallScreen() {
       <PaywallValueProviders style={{ position: "absolute", top: 125, marginHorizontal: 20 }} />
 
       
-      <CheckoutForm amount={499} />
+      <CheckoutForm amount={399} />
     </View>
   );
 }
