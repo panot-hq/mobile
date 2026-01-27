@@ -15,10 +15,19 @@ const storage = createMMKV();
 const LANGUAGE_KEY = "app_language";
 
 const getLanguage = () => {
-  const storedLanguage = storage.getString(LANGUAGE_KEY);
-  if (storedLanguage) {
-    return storedLanguage;
+  if (typeof window === 'undefined') {
+    return "en-US";
   }
+
+  try {
+    const storedLanguage = storage.getString(LANGUAGE_KEY);
+    if (storedLanguage) {
+      return storedLanguage;
+    }
+  } catch (error) {
+    return "en-US";
+  }
+
   const deviceLanguage = getLocales()[0]?.languageTag;
   return deviceLanguage === "es-ES" ? "es-ES" : "en-US";
 };
@@ -38,7 +47,9 @@ i18n.use(initReactI18next).init({
 
 export const changeLanguage = (lang: string) => {
   i18n.changeLanguage(lang);
-  storage.set(LANGUAGE_KEY, lang);
+  if (typeof window !== 'undefined') {
+    storage.set(LANGUAGE_KEY, lang);
+  }
 };
 
 export default i18n;

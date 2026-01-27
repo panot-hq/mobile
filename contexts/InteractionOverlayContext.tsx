@@ -625,7 +625,7 @@ export const InteractionOverlayProvider = ({
                                 paddingVertical: 2,
                               }}
                             >
-                              enhanced
+                              soon
                             </Text>
                           </View>
                         )}

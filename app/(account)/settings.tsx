@@ -1,5 +1,4 @@
 import ArrowButton from "@/components/auth/buttons/ArrowButton";
-import BaseMemberSettingsSection from "@/components/settings/BaseMemberSettingsSection";
 import SettingsSection from "@/components/settings/SettingsSection";
 import BaseButton from "@/components/ui/BaseButton";
 import { useAuth } from "@/contexts/AuthContext";
@@ -243,11 +242,12 @@ export default function AccountSettingsScreen() {
           </View>
         </SettingsSection>
 
+{/*
           <BaseMemberSettingsSection
             isSubscribed={isSubscribed}
             setIsSubscribed={setIsSubscribed}
           />
-
+*/}
             
 
         <View style={{ 

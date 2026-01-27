@@ -238,7 +238,7 @@ export default function AddContactModal({
                       paddingVertical: 2,
                     }}
                   >
-                    enhanced
+                    soon
                   </Text>
                 </View>
               )}

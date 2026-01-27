@@ -15,7 +15,12 @@ export default function ContactInteractionTimeline({
   const { t, i18n } = useTranslation();
 
   const groupedInteractions = interactions.reduce((groups, interaction) => {
-    const date = new Date(interaction.created_at);
+    let date = interaction.created_at
+      ? new Date(interaction.created_at)
+      : new Date();
+    if (isNaN(date.getTime())) {
+      date = new Date();
+    }
     const dateKey = date.toLocaleDateString(i18n.language, {
       month: "short",
       day: "numeric",
@@ -30,16 +35,24 @@ export default function ContactInteractionTimeline({
   }, {} as Record<string, typeof interactions>);
 
   const sortedDateKeys = Object.keys(groupedInteractions).sort((a, b) => {
-    const dateA = new Date(groupedInteractions[a][0].created_at).getTime();
-    const dateB = new Date(groupedInteractions[b][0].created_at).getTime();
+    const dateA = groupedInteractions[a][0].created_at
+      ? new Date(groupedInteractions[a][0].created_at).getTime()
+      : 0;
+    const dateB = groupedInteractions[b][0].created_at
+      ? new Date(groupedInteractions[b][0].created_at).getTime()
+      : 0;
     return dateB - dateA;
   });
 
   sortedDateKeys.forEach((dateKey) => {
     groupedInteractions[dateKey].sort((a, b) => {
-      return (
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      const timeA = a.created_at
+        ? new Date(a.created_at).getTime()
+        : 0;
+      const timeB = b.created_at
+        ? new Date(b.created_at).getTime()
+        : 0;
+      return timeB - timeA;
     });
   });
 

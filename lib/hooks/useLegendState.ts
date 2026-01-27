@@ -217,6 +217,7 @@ export function useInteractions() {
       interactions$[id].assign({
         id,
         owner_id: user.id,
+        created_at: new Date().toISOString(),
         ...interaction,
       });
 

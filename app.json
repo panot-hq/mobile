@@ -15,11 +15,14 @@
       },
       "supportsTablet": true,
       "bundleIdentifier": "com.ahrm.panot",
+      "buildNumber": "5",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSSpeechRecognitionUsageDescription": "Allow $(PRODUCT_NAME) to use speech recognition.",
-        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use the microphone.",
-        "NSContactsUsageDescription": "Allow $(PRODUCT_NAME) to access your contacts."
+        "NSSpeechRecognitionUsageDescription": "Processes your recorded voice to automatically transcribe interactions into text.",
+        "NSMicrophoneUsageDescription": "Records your voice notes to capture interaction without typing.",
+        "NSContactsUsageDescription": "Allows you to select contacts to import. Imported data is securely uploaded to our servers to sync your account.",
+        "NSCameraUsageDescription": "Allows you to take a photo to set as your profile picture.",
+        "NSPhotoLibraryUsageDescription": "Allows you to choose an image from your gallery to use as a profile picture."
       }
     },
     "android": {
@@ -39,7 +42,7 @@
       "output": "server"
     },
     "plugins": [
-       "expo-web-browser",
+      "expo-web-browser",
       "expo-localization",
       [
         "expo-router",
@@ -63,7 +66,7 @@
       [
         "expo-contacts",
         {
-          "contactsPermission": "Allow $(PRODUCT_NAME) to access your contacts."
+          "contactsPermission": "Enables you to select specific contacts from your address book to create their profiles in the app. We will be storing your contacts in our database and will not share them with any third parties or processed in any way."
         }
       ],
       [
