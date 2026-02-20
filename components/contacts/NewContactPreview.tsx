@@ -59,7 +59,6 @@ export default function NewContactPreview({
     }
   }, [showButtons]);
 
-  // Actualizar el transcript y editableText cuando previousTranscript cambia o cuando se pausa
   useEffect(() => {
     if (previousTranscript) {
       const textToShow = previousTranscript;
@@ -102,7 +101,7 @@ export default function NewContactPreview({
   };
 
   const getButtonStyle = (
-    variant: "primary" | "secondary" | "outline" = "secondary"
+    variant: "primary" | "secondary" | "outline" = "secondary",
   ) => {
     switch (variant) {
       case "primary":
@@ -130,7 +129,7 @@ export default function NewContactPreview({
   };
 
   const getTextStyle = (
-    variant: "primary" | "secondary" | "outline" = "secondary"
+    variant: "primary" | "secondary" | "outline" = "secondary",
   ) => {
     switch (variant) {
       case "primary":

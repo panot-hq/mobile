@@ -37,7 +37,7 @@ export enum EVENT_TYPES {
 export default function capture_event(
   event_name: string,
   posthog?: any,
-  properties: Record<string, any> = {}
+  properties: Record<string, any> = {},
 ) {
   if (!posthog) return;
 

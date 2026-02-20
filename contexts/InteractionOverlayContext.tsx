@@ -70,7 +70,7 @@ export const useInteractionOverlay = () => {
   const context = useContext(InteractionOverlayContext);
   if (!context) {
     throw new Error(
-      "useInteractionOverlay must be used within InteractionOverlayProvider"
+      "useInteractionOverlay must be used within InteractionOverlayProvider",
     );
   }
   return context;
@@ -194,11 +194,11 @@ export const InteractionOverlayProvider = ({
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             Alert.alert(
               t("common.error"),
-              t("interactions.overlay.delete_error")
+              t("interactions.overlay.delete_error"),
             );
           }
         }
-      }
+      },
     );
   };
 
@@ -260,7 +260,7 @@ export const InteractionOverlayProvider = ({
   const handleAssignPress = () => {
     hideOverlay(() => {
       router.push(
-        `/(interactions)/assign?interactionId=${interactionData?.id}&autoProcess=${autoProcessOnAssign}`
+        `/(interactions)/assign?interactionId=${interactionData?.id}&autoProcess=${autoProcessOnAssign}`,
       );
     });
   };
@@ -490,7 +490,7 @@ export const InteractionOverlayProvider = ({
                         onChangeText={setContentValue}
                         onBlur={handleContentSave}
                         placeholder={t(
-                          "interactions.overlay.content_placeholder"
+                          "interactions.overlay.content_placeholder",
                         )}
                         multiline
                         autoFocus

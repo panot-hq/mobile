@@ -36,7 +36,8 @@ export default function InteractionList({
   const interactions = useMemo(() => {
     return [...rawInteractions].sort(
       (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        new Date(b.created_at || Date.now()).getTime() -
+        new Date(a.created_at || Date.now()).getTime(),
     );
   }, [rawInteractions]);
 
@@ -133,7 +134,9 @@ export default function InteractionList({
                   }}
                 >
                   <Text style={{ fontSize: 13 }}>
-                    {formatCreatedAt(interaction.created_at).split(" ")[0]}
+                    {formatCreatedAt(
+                      interaction.created_at || new Date().toISOString(),
+                    ).split(" ")[0]}
                   </Text>
                   <Text style={{ fontSize: 13 }}>
                     {new Date(
@@ -241,7 +244,7 @@ export default function InteractionList({
                 >
                   <InteractionComponent
                     interactionId={item.id.toString()}
-                    createdAt={item.created_at}
+                    createdAt={item.created_at || new Date().toISOString()}
                     rawContent={item.raw_content}
                     status={item.status || "unprocessed"}
                   />

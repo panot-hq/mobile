@@ -19,7 +19,7 @@ export function useContacts() {
     if (!allContacts || !user) return [];
 
     return Object.values(allContacts).filter(
-      (contact: any) => contact.owner_id === user.id && !contact.deleted
+      (contact: any) => contact.owner_id === user.id && !contact.deleted,
     ) as Contact[];
   });
 
@@ -27,7 +27,7 @@ export function useContacts() {
     contact: Omit<
       Contact,
       "id" | "created_at" | "updated_at" | "owner_id" | "node_id"
-    >
+    >,
   ): Promise<Contact> => {
     if (!user) throw new Error("User not authenticated");
 
@@ -62,8 +62,8 @@ export function useContacts() {
       "summary" in contact.details
         ? (contact.details as { summary?: string }).summary
         : typeof contact.details === "string"
-        ? contact.details
-        : null;
+          ? contact.details
+          : null;
 
     if (detailsSummary && detailsSummary.trim().length > 0) {
       try {
@@ -164,7 +164,7 @@ export function useInteractions() {
 
     return Object.values(allInteractions).filter(
       (interaction: any) =>
-        interaction.owner_id === user.id && !interaction.deleted
+        interaction.owner_id === user.id && !interaction.deleted,
     ) as Interaction[];
   });
 
@@ -176,7 +176,7 @@ export function useInteractions() {
       (interaction: any) =>
         interaction.owner_id === user.id &&
         !interaction.deleted &&
-        !interaction.contact_id
+        !interaction.contact_id,
     ) as Interaction[];
   });
 
@@ -188,7 +188,7 @@ export function useInteractions() {
       (interaction: any) =>
         interaction.owner_id === user.id &&
         !interaction.deleted &&
-        interaction.contact_id === contactId
+        interaction.contact_id === contactId,
     ) as Interaction[];
   };
 
@@ -196,11 +196,10 @@ export function useInteractions() {
     interaction: Omit<
       Interaction,
       "id" | "created_at" | "updated_at" | "owner_id"
-    >
+    >,
   ) => {
     if (!user) throw new Error("User not authenticated");
 
-    // Validate contact_id if provided
     if (interaction.contact_id) {
       // @ts-ignore
       const contact = contacts$[interaction.contact_id]?.peek();
@@ -217,7 +216,6 @@ export function useInteractions() {
       interactions$[id].assign({
         id,
         owner_id: user.id,
-        created_at: new Date().toISOString(),
         ...interaction,
       });
 
@@ -251,12 +249,11 @@ export function useInteractions() {
   };
 
   const assignContact = (interactionId: string, contactId: string) => {
-    // Validate that the contact exists before assigning
     // @ts-ignore
     const contact = contacts$[contactId]?.peek();
     if (!contact || contact.deleted) {
       throw new Error(
-        "Cannot assign interaction to non-existent or deleted contact"
+        "Cannot assign interaction to non-existent or deleted contact",
       );
     }
     updateInteraction(interactionId, { contact_id: contactId });

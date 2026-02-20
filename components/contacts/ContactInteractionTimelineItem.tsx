@@ -27,7 +27,9 @@ export default function ContactInteractionItem({
   const scale = useSharedValue(1);
   const { showOverlay } = useInteractionOverlay();
   const componentRef = useRef<View>(null);
-  const formatted = formatCreatedAt(interaction.created_at);
+  const formatted = formatCreatedAt(
+    interaction.created_at || new Date().toISOString(),
+  );
   const isInteractionProcessing = interaction.status === "processing";
   const isInteractionProcessed = interaction.status === "processed";
 
@@ -53,7 +55,7 @@ export default function ContactInteractionItem({
       componentRef.current.measureInWindow((x, y, width, height) => {
         showOverlay({
           id: interaction.id,
-          createdAt: interaction.created_at,
+          createdAt: interaction.created_at || new Date().toISOString(),
           rawContent: interaction.raw_content,
           datePart,
           hourPart,
