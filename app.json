@@ -15,7 +15,7 @@
       },
       "supportsTablet": true,
       "bundleIdentifier": "com.ahrm.panot",
-      "buildNumber": "5",
+      "buildNumber": "6",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSSpeechRecognitionUsageDescription": "Processes your recorded voice to automatically transcribe interactions into text.",

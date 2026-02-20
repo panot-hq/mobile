@@ -32,7 +32,7 @@ export const contacts$: Observable<any> = observable(
     collection: "contacts",
     select: (from: any) =>
       from.select(
-        "id,owner_id,first_name,last_name,details,created_at,updated_at,deleted,communication_channels,node_id"
+        "id,owner_id,first_name,last_name,details,created_at,updated_at,deleted,communication_channels,node_id",
       ),
     actions: ["read", "create", "update", "delete"],
     realtime: true,
@@ -56,7 +56,7 @@ export const contacts$: Observable<any> = observable(
         console.error("❌ Contacts sync error:", error);
       }
     },
-  })
+  }),
 );
 
 export const interactions$: Observable<any> = observable(
@@ -66,7 +66,7 @@ export const interactions$: Observable<any> = observable(
     collection: "interactions",
     select: (from: any) =>
       from.select(
-        "id,owner_id,raw_content,contact_id,created_at,updated_at,deleted,processed,status"
+        "id,owner_id,raw_content,contact_id,created_at,updated_at,deleted,processed,status",
       ),
     actions: ["read", "create", "update", "delete"],
     realtime: true,
@@ -90,7 +90,7 @@ export const interactions$: Observable<any> = observable(
         console.error("❌ Interactions sync error:", error);
       }
     },
-  })
+  }),
 );
 
 export const profiles$: Observable<any> = observable(
@@ -100,7 +100,7 @@ export const profiles$: Observable<any> = observable(
     collection: "profiles",
     select: (from: any) =>
       from.select(
-        "user_id,onboarding_done,subscribed,created_at,updated_at,deleted"
+        "user_id,onboarding_done,subscribed,created_at,updated_at,deleted",
       ),
     actions: ["read", "create", "update"],
     realtime: true,
@@ -125,7 +125,7 @@ export const profiles$: Observable<any> = observable(
         console.error("❌ Profiles sync error:", error);
       }
     },
-  })
+  }),
 );
 
 export async function initializeSync(userId: string) {
@@ -145,12 +145,6 @@ export async function initializeSync(userId: string) {
     contactsSyncState$.sync();
     interactionsSyncState$.sync();
     profilesSyncState$.sync();
-
-    // Log profile data after sync is initiated
-    setTimeout(() => {
-      // @ts-ignore
-      const profile = profiles$[userId]?.get();
-    }, 1000);
 
     await cleanupOrphanedInteractions();
   } catch (error) {
@@ -190,7 +184,7 @@ export async function cleanupOrphanedInteractions() {
           });
           cleanedCount++;
         }
-      }
+      },
     );
   } catch (error) {
     console.error("Error cleaning up orphaned interactions:", error);
